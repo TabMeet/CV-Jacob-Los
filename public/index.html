@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Companion</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Onboarding / edit-companion screen -->
+    <section id="setup-screen" class="setup-screen hidden">
+        <div class="setup-card">
+            <h1 id="setup-title">Create your companion</h1>
+            <p class="setup-subtitle">Give them a name, a personality, and a look. You can change any of this later.</p>
+
+            <label class="field-label" for="input-name">Name</label>
+            <input id="input-name" class="text-input" type="text" maxlength="60" placeholder="e.g. Nova" autocomplete="off">
+
+            <label class="field-label" for="input-personality">Personality</label>
+            <textarea id="input-personality" class="text-input textarea" maxlength="1000" rows="4"
+                placeholder="e.g. Warm, witty, endlessly curious. Loves a good tangent, keeps things upbeat, isn't afraid to gently push back."></textarea>
+
+            <label class="field-label">Avatar</label>
+            <div id="avatar-grid" class="avatar-grid"></div>
+            <input id="input-avatar-custom" class="text-input avatar-custom-input" type="text" maxlength="4" placeholder="or type your own emoji">
+
+            <label class="field-label">Accent color</label>
+            <div id="color-grid" class="color-grid"></div>
+
+            <div class="setup-actions">
+                <button id="btn-save-companion" class="btn btn-primary">Save &amp; start chatting</button>
+                <button id="btn-cancel-setup" class="btn btn-ghost hidden">Cancel</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chat screen -->
+    <section id="chat-screen" class="chat-screen hidden">
+        <header class="chat-header">
+            <div class="header-companion">
+                <div id="header-avatar" class="avatar-badge"></div>
+                <div class="header-text">
+                    <h1 id="header-name"></h1>
+                    <span class="status-dot"></span><span class="status-label">online</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="btn-clear-chat" class="icon-btn" title="Clear conversation">🗑</button>
+                <button id="btn-edit-companion" class="icon-btn" title="Edit companion">⚙</button>
+            </div>
+        </header>
+
+        <main id="message-list" class="message-list"></main>
+
+        <form id="chat-form" class="chat-input-bar">
+            <textarea id="chat-input" class="chat-input" rows="1" placeholder="Say something…" autocomplete="off"></textarea>
+            <button id="btn-send" type="submit" class="btn btn-send" aria-label="Send">➤</button>
+        </form>
+    </section>
+
+    <script src="app.js"></script>
+</body>
+</html>
