@@ -258,6 +258,8 @@ qs("btn-begin").addEventListener("click", () => {
     log: [],
     currentScene: null,
     awaitingContinue: false,
+    pendingDowntime: false,
+    lastDowntimeAt: 0,
     ended: false,
     endReason: null
   };
@@ -280,6 +282,9 @@ function enterGameView(rebuildLog) {
   if (state.awaitingContinue) {
     qs("choices").classList.add("hidden");
     qs("continue-wrap").classList.remove("hidden");
+  } else if (state.pendingDowntime) {
+    const template = DOWNTIME_TEMPLATES[state.downtimeTemplateIndex] || DOWNTIME_TEMPLATES[0];
+    renderDowntimeChoices(template);
   } else if (state.currentScene) {
     const missionType = MISSION_TYPES.find(m => m.id === state.currentScene.missionTypeId);
     const beat = missionType.beats[state.currentScene.beatIndex];
@@ -352,9 +357,15 @@ function pickPlanet() {
   return pickRandom(PLANETS);
 }
 function pickMissionType() {
-  let choices = MISSION_TYPES;
-  if (state.lastMissionTypeId) choices = MISSION_TYPES.filter(m => m.id !== state.lastMissionTypeId);
-  return pickRandom(choices);
+  const cls = CLASSES.find(c => c.id === state.character.classId);
+  const favored = (cls && cls.favoredMissions) || [];
+  const pool = MISSION_TYPES.filter(m => m.id !== state.lastMissionTypeId);
+  const weighted = [];
+  pool.forEach(m => {
+    const weight = favored.includes(m.id) ? 3 : 1;
+    for (let i = 0; i < weight; i++) weighted.push(m);
+  });
+  return pickRandom(weighted);
 }
 function currentDC() {
   let dc = 11 + Math.floor(state.missionCount / 5);
@@ -365,6 +376,10 @@ function beatDC(beatIndex) {
   const base = currentDC();
   const reduction = beatIndex === 0 ? 3 : beatIndex === 1 ? 1 : 0;
   return Math.max(8, base - reduction);
+}
+function effectiveDC(beat, scene, approachKey) {
+  const modifier = (beat.dcMod && beat.dcMod[approachKey]) || 0;
+  return Math.max(5, scene.dc + modifier);
 }
 function statValueFor(approachKey) {
   const s = state.character.stats;
@@ -455,13 +470,29 @@ function isQuestion(raw) {
   return starters.includes(firstWord);
 }
 
+/* Scores every FAQ topic by keyword overlap rather than stopping at the
+   first match, so a question that touches two topics ("if I die does my
+   save disappear?") lands on whichever topic it actually overlaps with
+   most, instead of whichever happens to be listed first. This is the
+   "certain level of AI thinking" available without a live model: real
+   intent scoring over a fixed topic set, not a hardcoded lookup. */
 function answerQuestion(raw) {
   const lower = raw.toLowerCase();
-  const hit = FAQ_BANK.find(entry => entry.keywords.some(k => lower.includes(k)));
-  return hit ? hit.answer : FAQ_FALLBACK;
+  let best = null;
+  let bestScore = 0;
+  FAQ_BANK.forEach(entry => {
+    const score = entry.keywords.reduce((sum, k) => sum + (lower.includes(k) ? k.split(" ").length : 0), 0);
+    if (score > bestScore) { bestScore = score; best = entry; }
+  });
+  return best ? best.answer : FAQ_FALLBACK;
 }
 
-function freeformRoll(raw) {
+/* Same idea for custom actions: score the text against three word banks
+   (bold/direct, investigative, devotional) weighted by how much of the
+   phrasing actually matches, rather than a single keyword hit deciding
+   everything. Ties and no-match text fall back to a neutral average of
+   all three stats, so an oddly-phrased action isn't unfairly penalized. */
+function freeformApproach(raw) {
   const lower = raw.toLowerCase();
   const hits = {
     assault: FREEFORM_ASSAULT_WORDS.filter(w => lower.includes(w)).length,
@@ -469,10 +500,15 @@ function freeformRoll(raw) {
     faith: FREEFORM_FAITH_WORDS.filter(w => lower.includes(w)).length
   };
   const best = Object.keys(hits).reduce((a, b) => (hits[b] > hits[a] ? b : a), "assault");
-  if (hits[best] > 0) return statModifier(statValueFor(best));
-  const avg = (statModifier(statValueFor("assault")) + statModifier(statValueFor("cunning")) + statModifier(statValueFor("faith"))) / 3;
-  return Math.round(avg);
+  return hits[best] > 0 ? best : null;
 }
+function freeformRoll(raw) {
+  const approach = freeformApproach(raw);
+  if (approach) return { mod: statModifier(statValueFor(approach)), approach };
+  const avg = (statModifier(statValueFor("assault")) + statModifier(statValueFor("cunning")) + statModifier(statValueFor("faith"))) / 3;
+  return { mod: Math.round(avg), approach: null };
+}
+const FREEFORM_READ_AS = { assault: "a direct, forceful approach", cunning: "a careful, reasoned approach", faith: "an approach rooted in faith and resolve" };
 
 qs("btn-freeform-submit").addEventListener("click", () => {
   const raw = qs("freeform-input").value.trim();
@@ -489,9 +525,16 @@ qs("btn-freeform-submit").addEventListener("click", () => {
     return;
   }
 
-  const mod = freeformRoll(raw);
-  runDiceAnimation(mod, ctx.scene.dc, (roll, total, tier) => {
-    resolveFreeformOutcome(raw, ctx.missionType, ctx.beat, ctx.scene, roll, mod, total, tier);
+  if (ctx.beat.noRoll) {
+    resolveNoRollBeat(ctx.missionType, ctx.beat, ctx.scene, `You go with your own instinct here. It isn't one of the paths anyone suggested, but it's yours.`);
+    return;
+  }
+
+  const { mod, approach } = freeformRoll(raw);
+  const dc = approach ? effectiveDC(ctx.beat, ctx.scene, approach) : ctx.scene.dc;
+  if (approach) pushLog("roll", `Reading that as ${FREEFORM_READ_AS[approach]}.`);
+  runDiceAnimation(mod, dc, (roll, total, tier) => {
+    resolveFreeformOutcome(raw, ctx.missionType, ctx.beat, ctx.scene, dc, roll, mod, total, tier);
   });
 });
 
@@ -504,12 +547,30 @@ function onChoiceClick(approachKey, missionType, beat) {
   document.querySelectorAll(".choice-btn").forEach(b => b.disabled = true);
   pushLog("choice", `You choose: ${approach.icon} "${opt.label}"`);
 
+  if (beat.noRoll) {
+    resolveNoRollBeat(missionType, beat, scene, opt.response);
+    return;
+  }
+
   const statVal = statValueFor(approachKey);
   const mod = statModifier(statVal);
+  const dc = effectiveDC(beat, scene, approachKey);
 
-  runDiceAnimation(mod, scene.dc, (roll, total, tier) => {
-    resolveBeatOutcome(approachKey, missionType, beat, scene, roll, mod, total, tier);
+  runDiceAnimation(mod, dc, (roll, total, tier) => {
+    resolveBeatOutcome(approachKey, missionType, beat, scene, dc, roll, mod, total, tier);
   });
+}
+
+function resolveNoRollBeat(missionType, beat, scene, responseText) {
+  pushLog("narration", responseText);
+  qs("choices").classList.add("hidden");
+  qs("freeform-wrap").classList.add("hidden");
+
+  scene.lastTier = "success";
+  scene.beatIndex += 1;
+  state.awaitingContinue = true;
+  saveState();
+  qs("continue-wrap").classList.remove("hidden");
 }
 
 function tierLabel(tier) {
@@ -581,16 +642,17 @@ function logEffects(effects) {
   if (effects.corruptionDelta < 0) pushLog("roll", `The taint recedes, if only a little. (${effects.corruptionDelta} corruption)`);
 }
 
-function resolveBeatOutcome(approachKey, missionType, beat, scene, roll, mod, total, tier) {
-  pushLog("roll", `d20 roll: ${roll} + ${mod} (modifier) = ${total} vs Difficulty ${scene.dc} — <strong>${tierLabel(tier)}</strong>`);
+function resolveBeatOutcome(approachKey, missionType, beat, scene, dc, roll, mod, total, tier) {
+  pushLog("roll", `d20 roll: ${roll} + ${mod} (modifier) = ${total} vs Difficulty ${dc} — <strong>${tierLabel(tier)}</strong>`);
   const objective = beat.objective || missionType.objective;
   const threat = beat.threat || missionType.threat;
-  const text = OUTCOME_FRAGMENTS[approachKey][tier](state.character.name, threat, objective);
+  const fragments = missionType.tone === "social" ? OUTCOME_FRAGMENTS_SOCIAL : OUTCOME_FRAGMENTS;
+  const text = fragments[approachKey][tier](state.character.name, threat, objective);
   finalizeBeatResolution(missionType, scene, tier, text);
 }
 
-function resolveFreeformOutcome(raw, missionType, beat, scene, roll, mod, total, tier) {
-  pushLog("roll", `d20 roll: ${roll} + ${mod} (modifier) = ${total} vs Difficulty ${scene.dc} — <strong>${tierLabel(tier)}</strong>`);
+function resolveFreeformOutcome(raw, missionType, beat, scene, dc, roll, mod, total, tier) {
+  pushLog("roll", `d20 roll: ${roll} + ${mod} (modifier) = ${total} vs Difficulty ${dc} — <strong>${tierLabel(tier)}</strong>`);
   const objective = beat.objective || missionType.objective;
   const threat = beat.threat || missionType.threat;
   const text = FREEFORM_FRAGMENTS[tier](state.character.name, escapeHtml(raw), threat, objective);
@@ -651,15 +713,61 @@ qs("btn-continue-journey").addEventListener("click", () => {
     startBeat(state.currentScene.beatIndex);
     return;
   }
-  if (state.missionCount > 0 && state.missionCount % 4 === 0) {
-    pushLog("narration", `<em>${pickRandom(REST_LINES)}</em>`);
-    const healed = randInt(2, 5);
-    state.wounds = Math.min(state.maxWounds, state.wounds + healed);
-    pushLog("roll", `${state.character.name} recovers ${healed} wound${healed === 1 ? "" : "s"}. (${state.wounds}/${state.maxWounds})`);
-    updateHud();
+  if (state.missionCount > 0 && state.missionCount % 4 === 0 && state.lastDowntimeAt !== state.missionCount) {
+    state.pendingDowntime = true;
+    saveState();
+    startDowntimeScene();
+    return;
   }
   nextMission();
 });
+
+/* A slow, no-dice character beat dropped in every few missions — the
+   deliberate counterweight to the encounters, and proof "the game" isn't
+   only ever a fight. The chosen template is saved to state so that a
+   resume (Continue Campaign, or a mid-scene reload) rebuilds the exact
+   same choices instead of re-narrating a freshly re-rolled one. */
+function startDowntimeScene() {
+  const idx = Math.floor(Math.random() * DOWNTIME_TEMPLATES.length);
+  state.downtimeTemplateIndex = idx;
+  const template = DOWNTIME_TEMPLATES[idx];
+  pushDivider();
+  pushLog("narration", `<em>${template.narration(state.character)}</em>`);
+  state.awaitingContinue = false;
+  saveState();
+  renderDowntimeChoices(template);
+}
+
+function renderDowntimeChoices(template) {
+  const wrap = qs("choices");
+  wrap.innerHTML = "";
+  wrap.classList.remove("hidden");
+  qs("continue-wrap").classList.add("hidden");
+  qs("freeform-wrap").classList.add("hidden");
+  Object.keys(APPROACHES).forEach(key => {
+    const a = APPROACHES[key];
+    const opt = template.options[key];
+    const btn = document.createElement("button");
+    btn.className = "choice-btn";
+    btn.innerHTML = `<span class="choice-letter">${a.letter}</span><span class="choice-text">${a.icon} ${opt.label}</span>`;
+    btn.addEventListener("click", () => finishDowntimeScene(opt));
+    wrap.appendChild(btn);
+  });
+}
+
+function finishDowntimeScene(opt) {
+  qs("choices").classList.add("hidden");
+  pushLog("choice", `You choose: ${opt.label}`);
+  pushLog("narration", opt.response);
+  const healed = randInt(2, 5);
+  state.wounds = Math.min(state.maxWounds, state.wounds + healed);
+  pushLog("roll", `${state.character.name} recovers ${healed} wound${healed === 1 ? "" : "s"}. (${state.wounds}/${state.maxWounds})`);
+  updateHud();
+  state.pendingDowntime = false;
+  state.lastDowntimeAt = state.missionCount;
+  saveState();
+  nextMission();
+}
 
 /* ---------------- game over ---------------- */
 function endCampaign(reason) {
