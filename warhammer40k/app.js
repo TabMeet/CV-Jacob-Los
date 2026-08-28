@@ -2,12 +2,18 @@
    WARHAMMER 40,000: WAR OF SIGNAL LOST — game engine & UI
    ============================================================ */
 
-const SAVE_KEY = "wh40k_save_v2"; // v2: adds the calendar/travel/growth/memory systems
+const SAVE_KEY_LEGACY = "wh40k_save_v2"; // used in guest mode (no account) — unchanged from before accounts existed
+function saveKeyFor() {
+  return currentUser ? `wh40k_save_v2_${currentUser.toLowerCase()}` : SAVE_KEY_LEGACY;
+}
 
 let state = null;          // active campaign state
 let charSel = { classId: null, homeworldId: null };
 let mapReturnView = "title";
 let mapPlanetOrderCache = null;
+let currentUser = null;    // logged-in username, or null in guest mode
+let userDb = [];           // shared account registry (see loadUserDbFromDom)
+let claudeArtifact = null; // resolved "artifact" capability, or null outside Claude
 
 const CLASS_SUBSET_SIZE = 4;
 const HOMEWORLD_SUBSET_SIZE = 4;
@@ -154,18 +160,237 @@ function shuffleSample(arr, n) {
   return copy.slice(0, Math.min(n, copy.length));
 }
 
-/* ---------------- save / load ---------------- */
+/* ---------------- save / load ----------------
+   Scoped per logged-in username (saveKeyFor) so different accounts on the
+   same browser don't collide; guest mode (no account) uses the one fixed
+   legacy key, same as before accounts existed. */
 function saveState() {
-  if (state) localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  if (state) localStorage.setItem(saveKeyFor(), JSON.stringify(state));
 }
 function loadState() {
-  const raw = localStorage.getItem(SAVE_KEY);
+  const raw = localStorage.getItem(saveKeyFor());
   if (!raw) return null;
   try { return JSON.parse(raw); } catch (e) { return null; }
 }
 function deleteSave() {
-  localStorage.removeItem(SAVE_KEY);
+  localStorage.removeItem(saveKeyFor());
   state = null;
+}
+
+/* ---------------- accounts ----------------
+   Registration/login only really works inside a Claude Artifact, using
+   the "artifact" capability to keep a shared username registry in sync
+   across everyone who opens the page (declared via capabilities:
+   {artifact:{}} on publish). Outside that runtime — a plain static host
+   like GitHub Pages — window.claude doesn't exist at all, so the game
+   falls back to guest mode: no accounts, one save per browser, exactly
+   how it worked before this feature existed.
+
+   Security note, worn on its sleeve in the UI too: the "database" here
+   is a JSON blob embedded in the page's own public source. Passwords are
+   salted and hashed (never stored or sent in the clear), but the whole
+   registry is readable by anyone who views the page source — this is a
+   lightweight demo account store for a game, not a real auth system. */
+const USERNAME_RE = /^[A-Za-z0-9_-]{3,20}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function loadUserDbFromDom() {
+  try {
+    const el = document.getElementById("user-db");
+    userDb = JSON.parse((el && el.textContent) || "[]");
+  } catch (e) {
+    userDb = [];
+  }
+}
+
+function findUser(usernameLower) {
+  return userDb.find(u => u.usernameLower === usernameLower) || null;
+}
+
+function randomSalt() {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashPassword(password, salt) {
+  const data = new TextEncoder().encode(salt + ":" + password);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function fetchLiveUserDb() {
+  try {
+    const res = await fetch(window.location.href, { cache: "no-store" });
+    const html = await res.text();
+    const match = html.match(/<script id="user-db" type="application\/json">([\s\S]*?)<\/script>/);
+    return match ? JSON.parse(match[1]) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function publishUserDb(newUserDb) {
+  const res = await fetch(window.location.href, { cache: "no-store" });
+  if (!res.ok) throw { code: "upstream_error", message: "Could not read the current page." };
+  const rawHtml = await res.text();
+  const marker = /<script id="user-db" type="application\/json">[\s\S]*?<\/script>/;
+  if (!marker.test(rawHtml)) throw { code: "upstream_error", message: "Account registry marker not found." };
+  const safeJson = JSON.stringify(newUserDb).replace(/</g, "\\u003c");
+  const newHtml = rawHtml.replace(marker, `<script id="user-db" type="application/json">${safeJson}</script>`);
+  if (!claudeArtifact) throw { code: "not_granted", message: "Accounts capability not available." };
+  return claudeArtifact.publish(newHtml);
+}
+
+async function registerAccount(username, email, password) {
+  const lower = username.toLowerCase();
+  if (findUser(lower)) return { ok: false, error: "That username is already taken." };
+
+  const salt = randomSalt();
+  const passwordHash = await hashPassword(password, salt);
+  const newEntry = { username, usernameLower: lower, email, salt, passwordHash };
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const candidateDb = userDb.concat([newEntry]);
+    try {
+      await publishUserDb(candidateDb);
+      userDb = candidateDb;
+      return { ok: true };
+    } catch (err) {
+      const code = err && err.code;
+      if (code === "conflict") {
+        const fresh = await fetchLiveUserDb();
+        if (fresh) userDb = fresh;
+        if (findUser(lower)) return { ok: false, error: "That username was just taken by someone else. Please choose another." };
+        continue; // retry once against the fresh registry
+      }
+      if (code === "not_writer" || code === "not_granted" || code === "capability_disabled" || code === "not_declared") {
+        return { ok: false, error: "Accounts aren't available to write from this view right now." };
+      }
+      return { ok: false, error: "Something went wrong creating the account. Please try again." };
+    }
+  }
+  return { ok: false, error: "Could not create the account after a couple of tries. Please try again." };
+}
+
+function showAuthError(which, msg) {
+  const el = qs(which + "-error");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+}
+function hideAuthError(which) {
+  qs(which + "-error").classList.add("hidden");
+}
+
+function switchAuthTab(which) {
+  qs("tab-login").classList.toggle("active", which === "login");
+  qs("tab-register").classList.toggle("active", which === "register");
+  qs("form-login").classList.toggle("hidden", which !== "login");
+  qs("form-register").classList.toggle("hidden", which !== "register");
+}
+qs("tab-login").addEventListener("click", () => switchAuthTab("login"));
+qs("tab-register").addEventListener("click", () => switchAuthTab("register"));
+
+function updateAccountLine() {
+  const line = qs("title-account-line");
+  if (currentUser) {
+    qs("title-username").textContent = currentUser;
+    line.classList.remove("hidden");
+  } else {
+    line.classList.add("hidden");
+  }
+}
+
+function enterTitleAsUser() {
+  if (currentUser) localStorage.setItem("wh40k_current_user", currentUser);
+  updateAccountLine();
+  refreshTitleButtons();
+  showView("title");
+}
+
+qs("btn-guest-continue").addEventListener("click", () => {
+  currentUser = null;
+  updateAccountLine();
+  refreshTitleButtons();
+  showView("title");
+});
+
+qs("btn-logout").addEventListener("click", () => {
+  localStorage.removeItem("wh40k_current_user");
+  currentUser = null;
+  qs("form-login").reset();
+  qs("form-register").reset();
+  hideAuthError("login");
+  hideAuthError("register");
+  switchAuthTab("login");
+  qs("auth-guest-notice").classList.add("hidden");
+  qs("auth-forms").classList.remove("hidden");
+  showView("auth");
+});
+
+qs("form-login").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  hideAuthError("login");
+  const username = qs("login-username").value.trim();
+  const password = qs("login-password").value;
+  const user = findUser(username.toLowerCase());
+  if (!user) { showAuthError("login", "No account with that username."); return; }
+  const hash = await hashPassword(password, user.salt);
+  if (hash !== user.passwordHash) { showAuthError("login", "Incorrect password."); return; }
+  currentUser = user.username;
+  enterTitleAsUser();
+});
+
+qs("form-register").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  hideAuthError("register");
+  const username = qs("register-username").value.trim();
+  const email = qs("register-email").value.trim();
+  const password = qs("register-password").value;
+  const confirmPassword = qs("register-password-confirm").value;
+
+  if (!USERNAME_RE.test(username)) { showAuthError("register", "Usernames must be 3-20 characters: letters, numbers, - or _ only."); return; }
+  if (!EMAIL_RE.test(email)) { showAuthError("register", "Please enter a valid email address."); return; }
+  if (password.length < 8) { showAuthError("register", "Password must be at least 8 characters."); return; }
+  if (password !== confirmPassword) { showAuthError("register", "Passwords don't match."); return; }
+  if (findUser(username.toLowerCase())) { showAuthError("register", "That username is already taken."); return; }
+
+  const submitBtn = e.target.querySelector("button[type=submit]");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Creating account…";
+  const result = await registerAccount(username, email, password);
+  submitBtn.disabled = false;
+  submitBtn.textContent = "Create Account";
+  if (!result.ok) { showAuthError("register", result.error); return; }
+  currentUser = username;
+  enterTitleAsUser();
+});
+
+async function initAuth() {
+  loadUserDbFromDom();
+  const savedUser = localStorage.getItem("wh40k_current_user");
+
+  if (window.claude && typeof window.claude.use === "function") {
+    try { claudeArtifact = await window.claude.use("artifact"); } catch (e) { claudeArtifact = null; }
+  }
+
+  qs("auth-loading").classList.add("hidden");
+
+  if (!claudeArtifact) {
+    qs("auth-guest-notice").classList.remove("hidden");
+    return;
+  }
+
+  const fresh = await fetchLiveUserDb();
+  if (fresh) userDb = fresh;
+
+  if (savedUser && findUser(savedUser.toLowerCase())) {
+    currentUser = findUser(savedUser.toLowerCase()).username;
+    enterTitleAsUser();
+    return;
+  }
+
+  qs("auth-forms").classList.remove("hidden");
 }
 
 /* ---------------- title screen ---------------- */
@@ -1020,9 +1245,8 @@ qs("btn-map-back").addEventListener("click", () => {
 });
 
 /* ---------------- init ---------------- */
-refreshTitleButtons();
 classSubset = shuffleSample(CLASSES.map(c => c.id), CLASS_SUBSET_SIZE);
 homeworldSubset = shuffleSample(HOMEWORLDS.map(h => h.id), HOMEWORLD_SUBSET_SIZE);
 renderClassCards();
 renderHomeworldCards();
-showView("title");
+initAuth(); // shows the auth view (already active by default) or moves straight to title

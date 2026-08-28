@@ -9,15 +9,64 @@
 </head>
 <body>
 
+<!-- ============ AUTH (accounts) ============ -->
+<section id="view-auth" class="view active">
+  <div class="title-wrap auth-wrap">
+    <div class="aquila">✠</div>
+    <h1>WAR OF SIGNAL LOST</h1>
+    <p class="subtitle">A solo campaign in the 41st Millennium</p>
+
+    <div id="auth-loading" class="auth-status">
+      <p>Checking the astropathic registry&hellip;</p>
+    </div>
+
+    <div id="auth-guest-notice" class="auth-status hidden">
+      <p>Accounts need this page open inside a Claude Artifact — that connection isn't available here. You can still play; your campaign will just save to this browser instead of an account.</p>
+      <button id="btn-guest-continue" class="btn btn-primary">Continue Without an Account</button>
+    </div>
+
+    <div id="auth-forms" class="auth-forms hidden">
+      <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab active" type="button">Log In</button>
+        <button id="tab-register" class="auth-tab" type="button">Register</button>
+      </div>
+
+      <form id="form-login" class="auth-form" novalidate>
+        <label class="field-label" for="login-username">Username</label>
+        <input id="login-username" class="text-input" type="text" autocomplete="username" required>
+        <label class="field-label" for="login-password">Password</label>
+        <input id="login-password" class="text-input" type="password" autocomplete="current-password" required>
+        <p id="login-error" class="auth-error hidden"></p>
+        <button type="submit" class="btn btn-primary">Log In</button>
+      </form>
+
+      <form id="form-register" class="auth-form hidden" novalidate>
+        <label class="field-label" for="register-username">Username</label>
+        <input id="register-username" class="text-input" type="text" autocomplete="username" maxlength="20" required>
+        <label class="field-label" for="register-email">Email</label>
+        <input id="register-email" class="text-input" type="email" autocomplete="email" required>
+        <label class="field-label" for="register-password">Password</label>
+        <input id="register-password" class="text-input" type="password" autocomplete="new-password" required>
+        <label class="field-label" for="register-password-confirm">Confirm Password</label>
+        <input id="register-password-confirm" class="text-input" type="password" autocomplete="new-password" required>
+        <p class="auth-hint">Usernames must be unique across everyone who plays here. Please don't reuse a real password — this is a lightweight account store for the game, not a secure login system.</p>
+        <p id="register-error" class="auth-error hidden"></p>
+        <button type="submit" class="btn btn-primary">Create Account</button>
+      </form>
+    </div>
+  </div>
+</section>
+
 <!-- ============ TITLE ============ -->
-<section id="view-title" class="view active">
+<section id="view-title" class="view">
   <div class="title-wrap">
     <div class="aquila">✠</div>
     <h1>WAR OF SIGNAL LOST</h1>
     <p class="subtitle">A solo campaign in the 41st Millennium</p>
+    <p id="title-account-line" class="account-line hidden">Signed in as <strong id="title-username"></strong> &middot; <button id="btn-logout" class="btn-link-inline" type="button">Log out</button></p>
     <div class="title-actions">
-      <button id="btn-new-campaign" class="btn btn-primary">New Campaign</button>
-      <button id="btn-continue-campaign" class="btn btn-secondary hidden">Continue Campaign</button>
+      <button id="btn-new-campaign" class="btn btn-primary">Start New Journey</button>
+      <button id="btn-continue-campaign" class="btn btn-secondary hidden">Continue Journey</button>
       <button id="btn-title-map" class="btn btn-secondary hidden">Star Map</button>
       <button id="btn-delete-save" class="btn btn-link hidden">Delete Save &amp; Start Over</button>
     </div>
@@ -141,11 +190,16 @@
     <p id="gameover-text" class="subtitle"></p>
     <div id="gameover-stats" class="gameover-stats"></div>
     <div class="title-actions">
-      <button id="btn-gameover-newcampaign" class="btn btn-primary">Begin New Campaign</button>
+      <button id="btn-gameover-newcampaign" class="btn btn-primary">Begin New Journey</button>
       <button id="btn-gameover-map" class="btn btn-secondary">View Star Map</button>
     </div>
   </div>
 </section>
+
+<!-- Shared account registry. Kept in sync via the Claude Artifact "artifact"
+     capability's publish(html) — see registerAccount() in app.js. Outside
+     that runtime this just stays an empty local list (guest mode). -->
+<script id="user-db" type="application/json">[]</script>
 
 <script src="data.js"></script>
 <script src="app.js"></script>
