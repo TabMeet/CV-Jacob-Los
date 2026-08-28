@@ -82,8 +82,9 @@ h1,h2,h3{
 #view-game.active{
   display:flex;
   flex-direction:column;
-  height:100vh;
-  height:100dvh;
+  justify-content:flex-start;
+  height: 100vh;
+  height: var(--app-height, 100vh);
   overflow:hidden;
 }
 
@@ -274,29 +275,25 @@ h1,h2,h3{
 
 .topbar-nav{ display:flex; gap:0.5rem; margin-left:auto; }
 
-.game-body{
-  flex: 1;
-  min-height: 0;
-  display:flex;
-  flex-direction:column;
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  overflow: hidden;
-}
 .story-log{
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  box-sizing: border-box;
   display:flex;
   flex-direction:column;
-  gap: 1.1rem;
-  padding: 1.8rem 1.5rem 1.2rem;
-  font-size: 1.14rem;
+  justify-content: flex-start;
+  gap: 1.2rem;
+  padding: 1.8rem 1.5rem 1.4rem;
+  font-size: 1.18rem;
 }
 .story-log p{
   margin:0;
-  line-height:1.7;
+  line-height:1.75;
   animation: fadein 0.4s ease-in;
 }
 .story-log .log-narration{ color: var(--text); }
@@ -314,6 +311,8 @@ h1,h2,h3{
 
 .action-bar{
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
   border-top: 1px solid var(--border);
   background: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
   padding: 1.1rem 1.5rem calc(1.1rem + env(safe-area-inset-bottom, 0px));
@@ -323,6 +322,8 @@ h1,h2,h3{
   display:flex;
   flex-direction:column;
   gap: 0.7rem;
+  max-width: 900px;
+  margin: 0 auto;
 }
 .choice-btn{
   display:flex;
@@ -502,7 +503,13 @@ h1,h2,h3{
 /* ============ responsive ============ */
 @media (max-width: 640px){
   .title-wrap h1{ font-size: 1.6rem; }
-  .game-topbar{ flex-direction: column; align-items: stretch; }
+  .game-topbar{ flex-direction: column; align-items: stretch; gap: 0.55rem; padding: 0.6rem 1rem; }
+  /* flex-basis of 260px was meant as a width hint for the row layout;
+     once the topbar switches to a column, the same basis becomes a
+     height demand and blows the bar up to 260px tall. Reset it here. */
+  .topbar-bars{ flex: 0 1 auto; }
+  .hud-portrait{ width: 42px; height: 42px; font-size: 1.25rem; }
+  .topbar-meta{ font-size: 0.78rem; }
   .topbar-nav{ margin-left:0; justify-content:flex-end; }
   .map-detail{ left: 1rem; right:1rem; width:auto; }
 }

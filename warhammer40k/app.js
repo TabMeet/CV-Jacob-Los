@@ -9,6 +9,20 @@ let charSel = { classId: null, homeworldId: null };
 let mapReturnView = "title";
 let mapPlanetOrderCache = null;
 
+/* ---------------- viewport height fix ----------------
+   Mobile browsers and embedded webviews often disagree on what 100vh
+   means (address bars, dynamic toolbars, preview chrome). Measuring the
+   real height in JS and exposing it as a custom property is the reliable
+   way to make the game view actually fill the visible screen. */
+function setAppHeight() {
+  const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+  document.documentElement.style.setProperty("--app-height", h + "px");
+}
+setAppHeight();
+window.addEventListener("resize", setAppHeight);
+window.addEventListener("orientationchange", setAppHeight);
+if (window.visualViewport) window.visualViewport.addEventListener("resize", setAppHeight);
+
 /* ---------------- helpers ---------------- */
 function qs(id) { return document.getElementById(id); }
 function randInt(min, max) { return min + Math.floor(Math.random() * (max - min + 1)); }
