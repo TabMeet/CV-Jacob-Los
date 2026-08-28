@@ -896,9 +896,57 @@ const FAQ_BANK = [
   { keywords: ["what should i do", "give me a hint", "help me decide", "what do you recommend", "advice"], answer: "That one's yours to make — this isn't scripted toward a right answer. Pick whichever option fits how you want to play this character, or type your own approach in the Other box." },
   { keywords: ["how do i play", "how does this work", "controls", "instructions", "how to play"], answer: "Read the story text, then pick A, B, C, or type your own approach under \"Something else...\". Most choices roll a d20 against a difficulty using your character's stats; some quieter moments don't roll at all — they're just about who your character is." },
   { keywords: ["xenos", "play as an ork", "play as chaos", "play as a tyranid", "different faction", "other side"], answer: "Every character here serves the Imperium in some capacity — there's no option to play a xenos or Chaos character. The archetypes vary in how they serve it, from a Battle-Brother to an Astropath to a Rogue Trader." },
-  { keywords: ["wounds mean", "what are wounds", "hp", "health"], answer: "Wounds work like a health total — they drop on a failed check and mostly only recover during the rest interludes between missions. Hit zero and your character's story ends there." }
+  { keywords: ["wounds mean", "what are wounds", "hp", "health"], answer: "Wounds work like a health total — they drop on a failed check and mostly only recover during the rest interludes between missions. Hit zero and your character's story ends there." },
+  { keywords: ["light-year", "light year", "how far", "distance", "travel time", "how long does it take"], answer: "Every world is some distance away, measured in light-years, and the warp doesn't cross that distance at a fixed rate — the same jump can take a few days or several weeks depending on how the currents run. Time spent travelling still counts: it's what makes your character grow stronger over the campaign." },
+  { keywords: ["grow stronger", "level up", "experience", "get stronger", "improve my stats", "gain a level"], answer: "There's no experience points to spend — instead, roughly every 30 Terran Standard days that pass (mostly from travel between worlds), your character improves at whatever they've leaned on most: fight hard enough and Weapon or Ballistic Skill rises, reason your way through enough problems and Intelligence rises, and so on." },
+  { keywords: ["remember", "recognize", "familiar", "faced before", "done this before"], answer: "Yes — your character remembers the missions they've lived through. Facing a kind of trouble you've handled before makes the difficulty a little easier, and the story will say so." }
 ];
 const FAQ_FALLBACK = "Some things even the Astropathic choir cannot foresee. The warp keeps its own counsel here — if you want to know for certain, the only way is to act.";
+
+/* ============================================================
+   TIME, DISTANCE & TRAVEL — the warp doesn't care about your
+   schedule. Distance is in light-years; transit time in Terran
+   Standard days, at a variable rate to keep every jump uncertain.
+   ============================================================ */
+const TRAVEL_DEPART = [
+  (from) => `The <em>Emperor's Wrath</em> breaks orbit from ${from}, gellar field flaring to life as it noses toward the nearest warp threshold.`,
+  (from) => `Leaving ${from} behind, the ship's Navigator retreats to the sanctum, third eye already straining against the veil ahead.`,
+  (from) => `${from} falls away behind the void shields as the crew braces for translation into the immaterium.`,
+  (from) => `The last tenders from ${from} are barely clear of the hull before the engines begin their long, uneasy build toward the jump.`
+];
+const TRAVEL_DEPART_FIRST = [
+  `The <em>Emperor's Wrath</em> slips free of its berth for the first time this tour, gellar field flaring to life as it noses toward the warp threshold.`,
+  `With the crew barely settled, the ship's Navigator retreats to the sanctum, third eye already straining against the veil ahead.`,
+  `Orders in hand, the ship commits to the warp before half the crew has finished stowing their gear.`
+];
+const TRAVEL_TRANSIT = [
+  (days, ly) => `The crossing spans some ${ly} light-years, and the warp is in no hurry about it — ${days} Terran Standard days pass before the Astropathic choir reports steady bearings again.`,
+  (days, ly) => `${ly} light-years of hostile immaterium stand between here and the destination; ${days} days of shuddering bulkheads and half-sleep follow.`,
+  (days, ly) => `It is a modest ${ly} light-year hop as these things go, but even a short leash through the warp costs ${days} days nobody gets back.`,
+  (days, ly) => `${ly} light-years, and every one of the ${days} days it takes feels a little longer than the last.`
+];
+const TRAVEL_MICRO = [
+  (c) => `${c.name} spends part of the transit reviewing the cost of the last mission, and what it bought.`,
+  (c) => `Somewhere in the drifting days, ${c.name} loses count of how long they've actually been awake.`,
+  (c) => `The ship's chapel sees more visitors than usual during the crossing.`,
+  (c) => `Rumors move faster than the ship does; by the time realspace returns, half the crew already has a theory about where they're headed.`,
+  (c) => `${c.name} sharpens a blade that doesn't need sharpening, mostly to have something to do with the waiting.`,
+  (c) => `The warp presses strange half-dreams against the hull the whole crossing. Nobody sleeps especially well.`,
+  (c) => `${c.name} rereads the mission dataslate more times than there's new information to justify.`
+];
+const TRAVEL_ARRIVE = [
+  (p) => `Realspace resolves around the ship in a wash of returning starlight, and ${p} hangs ahead, waiting.`,
+  (p) => `The gellar field drops. ${p} fills the forward oculus, indifferent to how long it took to get here.`,
+  (p) => `Translation completes without incident — a small mercy — and ${p} comes into view.`,
+  (p) => `The warp releases the ship almost gently, and ${p} is simply there, as if it had been the whole time.`
+];
+
+const GROWTH_LINES = [
+  (c, stat) => `Standard weeks fold into months. ${c.name} has changed in ways only field experience teaches — ${stat} sharper than it was.`,
+  (c, stat) => `Time in the Emperor's service leaves its mark. ${c.name}'s ${stat} has grown, forged by repetition nobody would call comfortable.`,
+  (c, stat) => `Another month gone. ${c.name} doesn't feel any different day to day, but the dataslate's numbers say ${stat} has improved.`,
+  (c, stat) => `It isn't training so much as survival, repeated often enough to leave a mark: ${c.name}'s ${stat} has risen.`
+];
 
 function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];

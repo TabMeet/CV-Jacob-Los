@@ -2,7 +2,7 @@
    WARHAMMER 40,000: WAR OF SIGNAL LOST — game engine & UI
    ============================================================ */
 
-const SAVE_KEY = "wh40k_save_v1";
+const SAVE_KEY = "wh40k_save_v2"; // v2: adds the calendar/travel/growth/memory systems
 
 let state = null;          // active campaign state
 let charSel = { classId: null, homeworldId: null };
@@ -15,6 +15,95 @@ let classSubset = [];      // ids shown by default each new campaign
 let homeworldSubset = [];
 let classFilter = "";
 let homeworldFilter = "";
+
+/* ---------------- calendar, distance & growth ----------------
+   Distance between any two worlds is a fixed light-year figure derived
+   from a hash of the pair (so it's stable across the campaign, and the
+   same both directions). Travel time from that distance is NOT fixed —
+   the warp is famously indifferent to schedules — so the same jump can
+   take very different numbers of Terran Standard days each time. Those
+   days accumulate into an in-game calendar, and enough of them passing
+   is what makes a character grow stronger, independent of any single
+   mission's outcome. */
+const CAMPAIGN_START_YEAR = 999;
+const CAMPAIGN_START_MILLENNIUM = 41;
+const GROWTH_INTERVAL_DAYS = 30;
+
+function distanceBetweenPlanets(a, b) {
+  if (!a) return 4 + Math.random() * 6; // short final approach for the very first deployment
+  const key = [a, b].sort().join("::");
+  const h = hashStr(key);
+  return 8 + (h % 4200) / 100; // 8.00 - 50.00 light-years, stable per pair
+}
+
+function travelDaysFor(distanceLy) {
+  const ratePerLy = 0.35 + Math.random() * 0.35; // warp currents: never the same rate twice
+  return Math.max(2, Math.round(distanceLy * ratePerLy));
+}
+
+function formatImperialDate(daysSinceStart) {
+  const yearsElapsed = Math.floor(daysSinceStart / 365);
+  const dayOfYear = daysSinceStart % 365;
+  let year = CAMPAIGN_START_YEAR + yearsElapsed;
+  let millennium = CAMPAIGN_START_MILLENNIUM;
+  while (year > 999) { year -= 1000; millennium += 1; }
+  const text = `${String(dayOfYear).padStart(3, "0")}.${String(year).padStart(3, "0")}.M${millennium}`;
+  return { text, millennium };
+}
+
+function buildTravelNarration(fromPlanet, toPlanet, days, distanceLy, character) {
+  const depart = fromPlanet ? pickRandom(TRAVEL_DEPART)(fromPlanet) : pickRandom(TRAVEL_DEPART_FIRST);
+  const transit = pickRandom(TRAVEL_TRANSIT)(days, distanceLy.toFixed(1));
+  const micro = pickRandom(TRAVEL_MICRO)(character);
+  const arrive = pickRandom(TRAVEL_ARRIVE)(toPlanet);
+  return `${depart} ${transit} ${micro} ${arrive}`;
+}
+
+function advanceCalendar(days) {
+  state.daysSinceStart += days;
+  const info = formatImperialDate(state.daysSinceStart);
+  if (info.millennium > state.lastMillenniumSeen) {
+    pushLog("narration", `<em>Somewhere in the reckoning of it all, the calendar turns. For the first time in ten thousand years, the count rolls from M${state.lastMillenniumSeen} into M${info.millennium}. Nothing about the war changes. The number does, and somehow that feels like it should mean something.</em>`);
+    state.lastMillenniumSeen = info.millennium;
+  }
+  checkGrowth();
+}
+
+function checkGrowth() {
+  while (state.daysSinceStart - state.lastGrowthDay >= GROWTH_INTERVAL_DAYS) {
+    state.lastGrowthDay += GROWTH_INTERVAL_DAYS;
+    applyGrowth();
+  }
+}
+
+function applyGrowth() {
+  const usage = state.approachUsage;
+  let key = Object.keys(usage).reduce((a, b) => (usage[b] > usage[a] ? b : a), "assault");
+  const s = state.character.stats;
+  let statLabel;
+  if (key === "assault") {
+    if (s.ws <= s.bs) { s.ws += 1; statLabel = "Weapon Skill"; } else { s.bs += 1; statLabel = "Ballistic Skill"; }
+  } else if (key === "cunning") {
+    s.int += 1; statLabel = "Intelligence";
+  } else {
+    s.wp += 1; statLabel = "Willpower";
+  }
+  state.growthCount = (state.growthCount || 0) + 1;
+  if (state.growthCount % 2 === 0) {
+    state.maxWounds += 1;
+    state.wounds = Math.min(state.maxWounds, state.wounds + 1);
+  }
+  pushLog("narration", `<em>${pickRandom(GROWTH_LINES)(state.character, statLabel)}</em>`);
+  updateHud();
+}
+
+function buildRecollectionLine(missionType, memory, character) {
+  const label = missionType.name.toLowerCase();
+  if (memory.count === 1) {
+    return `This isn't ${character.name}'s first ${label} — ${memory.lastPlanet} left lessons that haven't faded.`;
+  }
+  return `${character.name} has faced a ${label} more than once now. Whatever this world throws up, it won't be entirely unfamiliar.`;
+}
 
 /* ---------------- viewport height fix ----------------
    Mobile browsers and embedded webviews often disagree on what 100vh
@@ -260,6 +349,14 @@ qs("btn-begin").addEventListener("click", () => {
     awaitingContinue: false,
     pendingDowntime: false,
     lastDowntimeAt: 0,
+    daysSinceStart: 0,
+    lastGrowthDay: 0,
+    growthCount: 0,
+    lastMillenniumSeen: CAMPAIGN_START_MILLENNIUM,
+    approachUsage: { assault: 0, cunning: 0, faith: 0 },
+    currentPlanet: null,
+    totalLightYears: 0,
+    missionMemory: {},
     ended: false,
     endReason: null
   };
@@ -312,6 +409,7 @@ function updateHud() {
   qs("bar-corruption-text").textContent = corPct + "%";
   qs("hud-mission-count").textContent = state.missionCount;
   qs("hud-renown").textContent = state.renown;
+  qs("hud-day").textContent = state.daysSinceStart;
 }
 
 function clearLogDom() { qs("story-log").innerHTML = ""; }
@@ -378,8 +476,13 @@ function beatDC(beatIndex) {
   return Math.max(8, base - reduction);
 }
 function effectiveDC(beat, scene, approachKey) {
-  const modifier = (beat.dcMod && beat.dcMod[approachKey]) || 0;
-  return Math.max(5, scene.dc + modifier);
+  let dc = scene.dc;
+  if (approachKey) dc += (beat.dcMod && beat.dcMod[approachKey]) || 0;
+  if (scene.beatIndex >= 2) {
+    dc -= Math.max(-2, Math.min(2, scene.momentum || 0));
+  }
+  dc -= (scene.memoryDiscount || 0);
+  return Math.max(5, dc);
 }
 function statValueFor(approachKey) {
   const s = state.character.stats;
@@ -391,10 +494,23 @@ function nextMission() {
   const planet = pickPlanet();
   const missionType = pickMissionType();
   state.lastMissionTypeId = missionType.id;
-  state.currentScene = { planet, missionTypeId: missionType.id, beatIndex: 0, dc: 0, lastTier: null };
-  saveState();
+
+  const distance = distanceBetweenPlanets(state.currentPlanet, planet);
+  const days = travelDaysFor(distance);
+  state.totalLightYears += distance;
 
   pushDivider();
+  pushLog("narration", buildTravelNarration(state.currentPlanet, planet, days, distance, state.character));
+  advanceCalendar(days);
+  state.currentPlanet = planet;
+
+  const memory = state.missionMemory[missionType.id];
+  const memoryDiscount = memory ? Math.min(2, memory.count) : 0;
+  if (memory) pushLog("narration", `<em>${buildRecollectionLine(missionType, memory, state.character)}</em>`);
+
+  state.currentScene = { planet, missionTypeId: missionType.id, beatIndex: 0, dc: 0, lastTier: null, momentum: 0, memoryDiscount };
+  saveState();
+
   pushLog("narration", `<strong>${missionType.name}</strong> — ${planet}`);
   pushLog("narration", missionType.intro(planet));
   qs("continue-wrap").classList.add("hidden");
@@ -531,10 +647,10 @@ qs("btn-freeform-submit").addEventListener("click", () => {
   }
 
   const { mod, approach } = freeformRoll(raw);
-  const dc = approach ? effectiveDC(ctx.beat, ctx.scene, approach) : ctx.scene.dc;
+  const dc = effectiveDC(ctx.beat, ctx.scene, approach);
   if (approach) pushLog("roll", `Reading that as ${FREEFORM_READ_AS[approach]}.`);
   runDiceAnimation(mod, dc, (roll, total, tier) => {
-    resolveFreeformOutcome(raw, ctx.missionType, ctx.beat, ctx.scene, dc, roll, mod, total, tier);
+    resolveFreeformOutcome(raw, approach, ctx.missionType, ctx.beat, ctx.scene, dc, roll, mod, total, tier);
   });
 });
 
@@ -648,14 +764,16 @@ function resolveBeatOutcome(approachKey, missionType, beat, scene, dc, roll, mod
   const threat = beat.threat || missionType.threat;
   const fragments = missionType.tone === "social" ? OUTCOME_FRAGMENTS_SOCIAL : OUTCOME_FRAGMENTS;
   const text = fragments[approachKey][tier](state.character.name, threat, objective);
+  state.approachUsage[approachKey] += 1;
   finalizeBeatResolution(missionType, scene, tier, text);
 }
 
-function resolveFreeformOutcome(raw, missionType, beat, scene, dc, roll, mod, total, tier) {
+function resolveFreeformOutcome(raw, approach, missionType, beat, scene, dc, roll, mod, total, tier) {
   pushLog("roll", `d20 roll: ${roll} + ${mod} (modifier) = ${total} vs Difficulty ${dc} — <strong>${tierLabel(tier)}</strong>`);
   const objective = beat.objective || missionType.objective;
   const threat = beat.threat || missionType.threat;
   const text = FREEFORM_FRAGMENTS[tier](state.character.name, escapeHtml(raw), threat, objective);
+  if (approach) state.approachUsage[approach] += 1;
   finalizeBeatResolution(missionType, scene, tier, text);
 }
 
@@ -675,6 +793,13 @@ function finalizeBeatResolution(missionType, scene, tier, text) {
     state.renown += effects.renownDelta;
     state.missionCount += 1;
     recordPlanetVisit(scene.planet, missionType, tier, text);
+    const mem = state.missionMemory[missionType.id] || { count: 0, lastPlanet: null };
+    mem.count += 1;
+    mem.lastPlanet = scene.planet;
+    state.missionMemory[missionType.id] = mem;
+  } else {
+    const swing = tier === "critSuccess" ? 2 : tier === "success" ? 1 : tier === "critFail" ? -2 : -1;
+    scene.momentum = (scene.momentum || 0) + swing;
   }
   logEffects(effects);
   updateHud();
@@ -693,7 +818,7 @@ function finalizeBeatResolution(missionType, scene, tier, text) {
 }
 
 function recordPlanetVisit(planetName, missionType, tier, summary) {
-  const now = new Date().toLocaleString();
+  const now = formatImperialDate(state.daysSinceStart).text;
   if (!state.visitedPlanets[planetName]) {
     state.visitedPlanets[planetName] = { name: planetName, firstVisited: now, visits: [] };
     state.visitedOrder.push(planetName);
@@ -762,6 +887,7 @@ function finishDowntimeScene(opt) {
   const healed = randInt(2, 5);
   state.wounds = Math.min(state.maxWounds, state.wounds + healed);
   pushLog("roll", `${state.character.name} recovers ${healed} wound${healed === 1 ? "" : "s"}. (${state.wounds}/${state.maxWounds})`);
+  advanceCalendar(randInt(2, 5));
   updateHud();
   state.pendingDowntime = false;
   state.lastDowntimeAt = state.missionCount;
@@ -790,6 +916,9 @@ function endCampaign(reason) {
     <p>Renown earned: ${state.renown}</p>
     <p>Planets visited: ${state.visitedOrder.length}</p>
     <p>Final corruption: ${state.corruption}%</p>
+    <p>Campaign date reached: ${formatImperialDate(state.daysSinceStart).text} (Day ${state.daysSinceStart})</p>
+    <p>Light-years travelled: ${Math.round(state.totalLightYears)}</p>
+    <p>Times grown stronger: ${state.growthCount || 0}</p>
   `;
   showView("gameover");
 }
