@@ -161,6 +161,19 @@ h1,h2,h3{
 }
 .text-input:focus{ outline: 1px solid var(--gold); }
 
+.search-row{
+  display:flex;
+  align-items:center;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+.search-row .search-input{ margin-bottom:0; flex:1; }
+.no-results{
+  color: var(--text-dim);
+  font-style: italic;
+  padding: 0.6rem 0 1.2rem;
+}
+
 .card-grid{
   display:grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -358,10 +371,33 @@ h1,h2,h3{
   justify-content:center;
   flex-shrink:0;
 }
+.choice-btn.choice-other{
+  border-style: dashed;
+  color: var(--text-dim);
+  font-style: italic;
+}
+.choice-btn.choice-other:hover:not(:disabled){ color: var(--text); }
+.choice-btn.choice-other .choice-letter{ border-style: dashed; color: var(--text-dim); }
 
 .continue-wrap{
   display:flex;
   justify-content:center;
+}
+
+.freeform-wrap{
+  max-width: 900px;
+  margin: 0 auto;
+}
+.freeform-wrap .field-label{ margin-bottom: 0.4em; }
+.freeform-input{
+  margin-bottom: 0.8rem;
+  resize: vertical;
+  font-family: 'EB Garamond', serif;
+}
+.freeform-actions{
+  display:flex;
+  gap: 0.8rem;
+  align-items:center;
 }
 
 /* ============ dice overlay ============ */

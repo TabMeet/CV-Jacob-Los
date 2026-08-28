@@ -9,6 +9,13 @@ let charSel = { classId: null, homeworldId: null };
 let mapReturnView = "title";
 let mapPlanetOrderCache = null;
 
+const CLASS_SUBSET_SIZE = 4;
+const HOMEWORLD_SUBSET_SIZE = 4;
+let classSubset = [];      // ids shown by default each new campaign
+let homeworldSubset = [];
+let classFilter = "";
+let homeworldFilter = "";
+
 /* ---------------- viewport height fix ----------------
    Mobile browsers and embedded webviews often disagree on what 100vh
    means (address bars, dynamic toolbars, preview chrome). Measuring the
@@ -43,6 +50,21 @@ function showView(name) {
   qs("view-" + name).classList.add("active");
 }
 
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function shuffleSample(arr, n) {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, Math.min(n, copy.length));
+}
+
 /* ---------------- save / load ---------------- */
 function saveState() {
   if (state) localStorage.setItem(SAVE_KEY, JSON.stringify(state));
@@ -69,6 +91,12 @@ function refreshTitleButtons() {
 qs("btn-new-campaign").addEventListener("click", () => {
   charSel = { classId: null, homeworldId: null };
   qs("input-name").value = "";
+  classFilter = "";
+  homeworldFilter = "";
+  qs("search-class").value = "";
+  qs("search-homeworld").value = "";
+  classSubset = shuffleSample(CLASSES.map(c => c.id), CLASS_SUBSET_SIZE);
+  homeworldSubset = shuffleSample(HOMEWORLDS.map(h => h.id), HOMEWORLD_SUBSET_SIZE);
   renderClassCards();
   renderHomeworldCards();
   qs("stat-preview").classList.add("hidden");
@@ -102,7 +130,16 @@ qs("btn-delete-save").addEventListener("click", () => {
 function renderClassCards() {
   const wrap = qs("class-cards");
   wrap.innerHTML = "";
-  CLASSES.forEach(c => {
+  const filter = classFilter.trim().toLowerCase();
+  const list = filter
+    ? CLASSES.filter(c => `${c.name} ${c.tagline} ${c.description}`.toLowerCase().includes(filter))
+    : classSubset.map(id => CLASSES.find(c => c.id === id)).filter(Boolean);
+
+  if (list.length === 0) {
+    wrap.innerHTML = `<p class="no-results">No origins match "${escapeHtml(classFilter)}".</p>`;
+    return;
+  }
+  list.forEach(c => {
     const div = document.createElement("div");
     div.className = "pick-card" + (charSel.classId === c.id ? " selected" : "");
     div.innerHTML = `<h4>${c.name}</h4><p class="card-tagline">${c.tagline}</p><p>${c.description}</p>`;
@@ -119,7 +156,16 @@ function renderClassCards() {
 function renderHomeworldCards() {
   const wrap = qs("homeworld-cards");
   wrap.innerHTML = "";
-  HOMEWORLDS.forEach(h => {
+  const filter = homeworldFilter.trim().toLowerCase();
+  const list = filter
+    ? HOMEWORLDS.filter(h => `${h.name} ${h.desc}`.toLowerCase().includes(filter))
+    : homeworldSubset.map(id => HOMEWORLDS.find(h => h.id === id)).filter(Boolean);
+
+  if (list.length === 0) {
+    wrap.innerHTML = `<p class="no-results">No homeworlds match "${escapeHtml(homeworldFilter)}".</p>`;
+    return;
+  }
+  list.forEach(h => {
     const div = document.createElement("div");
     div.className = "pick-card" + (charSel.homeworldId === h.id ? " selected" : "");
     div.innerHTML = `<h4>${h.name}</h4><p>${h.desc}</p>`;
@@ -132,6 +178,29 @@ function renderHomeworldCards() {
     wrap.appendChild(div);
   });
 }
+
+qs("search-class").addEventListener("input", (e) => {
+  classFilter = e.target.value;
+  renderClassCards();
+});
+qs("search-homeworld").addEventListener("input", (e) => {
+  homeworldFilter = e.target.value;
+  renderHomeworldCards();
+});
+qs("btn-shuffle-class").addEventListener("click", () => {
+  classSubset = shuffleSample(CLASSES.map(c => c.id), CLASS_SUBSET_SIZE);
+  charSel.classId = null;
+  renderClassCards();
+  updateStatPreview();
+  validateBeginButton();
+});
+qs("btn-shuffle-homeworld").addEventListener("click", () => {
+  homeworldSubset = shuffleSample(HOMEWORLDS.map(h => h.id), HOMEWORLD_SUBSET_SIZE);
+  charSel.homeworldId = null;
+  renderHomeworldCards();
+  updateStatPreview();
+  validateBeginButton();
+});
 
 function computeStats() {
   const cls = CLASSES.find(c => c.id === charSel.classId);
@@ -341,6 +410,7 @@ function renderChoiceButtons(missionType, beat) {
   wrap.innerHTML = "";
   wrap.classList.remove("hidden");
   qs("continue-wrap").classList.add("hidden");
+  qs("freeform-wrap").classList.add("hidden");
   Object.keys(APPROACHES).forEach(key => {
     const a = APPROACHES[key];
     const opt = beat.options[key];
@@ -350,7 +420,80 @@ function renderChoiceButtons(missionType, beat) {
     btn.addEventListener("click", () => onChoiceClick(key, missionType, beat));
     wrap.appendChild(btn);
   });
+
+  const otherBtn = document.createElement("button");
+  otherBtn.className = "choice-btn choice-other";
+  otherBtn.innerHTML = `<span class="choice-letter">?</span><span class="choice-text">💬 Something else&hellip; (type an action, or ask a question)</span>`;
+  otherBtn.addEventListener("click", () => {
+    wrap.classList.add("hidden");
+    const input = qs("freeform-input");
+    input.value = "";
+    qs("freeform-wrap").classList.remove("hidden");
+    input.focus();
+  });
+  wrap.appendChild(otherBtn);
 }
+
+qs("btn-freeform-cancel").addEventListener("click", () => {
+  qs("freeform-wrap").classList.add("hidden");
+  qs("choices").classList.remove("hidden");
+});
+
+function getCurrentMissionAndBeat() {
+  const scene = state.currentScene;
+  if (!scene) return null;
+  const missionType = MISSION_TYPES.find(m => m.id === scene.missionTypeId);
+  const beat = missionType.beats[scene.beatIndex];
+  return { missionType, beat, scene };
+}
+
+function isQuestion(raw) {
+  const trimmed = raw.trim();
+  if (trimmed.endsWith("?")) return true;
+  const firstWord = (trimmed.split(/\s+/)[0] || "").toLowerCase().replace(/[^a-z']/g, "");
+  const starters = ["who", "what", "when", "where", "why", "how", "is", "are", "can", "could", "will", "would", "do", "does", "did", "should", "am"];
+  return starters.includes(firstWord);
+}
+
+function answerQuestion(raw) {
+  const lower = raw.toLowerCase();
+  const hit = FAQ_BANK.find(entry => entry.keywords.some(k => lower.includes(k)));
+  return hit ? hit.answer : FAQ_FALLBACK;
+}
+
+function freeformRoll(raw) {
+  const lower = raw.toLowerCase();
+  const hits = {
+    assault: FREEFORM_ASSAULT_WORDS.filter(w => lower.includes(w)).length,
+    cunning: FREEFORM_CUNNING_WORDS.filter(w => lower.includes(w)).length,
+    faith: FREEFORM_FAITH_WORDS.filter(w => lower.includes(w)).length
+  };
+  const best = Object.keys(hits).reduce((a, b) => (hits[b] > hits[a] ? b : a), "assault");
+  if (hits[best] > 0) return statModifier(statValueFor(best));
+  const avg = (statModifier(statValueFor("assault")) + statModifier(statValueFor("cunning")) + statModifier(statValueFor("faith"))) / 3;
+  return Math.round(avg);
+}
+
+qs("btn-freeform-submit").addEventListener("click", () => {
+  const raw = qs("freeform-input").value.trim();
+  if (!raw) return;
+  const ctx = getCurrentMissionAndBeat();
+  if (!ctx) return;
+
+  qs("freeform-wrap").classList.add("hidden");
+  pushLog("choice", `You: "${escapeHtml(raw)}"`);
+
+  if (isQuestion(raw)) {
+    pushLog("narration", `<em>${answerQuestion(raw)}</em>`);
+    renderChoiceButtons(ctx.missionType, ctx.beat);
+    return;
+  }
+
+  const mod = freeformRoll(raw);
+  runDiceAnimation(mod, ctx.scene.dc, (roll, total, tier) => {
+    resolveFreeformOutcome(raw, ctx.missionType, ctx.beat, ctx.scene, roll, mod, total, tier);
+  });
+});
 
 function onChoiceClick(approachKey, missionType, beat) {
   const scene = state.currentScene;
@@ -440,16 +583,27 @@ function logEffects(effects) {
 
 function resolveBeatOutcome(approachKey, missionType, beat, scene, roll, mod, total, tier) {
   pushLog("roll", `d20 roll: ${roll} + ${mod} (modifier) = ${total} vs Difficulty ${scene.dc} — <strong>${tierLabel(tier)}</strong>`);
-
   const objective = beat.objective || missionType.objective;
   const threat = beat.threat || missionType.threat;
-  const fragFn = OUTCOME_FRAGMENTS[approachKey][tier];
-  const text = fragFn(state.character.name, threat, objective);
+  const text = OUTCOME_FRAGMENTS[approachKey][tier](state.character.name, threat, objective);
+  finalizeBeatResolution(missionType, scene, tier, text);
+}
+
+function resolveFreeformOutcome(raw, missionType, beat, scene, roll, mod, total, tier) {
+  pushLog("roll", `d20 roll: ${roll} + ${mod} (modifier) = ${total} vs Difficulty ${scene.dc} — <strong>${tierLabel(tier)}</strong>`);
+  const objective = beat.objective || missionType.objective;
+  const threat = beat.threat || missionType.threat;
+  const text = FREEFORM_FRAGMENTS[tier](state.character.name, escapeHtml(raw), threat, objective);
+  finalizeBeatResolution(missionType, scene, tier, text);
+}
+
+function finalizeBeatResolution(missionType, scene, tier, text) {
   const outcomeCls = (tier === "success" || tier === "critSuccess") ? "outcome-success" : "outcome-fail";
   pushLog(outcomeCls, text);
 
   scene.lastTier = tier;
   qs("choices").classList.add("hidden");
+  qs("freeform-wrap").classList.add("hidden");
 
   const isClimax = scene.beatIndex >= 2;
   const effects = isClimax ? applyOutcomeEffects(tier, missionType) : applyMinorEffects(tier, missionType);
@@ -628,6 +782,8 @@ qs("btn-map-back").addEventListener("click", () => {
 
 /* ---------------- init ---------------- */
 refreshTitleButtons();
+classSubset = shuffleSample(CLASSES.map(c => c.id), CLASS_SUBSET_SIZE);
+homeworldSubset = shuffleSample(HOMEWORLDS.map(h => h.id), HOMEWORLD_SUBSET_SIZE);
 renderClassCards();
 renderHomeworldCards();
 showView("title");

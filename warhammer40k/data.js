@@ -62,6 +62,106 @@ const CLASSES = [
     wounds: 14,
     gear: "Archeotech pistol, void suit, signet of office",
     icon: "🧭"
+  },
+  {
+    id: "enginseer",
+    name: "Tech-Priest Enginseer",
+    tagline: "A priest-engineer of the Cult Mechanicus.",
+    description: "Part flesh, part machine, wholly devoted to the Omnissiah. Where others see broken wreckage, the Enginseer sees a prayer half-finished.",
+    stats: { ws: 9, bs: 11, t: 11, wp: 12, int: 17 },
+    wounds: 12,
+    gear: "Servo-arm, plasma cutter, cognis signum",
+    icon: "🔧"
+  },
+  {
+    id: "navigator",
+    name: "Imperial Navigator",
+    tagline: "A mutant-blooded pilot of House Navis.",
+    description: "A third eye, warp-sighted, lets you steer a ship through the immaterium. On the ground, that same sight sees threats others miss entirely.",
+    stats: { ws: 8, bs: 9, t: 10, wp: 15, int: 14 },
+    wounds: 10,
+    gear: "Navigator's third eye, void charts, ornate cane",
+    icon: "👁️"
+  },
+  {
+    id: "astropath",
+    name: "Astropath Transcendent",
+    tagline: "A blinded psyker of the Adeptus Astra Telepathica.",
+    description: "Sight was the price of the Emperor's gift. What remains is a mind that can touch minds across the void — and things far worse than minds.",
+    stats: { ws: 8, bs: 8, t: 9, wp: 17, int: 13 },
+    wounds: 9,
+    gear: "Psychic hood, sanctioning collar, warding rod",
+    icon: "🔮"
+  },
+  {
+    id: "confessor",
+    name: "Ministorum Confessor",
+    tagline: "A fire-and-brimstone priest of the Ecclesiarchy.",
+    description: "Part chaplain, part executioner. The Confessor's sermons have started riots and ended them, sometimes in the same breath.",
+    stats: { ws: 12, bs: 10, t: 11, wp: 16, int: 10 },
+    wounds: 13,
+    gear: "Eviscerator, vestments of office, prayer icons",
+    icon: "📿"
+  },
+  {
+    id: "assassin",
+    name: "Officio Assassin",
+    tagline: "A conditioned killer of the Officio Assassinorum.",
+    description: "Trained since childhood to remove a single target and vanish. Conversation is not the Assassin's preferred tool, but it isn't off the table.",
+    stats: { ws: 15, bs: 16, t: 10, wp: 13, int: 12 },
+    wounds: 11,
+    gear: "Monofilament garrote, needle pistol, chameleoline cloak",
+    icon: "🥷"
+  },
+  {
+    id: "ratling",
+    name: "Ratling Sharpshooter",
+    tagline: "A diminutive marksman of Imperial Guard renown.",
+    description: "Small, quiet, and unnervingly good at not being where you shot. What the Ratling lacks in size, a long-las more than makes up for.",
+    stats: { ws: 9, bs: 16, t: 9, wp: 10, int: 11 },
+    wounds: 10,
+    gear: "Long-las, camo cloak, lucky charm",
+    icon: "🎯"
+  },
+  {
+    id: "ogryn",
+    name: "Ogryn Bodyguard",
+    tagline: "A gene-bred abhuman of enormous strength.",
+    description: "Simple, loyal, and built like a demolition charge. The Ogryn doesn't overthink a fight — mostly because overthinking isn't really an option.",
+    stats: { ws: 14, bs: 9, t: 18, wp: 9, int: 6 },
+    wounds: 22,
+    gear: "Ripper gun, slab shield, sheer brute strength",
+    icon: "👊"
+  },
+  {
+    id: "commissar",
+    name: "Commissar",
+    tagline: "A political officer of the Astra Militarum.",
+    description: "Equal parts inspiration and threat. The Commissar's word can rally a routing company — or end a coward's war on the spot.",
+    stats: { ws: 13, bs: 13, t: 11, wp: 14, int: 12 },
+    wounds: 14,
+    gear: "Bolt pistol, power sabre, storm coat",
+    icon: "🎖️"
+  },
+  {
+    id: "hospitaller",
+    name: "Adepta Sororitas Hospitaller",
+    tagline: "A battlefield medic of the Order of the Sacred Rose.",
+    description: "Faith and field surgery in equal measure. The Hospitaller has pulled more soldiers back from the brink than any chirurgeon in the sector.",
+    stats: { ws: 11, bs: 11, t: 11, wp: 15, int: 13 },
+    wounds: 13,
+    gear: "Blessed medicae kit, sacred chirurgeon's blade",
+    icon: "➕"
+  },
+  {
+    id: "arbite",
+    name: "Adeptus Arbites Enforcer",
+    tagline: "A precinct officer of Imperial law.",
+    description: "Judge, and occasionally jury, on worlds where the Administratum's writ is the only law that matters. The Enforcer has seen every excuse in the book.",
+    stats: { ws: 13, bs: 13, t: 13, wp: 11, int: 11 },
+    wounds: 14,
+    gear: "Combat shotgun, shock maul, riot shield",
+    icon: "⚖️"
   }
 ];
 
@@ -70,7 +170,14 @@ const HOMEWORLDS = [
   { id: "forge", name: "Forge World", desc: "Born under the forge-glow of a Mechanicus world, steeped in litanies of maintenance since birth.", bonusStat: "bs" },
   { id: "death", name: "Death World", desc: "Every day on your homeworld tried to kill you. Most days, you won.", bonusStat: "t" },
   { id: "shrine", name: "Shrine World", desc: "Raised among relics and pilgrims, your faith was forged before your body was.", bonusStat: "wp" },
-  { id: "feral", name: "Feral World", desc: "You learned to fight with blade and spear long before you ever saw a lasgun.", bonusStat: "ws" }
+  { id: "feral", name: "Feral World", desc: "You learned to fight with blade and spear long before you ever saw a lasgun.", bonusStat: "ws" },
+  { id: "voidborn", name: "Void Born", desc: "Born and raised between the stars aboard a voidship, gravity and horizons were never things you could take for granted.", bonusStat: "bs" },
+  { id: "agri", name: "Agri World", desc: "Endless grain-fields and toil under an open sky taught you patience, and the strength that comes from a lifetime of hard labour.", bonusStat: "t" },
+  { id: "mining", name: "Mining World", desc: "Raised beneath the surface in the dark of the mineshafts, you learned to fight in tunnels too cramped for hesitation.", bonusStat: "ws" },
+  { id: "fortress", name: "Fortress World", desc: "Grown up behind void shields and gun emplacements, drilled for siege before you could properly hold a lasgun.", bonusStat: "bs" },
+  { id: "penal", name: "Penal World", desc: "A childhood spent among the condemned taught you to survive punishment that would break most people outright.", bonusStat: "wp" },
+  { id: "schola", name: "Schola Progenium", desc: "Raised as a ward of the Adeptus Terra, drilled in doctrine and discipline from the day you could walk.", bonusStat: "wp" },
+  { id: "frontier", name: "Frontier World", desc: "Life on the edge of Imperial space meant making do with what little the Administratum bothered to send.", bonusStat: "int" }
 ];
 
 const PLANETS = [
@@ -448,6 +555,36 @@ const REST_LINES = [
   "The crew shares recycled rations and stranger stories from further out in the void. For a moment, the war feels far away.",
   "Servo-skulls drift through the corridors, cataloguing damage. Repairs are slow, but the ship — and its crew — holds together."
 ];
+
+/* Fragments used when a player types their own action instead of picking
+   A/B/C. There's no author-written line for every possible sentence, so
+   these fold the player's own words back into a tiered reaction instead. */
+const FREEFORM_FRAGMENTS = {
+  critSuccess: (n, action, threat, objective) => `${n} tries something nobody planned for — "${action}" — and it works better than anyone could have hoped. Whatever ${threat} expected, it wasn't this, and ${objective} is suddenly within reach.`,
+  success: (n, action, threat, objective) => `${n} goes off-script: "${action}." It's unorthodox, but against ${threat} it buys real ground toward ${objective}.`,
+  fail: (n, action, threat, objective) => `${n} gambles on something unplanned — "${action}" — but ${threat} doesn't cooperate, and ${objective} slips further away.`,
+  critFail: (n, action, threat, objective) => `${n}'s improvisation — "${action}" — backfires badly against ${threat}, and for a moment everything threatens to fall apart.`
+};
+
+const FREEFORM_ASSAULT_WORDS = ["attack", "fight", "charge", "kill", "shoot", "strike", "assault", "stab", "punch", "blast", "storm", "smash", "cut down", "gun down"];
+const FREEFORM_CUNNING_WORDS = ["search", "examine", "look", "investigate", "hack", "scan", "sneak", "trick", "hide", "study", "analyze", "analyse", "check", "plan", "listen", "observe", "distract"];
+const FREEFORM_FAITH_WORDS = ["pray", "emperor", "faith", "bless", "chant", "rite", "worship", "litany", "hope", "trust", "vow"];
+
+/* Canned answers for meta/out-of-character questions typed into the
+   "Other" box. This is a static game with no live narrator, so questions
+   are matched by keyword rather than truly understood. */
+const FAQ_BANK = [
+  { keywords: ["return", "come back", "revisit", "go back"], answer: "Once a mission plays out, the fleet moves on — you can't step back into the same encounter. But nothing is forgotten: every world you've fought on stays logged on your Star Map, with the date, the mission, and how it went, so you can always look back on it." },
+  { keywords: ["save", "progress", "lose my", "quit", "continue later", "come back later"], answer: "Your campaign saves itself automatically after every choice. Use \"Save & Exit\" to leave safely, then \"Continue Campaign\" from the title screen whenever you're ready to pick up exactly where you left off." },
+  { keywords: ["die", "death", "permadeath", "killed"], answer: "If your wounds run out, your story ends there — this campaign is permadeath. You'll see a final summary, and you're free to forge a new character and begin again." },
+  { keywords: ["corrupt"], answer: "Corruption creeps up from failed encounters with the warp and heresy. If it ever reaches 100%, your character is lost to it entirely — a different, darker ending than dying in battle." },
+  { keywords: ["dice", "d20", "roll", "modifier", "difficulty", " dc"], answer: "Every choice rolls a twenty-sided die and adds a modifier based on your character's relevant stat, then compares it to the difficulty of the moment. Higher is better; a natural 20 or natural 1 always counts as a critical success or failure." },
+  { keywords: ["change my class", "change character", "different origin", "respec", "pick someone else"], answer: "Your archetype and homeworld are locked in once the campaign begins — that's who this character is. If you want to try someone else, start a new campaign from the title screen." },
+  { keywords: ["star map", "which planets", "planets have i", "map show"], answer: "The Star Map (reachable from the top bar or the title screen) plots every planet you've visited, connected in the order you reached them, with the date and outcome of each mission." },
+  { keywords: ["heal", "rest", "recover wound"], answer: "Your crew gets a short respite roughly every four missions, healing a handful of wounds. Beyond that, wounds only recover between missions — there's no way to heal mid-encounter." },
+  { keywords: ["renown", "reputation"], answer: "Renown only comes from succeeding at the climax of a mission — it's a record of your victories, though it doesn't currently unlock anything beyond bragging rights." }
+];
+const FAQ_FALLBACK = "Some things even the Astropathic choir cannot foresee. The warp keeps its own counsel here — if you want to know for certain, the only way is to act.";
 
 function pickRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];

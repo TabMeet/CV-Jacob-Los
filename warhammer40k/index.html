@@ -34,9 +34,17 @@
     <input id="input-name" class="text-input" type="text" maxlength="30" placeholder="e.g. Brother Aurelian">
 
     <h3>Origin</h3>
+    <div class="search-row">
+      <input id="search-class" class="text-input search-input" type="text" placeholder="Search all origins&hellip; (e.g. &ldquo;sniper&rdquo;, &ldquo;psyker&rdquo;, &ldquo;melee&rdquo;)">
+      <button id="btn-shuffle-class" type="button" class="btn btn-link btn-small">🎲 Different options</button>
+    </div>
     <div id="class-cards" class="card-grid"></div>
 
     <h3>Homeworld</h3>
+    <div class="search-row">
+      <input id="search-homeworld" class="text-input search-input" type="text" placeholder="Search all homeworlds&hellip;">
+      <button id="btn-shuffle-homeworld" type="button" class="btn btn-link btn-small">🎲 Different options</button>
+    </div>
     <div id="homeworld-cards" class="card-grid"></div>
 
     <div id="stat-preview" class="stat-preview hidden"></div>
@@ -84,6 +92,14 @@
 
   <div class="action-bar">
     <div id="choices" class="choices hidden"></div>
+    <div id="freeform-wrap" class="freeform-wrap hidden">
+      <label class="field-label" for="freeform-input">Type your own action, or ask a question about the campaign</label>
+      <textarea id="freeform-input" class="text-input freeform-input" rows="2" placeholder="e.g. &ldquo;If I decide to leave, will I be able to return here later on?&rdquo;"></textarea>
+      <div class="freeform-actions">
+        <button id="btn-freeform-submit" class="btn btn-primary btn-small">Submit</button>
+        <button id="btn-freeform-cancel" class="btn btn-link btn-small">Back to choices</button>
+      </div>
+    </div>
     <div id="continue-wrap" class="continue-wrap hidden">
       <button id="btn-continue-journey" class="btn btn-primary">Continue Journey</button>
     </div>
