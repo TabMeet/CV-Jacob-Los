@@ -511,8 +511,10 @@ function nextMission() {
   state.currentScene = { planet, missionTypeId: missionType.id, beatIndex: 0, dc: 0, lastTier: null, momentum: 0, memoryDiscount };
   saveState();
 
-  pushLog("narration", `<strong>${missionType.name}</strong> — ${planet}`);
-  pushLog("narration", missionType.intro(planet));
+  const cls = CLASSES.find(c => c.id === state.character.classId);
+  const isFavored = !!(cls && cls.favoredMissions && cls.favoredMissions.includes(missionType.id));
+  pushLog("mission-header", `${missionType.name} <span class="mission-header-planet">— ${planet}</span>`);
+  pushLog("narration", `${buildFramingLine(state.character, missionType, isFavored)} ${missionType.intro(planet)}`);
   qs("continue-wrap").classList.add("hidden");
   startBeat(0);
 }
