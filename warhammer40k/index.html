@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>War of Signal Lost — A Warhammer 40,000 Campaign</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ TITLE ============ -->
+<section id="view-title" class="view active">
+  <div class="title-wrap">
+    <div class="aquila">✠</div>
+    <h1>WAR OF SIGNAL LOST</h1>
+    <p class="subtitle">A solo campaign in the 41st Millennium</p>
+    <div class="title-actions">
+      <button id="btn-new-campaign" class="btn btn-primary">New Campaign</button>
+      <button id="btn-continue-campaign" class="btn btn-secondary hidden">Continue Campaign</button>
+      <button id="btn-title-map" class="btn btn-secondary hidden">Star Map</button>
+      <button id="btn-delete-save" class="btn btn-link hidden">Delete Save &amp; Start Over</button>
+    </div>
+    <p class="flavor-quote">"In the grim darkness of the far future, there is only war."</p>
+  </div>
+</section>
+
+<!-- ============ CHARACTER CREATOR ============ -->
+<section id="view-charcreate" class="view">
+  <div class="panel">
+    <h2>Forge Your Servant of the Imperium</h2>
+
+    <label class="field-label" for="input-name">Name</label>
+    <input id="input-name" class="text-input" type="text" maxlength="30" placeholder="e.g. Brother Aurelian">
+
+    <h3>Origin</h3>
+    <div id="class-cards" class="card-grid"></div>
+
+    <h3>Homeworld</h3>
+    <div id="homeworld-cards" class="card-grid"></div>
+
+    <div id="stat-preview" class="stat-preview hidden"></div>
+
+    <div class="charcreate-actions">
+      <button id="btn-begin" class="btn btn-primary" disabled>Begin Campaign</button>
+      <button id="btn-back-title" class="btn btn-link">Back</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GAME ============ -->
+<section id="view-game" class="view">
+  <header class="game-topbar">
+    <div class="topbar-id">
+      <span id="hud-name" class="hud-name"></span>
+      <span id="hud-class" class="hud-class"></span>
+    </div>
+    <div class="topbar-bars">
+      <div class="bar-row">
+        <span class="bar-label">Wounds</span>
+        <div class="bar-track"><div id="bar-wounds" class="bar-fill bar-wounds"></div></div>
+        <span id="bar-wounds-text" class="bar-text"></span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Corruption</span>
+        <div class="bar-track"><div id="bar-corruption" class="bar-fill bar-corruption"></div></div>
+        <span id="bar-corruption-text" class="bar-text"></span>
+      </div>
+    </div>
+    <div class="topbar-meta">
+      <span>Mission <span id="hud-mission-count">0</span></span>
+      <span>Renown <span id="hud-renown">0</span></span>
+    </div>
+    <div class="topbar-nav">
+      <button id="btn-game-map" class="btn btn-secondary btn-small">Star Map</button>
+      <button id="btn-game-title" class="btn btn-link btn-small">Save &amp; Exit</button>
+    </div>
+  </header>
+
+  <div class="game-body">
+    <div id="story-log" class="story-log"></div>
+
+    <div id="choices" class="choices hidden"></div>
+
+    <div id="continue-wrap" class="continue-wrap hidden">
+      <button id="btn-continue-journey" class="btn btn-primary">Continue Journey</button>
+    </div>
+  </div>
+
+  <div id="dice-overlay" class="dice-overlay hidden">
+    <div class="dice-box">
+      <div id="dice-face" class="dice-face">d20</div>
+      <div id="dice-result" class="dice-result"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STAR MAP ============ -->
+<section id="view-map" class="view">
+  <header class="map-header">
+    <h2>Star Map</h2>
+    <button id="btn-map-back" class="btn btn-secondary">Back</button>
+  </header>
+  <div id="map-empty" class="map-empty hidden">No planets have been visited yet. Your campaign has not yet begun.</div>
+  <div id="map-canvas-wrap" class="map-canvas-wrap">
+    <svg id="map-lines" class="map-lines"></svg>
+    <div id="map-nodes" class="map-nodes"></div>
+  </div>
+  <div id="map-detail" class="map-detail hidden">
+    <button id="btn-close-detail" class="btn btn-link btn-small">Close</button>
+    <h3 id="detail-name"></h3>
+    <p id="detail-first-visited" class="detail-meta"></p>
+    <div id="detail-visits"></div>
+  </div>
+</section>
+
+<!-- ============ GAME OVER ============ -->
+<section id="view-gameover" class="view">
+  <div class="title-wrap">
+    <div class="aquila">☠</div>
+    <h1 id="gameover-title">YOUR STORY ENDS HERE</h1>
+    <p id="gameover-text" class="subtitle"></p>
+    <div id="gameover-stats" class="gameover-stats"></div>
+    <div class="title-actions">
+      <button id="btn-gameover-newcampaign" class="btn btn-primary">Begin New Campaign</button>
+      <button id="btn-gameover-map" class="btn btn-secondary">View Star Map</button>
+    </div>
+  </div>
+</section>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
