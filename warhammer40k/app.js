@@ -237,7 +237,7 @@ async function publishUserDb(newUserDb) {
   const marker = /<script id="user-db" type="application\/json">[\s\S]*?<\/script>/;
   if (!marker.test(rawHtml)) throw { code: "upstream_error", message: "Account registry marker not found." };
   const safeJson = JSON.stringify(newUserDb).replace(/</g, "\\u003c");
-  const newHtml = rawHtml.replace(marker, `<script id="user-db" type="application/json">${safeJson}</script>`);
+  const newHtml = rawHtml.replace(marker, `<script id="user-db" type="application/json">${safeJson}<\/script>`);
   if (!claudeArtifact) throw { code: "not_granted", message: "Accounts capability not available." };
   return claudeArtifact.publish(newHtml);
 }
