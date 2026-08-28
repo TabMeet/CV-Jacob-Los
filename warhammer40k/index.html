@@ -52,8 +52,11 @@
 <section id="view-game" class="view">
   <header class="game-topbar">
     <div class="topbar-id">
-      <span id="hud-name" class="hud-name"></span>
-      <span id="hud-class" class="hud-class"></span>
+      <div id="hud-portrait" class="hud-portrait"></div>
+      <div class="topbar-id-text">
+        <span id="hud-name" class="hud-name"></span>
+        <span id="hud-class" class="hud-class"></span>
+      </div>
     </div>
     <div class="topbar-bars">
       <div class="bar-row">
@@ -80,10 +83,11 @@
   <div class="game-body">
     <div id="story-log" class="story-log"></div>
 
-    <div id="choices" class="choices hidden"></div>
-
-    <div id="continue-wrap" class="continue-wrap hidden">
-      <button id="btn-continue-journey" class="btn btn-primary">Continue Journey</button>
+    <div class="action-bar">
+      <div id="choices" class="choices hidden"></div>
+      <div id="continue-wrap" class="continue-wrap hidden">
+        <button id="btn-continue-journey" class="btn btn-primary">Continue Journey</button>
+      </div>
     </div>
   </div>
 

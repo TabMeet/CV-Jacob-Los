@@ -193,12 +193,23 @@ function enterGameView(rebuildLog) {
   showView("game");
   if (rebuildLog) rebuildLogDom();
   updateHud();
-  if (state.currentScene) {
-    renderChoices();
-  } else if (state.awaitingContinue) {
+  renderPortrait();
+  if (state.awaitingContinue) {
     qs("choices").classList.add("hidden");
     qs("continue-wrap").classList.remove("hidden");
+  } else if (state.currentScene) {
+    const missionType = MISSION_TYPES.find(m => m.id === state.currentScene.missionTypeId);
+    const beat = missionType.beats[state.currentScene.beatIndex];
+    renderChoiceButtons(missionType, beat);
   }
+}
+
+function renderPortrait() {
+  const el = qs("hud-portrait");
+  const cls = CLASSES.find(c => c.id === state.character.classId);
+  const hue = hashStr(state.character.name + state.character.classId) % 360;
+  el.style.background = `radial-gradient(circle at 35% 30%, hsl(${hue},48%,30%), hsl(${hue},55%,12%) 75%)`;
+  el.textContent = cls.icon;
 }
 
 function updateHud() {
@@ -267,6 +278,11 @@ function currentDC() {
   if (state.corruption >= 80) dc += 2; else if (state.corruption >= 50) dc += 1;
   return Math.min(dc, 18);
 }
+function beatDC(beatIndex) {
+  const base = currentDC();
+  const reduction = beatIndex === 0 ? 3 : beatIndex === 1 ? 1 : 0;
+  return Math.max(8, base - reduction);
+}
 function statValueFor(approachKey) {
   const s = state.character.stats;
   if (approachKey === "assault") return Math.max(s.ws, s.bs);
@@ -277,48 +293,65 @@ function nextMission() {
   const planet = pickPlanet();
   const missionType = pickMissionType();
   state.lastMissionTypeId = missionType.id;
-  const dc = currentDC();
-  state.currentScene = { planet, missionTypeId: missionType.id, dc };
-  state.awaitingContinue = false;
+  state.currentScene = { planet, missionTypeId: missionType.id, beatIndex: 0, dc: 0, lastTier: null };
   saveState();
 
   pushDivider();
   pushLog("narration", `<strong>${missionType.name}</strong> — ${planet}`);
   pushLog("narration", missionType.intro(planet));
   qs("continue-wrap").classList.add("hidden");
-  renderChoices();
-  updateHud();
-  saveState();
+  startBeat(0);
 }
 
-function renderChoices() {
+function startBeat(beatIndex) {
+  const scene = state.currentScene;
+  scene.beatIndex = beatIndex;
+  scene.dc = beatDC(beatIndex);
+  const missionType = MISSION_TYPES.find(m => m.id === scene.missionTypeId);
+  const beat = missionType.beats[beatIndex];
+
+  let text = beat.narration(scene.planet);
+  if (beatIndex > 0 && scene.lastTier) {
+    const good = scene.lastTier === "success" || scene.lastTier === "critSuccess";
+    text = pickRandom(good ? CONTINUITY_GOOD : CONTINUITY_BAD) + text;
+  }
+  pushLog("narration", text);
+  state.awaitingContinue = false;
+  saveState();
+  renderChoiceButtons(missionType, beat);
+  updateHud();
+}
+
+function renderChoiceButtons(missionType, beat) {
   const wrap = qs("choices");
   wrap.innerHTML = "";
   wrap.classList.remove("hidden");
+  qs("continue-wrap").classList.add("hidden");
   Object.keys(APPROACHES).forEach(key => {
     const a = APPROACHES[key];
+    const opt = beat.options[key];
     const btn = document.createElement("button");
     btn.className = "choice-btn";
-    btn.innerHTML = `<span class="choice-letter">${a.letter}</span><span class="choice-text"><strong>${a.icon} ${a.label}</strong><small>${a.prompt}</small></span>`;
-    btn.addEventListener("click", () => onChoiceClick(key));
+    btn.innerHTML = `<span class="choice-letter">${a.letter}</span><span class="choice-text">${a.icon} ${opt.label}</span>`;
+    btn.addEventListener("click", () => onChoiceClick(key, missionType, beat));
     wrap.appendChild(btn);
   });
 }
 
-function onChoiceClick(approachKey) {
+function onChoiceClick(approachKey, missionType, beat) {
   const scene = state.currentScene;
   if (!scene) return;
-  const missionType = MISSION_TYPES.find(m => m.id === scene.missionTypeId);
   const approach = APPROACHES[approachKey];
+  const opt = beat.options[approachKey];
 
   document.querySelectorAll(".choice-btn").forEach(b => b.disabled = true);
-  pushLog("choice", `You choose: ${approach.icon} <strong>${approach.label}</strong> — "${approach.prompt}"`);
+  pushLog("choice", `You choose: ${approach.icon} "${opt.label}"`);
 
   const statVal = statValueFor(approachKey);
   const mod = statModifier(statVal);
 
   runDiceAnimation(mod, scene.dc, (roll, total, tier) => {
-    resolveOutcome(approachKey, missionType, scene, roll, mod, total, tier);
+    resolveBeatOutcome(approachKey, missionType, beat, scene, roll, mod, total, tier);
   });
 }
 
@@ -373,39 +406,57 @@ function applyOutcomeEffects(tier, missionType) {
   return { woundLoss, corruptionDelta, renownDelta };
 }
 
-function resolveOutcome(approachKey, missionType, scene, roll, mod, total, tier) {
-  pushLog("roll", `d20 roll: ${roll} + ${mod} (modifier) = ${total} vs Difficulty ${scene.dc} — <strong>${tierLabel(tier)}</strong>`);
+function applyMinorEffects(tier, missionType) {
+  const warpish = missionType.id === "warp" || missionType.id === "heretic";
+  let woundLoss = 0, corruptionDelta = 0;
+  switch (tier) {
+    case "critSuccess": corruptionDelta = warpish ? -1 : 0; break;
+    case "success": break;
+    case "fail": woundLoss = randInt(0, 2); corruptionDelta = warpish ? randInt(1, 2) : 0; break;
+    case "critFail": woundLoss = randInt(1, 3); corruptionDelta = warpish ? randInt(2, 4) : 1; break;
+  }
+  return { woundLoss, corruptionDelta };
+}
 
-  const fragFn = OUTCOME_FRAGMENTS[approachKey][tier];
-  const text = fragFn(state.character.name, missionType.threat, missionType.objective);
-  const outcomeCls = (tier === "success" || tier === "critSuccess") ? "outcome-success" : "outcome-fail";
-  pushLog(outcomeCls, text);
-
-  const effects = applyOutcomeEffects(tier, missionType);
-  state.wounds = Math.max(0, state.wounds - effects.woundLoss);
-  state.corruption = Math.max(0, Math.min(100, state.corruption + effects.corruptionDelta));
-  state.renown += effects.renownDelta;
-  state.missionCount += 1;
-
+function logEffects(effects) {
   if (effects.woundLoss > 0) pushLog("roll", `${state.character.name} suffers ${effects.woundLoss} wound${effects.woundLoss === 1 ? "" : "s"}.`);
   if (effects.corruptionDelta > 0) pushLog("roll", `A whisper of corruption takes hold. (+${effects.corruptionDelta} corruption)`);
   if (effects.corruptionDelta < 0) pushLog("roll", `The taint recedes, if only a little. (${effects.corruptionDelta} corruption)`);
+}
 
-  recordPlanetVisit(scene.planet, missionType, tier, text);
+function resolveBeatOutcome(approachKey, missionType, beat, scene, roll, mod, total, tier) {
+  pushLog("roll", `d20 roll: ${roll} + ${mod} (modifier) = ${total} vs Difficulty ${scene.dc} — <strong>${tierLabel(tier)}</strong>`);
 
+  const objective = beat.objective || missionType.objective;
+  const threat = beat.threat || missionType.threat;
+  const fragFn = OUTCOME_FRAGMENTS[approachKey][tier];
+  const text = fragFn(state.character.name, threat, objective);
+  const outcomeCls = (tier === "success" || tier === "critSuccess") ? "outcome-success" : "outcome-fail";
+  pushLog(outcomeCls, text);
+
+  scene.lastTier = tier;
   qs("choices").classList.add("hidden");
+
+  const isClimax = scene.beatIndex >= 2;
+  const effects = isClimax ? applyOutcomeEffects(tier, missionType) : applyMinorEffects(tier, missionType);
+  state.wounds = Math.max(0, state.wounds - effects.woundLoss);
+  state.corruption = Math.max(0, Math.min(100, state.corruption + effects.corruptionDelta));
+  if (isClimax) {
+    state.renown += effects.renownDelta;
+    state.missionCount += 1;
+    recordPlanetVisit(scene.planet, missionType, tier, text);
+  }
+  logEffects(effects);
   updateHud();
 
-  if (state.wounds <= 0) {
-    endCampaign("death");
-    return;
-  }
-  if (state.corruption >= 100) {
-    endCampaign("corruption");
-    return;
-  }
+  if (state.wounds <= 0) { endCampaign("death"); return; }
+  if (state.corruption >= 100) { endCampaign("corruption"); return; }
 
-  state.currentScene = null;
+  if (isClimax) {
+    state.currentScene = null;
+  } else {
+    scene.beatIndex += 1;
+  }
   state.awaitingContinue = true;
   saveState();
   qs("continue-wrap").classList.remove("hidden");
@@ -428,6 +479,10 @@ function recordPlanetVisit(planetName, missionType, tier, summary) {
 
 qs("btn-continue-journey").addEventListener("click", () => {
   qs("continue-wrap").classList.add("hidden");
+  if (state.currentScene) {
+    startBeat(state.currentScene.beatIndex);
+    return;
+  }
   if (state.missionCount > 0 && state.missionCount % 4 === 0) {
     pushLog("narration", `<em>${pickRandom(REST_LINES)}</em>`);
     const healed = randInt(2, 5);
