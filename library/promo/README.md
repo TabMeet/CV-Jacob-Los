@@ -1,5 +1,15 @@
 # TikTok promos
 
+## Profile picture
+
+**`profile/ink-profile.png`** (1080×1080) shows Ink peeking over an open book in the lamplight, with a crescent moon. It's made for TikTok's round crop and stays recognisable down to the 32 px used in comments.
+
+The source is `profile/ink-profile.svg`. To change it (colours, the moon, the book), edit the SVG and re-render the PNG and a preview at TikTok sizes:
+
+```bash
+node promo/profile/render-profile.cjs promo/profile/ink-profile.svg promo/profile/ink-profile.png preview.png
+```
+
 ## 1 · The tour (`quiet-library-tiktok.mp4`)
 
 **`quiet-library-tiktok.mp4`** is a 38-second vertical video (1080×1920, 30 fps, H.264 + AAC, about 19 MB). It's ready to upload to TikTok, Reels or Shorts. **`cover.jpg`** is a still of Ink in the window, if you want to use it as the cover.

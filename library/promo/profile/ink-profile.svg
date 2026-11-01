@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <!-- Ink, the cat of The Quiet Library, peeking over an open book in the lamplight.
+       Made for a round profile picture: everything important sits inside the central circle. -->
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="64%">
+      <stop offset="0" stop-color="#ffe6ae"/>
+      <stop offset="0.30" stop-color="#f2bb6a"/>
+      <stop offset="0.58" stop-color="#a5602f"/>
+      <stop offset="0.82" stop-color="#3f2a1e"/>
+      <stop offset="1" stop-color="#1e1712"/>
+    </radialGradient>
+    <radialGradient id="eye" cx="45%" cy="40%" r="65%">
+      <stop offset="0" stop-color="#eef59a"/>
+      <stop offset="0.6" stop-color="#cbd95a"/>
+      <stop offset="1" stop-color="#93a92e"/>
+    </radialGradient>
+    <linearGradient id="page-l" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e9dcc2"/><stop offset="0.85" stop-color="#f8f1e2"/><stop offset="1" stop-color="#d9c8a8"/>
+    </linearGradient>
+    <linearGradient id="page-r" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#e9dcc2"/><stop offset="0.85" stop-color="#f8f1e2"/><stop offset="1" stop-color="#d9c8a8"/>
+    </linearGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#26211f"/><stop offset="1" stop-color="#0f0d0d"/>
+    </linearGradient>
+    <mask id="crescent">
+      <circle cx="842" cy="318" r="50" fill="#fff"/>
+      <circle cx="864" cy="301" r="46" fill="#000"/>
+    </mask>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="haze" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+
+  <!-- lamplight -->
+  <rect width="1000" height="1000" fill="url(#bg)"/>
+  <g fill="#ffe7b4" filter="url(#haze)">
+    <circle cx="190" cy="300" r="26" opacity=".35"/><circle cx="845" cy="420" r="18" opacity=".35"/>
+    <circle cx="240" cy="560" r="14" opacity=".3"/><circle cx="130" cy="430" r="10" opacity=".3"/>
+    <circle cx="880" cy="300" r="10" opacity=".3"/>
+  </g>
+
+  <!-- moon and a few stars -->
+  <rect x="780" y="260" width="120" height="120" fill="#fff4d6" mask="url(#crescent)" opacity=".95"/>
+  <g fill="#fff4d6">
+    <path d="M822 222l5 14 14 5-14 5-5 14-5-14-14-5 14-5z" opacity=".85"/>
+    <path d="M880 420l3 9 9 3-9 3-3 9-3-9-9-3 9-3z" opacity=".75"/>
+    <path d="M160 360l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" opacity=".55"/>
+  </g>
+
+
+  <!-- body -->
+  <path d="M215 1000c-10-190 80-330 285-345 205 15 295 155 285 345z" fill="url(#fur)"/>
+  <path d="M430 650c20 60 120 60 140 0 30 70 20 170-70 230-90-60-100-160-70-230z" fill="#f4f1ea"/>
+
+  <!-- soft shadow of the head on the chest -->
+  <ellipse cx="500" cy="680" rx="190" ry="40" fill="#000" opacity=".35" filter="url(#soft)"/>
+
+  <!-- ears -->
+  <path d="M292 360L262 150q-2-18 16-10l170 120z" fill="#161312" stroke="#161312" stroke-width="18" stroke-linejoin="round"/>
+  <path d="M708 360l30-210q2-18-16-10L552 260z" fill="#161312" stroke="#161312" stroke-width="18" stroke-linejoin="round"/>
+  <path d="M305 318l-18-136 112 88z" fill="#d99a9c" stroke="#d99a9c" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M695 318l18-136-112 88z" fill="#d99a9c" stroke="#d99a9c" stroke-width="10" stroke-linejoin="round"/>
+
+  <!-- head -->
+  <path d="M500 255c150 0 255 85 262 210 6 100-48 170-110 198-45 20-95 26-152 26s-107-6-152-26c-62-28-116-98-110-198 7-125 112-210 262-210z" fill="url(#fur)"/>
+  <!-- cheek fluff -->
+  <path d="M250 520c-22 30-30 60-28 92 25-14 40-22 58-28zM750 520c22 30 30 60 28 92-25-14-40-22-58-28z" fill="#141110"/>
+
+  <!-- white blaze and muzzle -->
+  <path d="M500 300c-14 48-42 96-46 150-10 52-44 90-50 140 18 64 68 92 96 92s78-28 96-92c-6-50-40-88-50-140-4-54-32-102-46-150z" fill="#f4f1ea"/>
+
+  <!-- eyes -->
+  <g>
+    <ellipse cx="392" cy="452" rx="62" ry="66" fill="#0b0a0a"/>
+    <ellipse cx="608" cy="452" rx="62" ry="66" fill="#0b0a0a"/>
+    <ellipse cx="392" cy="452" rx="54" ry="58" fill="url(#eye)"/>
+    <ellipse cx="608" cy="452" rx="54" ry="58" fill="url(#eye)"/>
+    <ellipse cx="396" cy="446" rx="23" ry="42" fill="#0b0a0a"/>
+    <ellipse cx="612" cy="446" rx="23" ry="42" fill="#0b0a0a"/>
+    <circle cx="380" cy="424" r="14" fill="#fff"/><circle cx="596" cy="424" r="14" fill="#fff"/>
+    <circle cx="410" cy="476" r="6" fill="#fff" opacity=".85"/><circle cx="626" cy="476" r="6" fill="#fff" opacity=".85"/>
+  </g>
+
+  <!-- nose and mouth -->
+  <path d="M474 560q26-12 52 0q-10 26-26 30q-16-4-26-30z" fill="#dc8f97"/>
+  <path d="M500 590v14M500 604q-20 22-44 8M500 604q20 22 44 8" fill="none" stroke="#6e5853" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="438" cy="606" rx="20" ry="11" fill="#f2a9a6" opacity=".45"/>
+  <ellipse cx="562" cy="606" rx="20" ry="11" fill="#f2a9a6" opacity=".45"/>
+
+  <!-- whiskers -->
+  <g fill="none" stroke="#fbf7ee" stroke-width="5" stroke-linecap="round" opacity=".92">
+    <path d="M430 590q-110-22-230-6M432 606q-110 0-224 34M436 620q-96 26-190 76"/>
+    <path d="M570 590q110-22 230-6M568 606q110 0 224 34M564 620q96 26 190 76"/>
+  </g>
+
+  <!-- the open book -->
+  <path d="M120 1000l52-196q166-40 328 6 162-46 328-6l52 196z" fill="#7b2e2a"/>
+  <path d="M175 812q160-38 325 10v178H150z" fill="url(#page-l)"/>
+  <path d="M825 812q-160-38-325 10v178h350z" fill="url(#page-r)"/>
+  <g stroke="#b9a98c" stroke-width="4" stroke-linecap="round" opacity=".5">
+    <path d="M215 862q120-22 240 2M210 900q125-20 245 2M205 938q128-18 250 2M200 976q130-16 255 2"/>
+    <path d="M785 862q-120-22-240 2M790 900q-125-20-245 2M795 938q-128-18-250 2M800 976q-130-16-255 2"/>
+  </g>
+  <path d="M500 822v178" stroke="#a88f6c" stroke-width="6"/>
+  <path d="M488 822h24v150l-12-12-12 12z" fill="#c9a45c"/>
+
+  <!-- paws resting on the pages -->
+  <ellipse cx="392" cy="778" rx="70" ry="56" fill="#141110"/>
+  <ellipse cx="608" cy="778" rx="70" ry="56" fill="#141110"/>
+  <ellipse cx="394" cy="812" rx="76" ry="44" fill="#f4f1ea"/>
+  <ellipse cx="606" cy="812" rx="76" ry="44" fill="#f4f1ea"/>
+  <g stroke="#cbc4b8" stroke-width="5" stroke-linecap="round">
+    <path d="M372 820v18M396 822v20M420 820v18M584 820v18M606 822v20M630 820v18"/>
+  </g>
+</svg>
