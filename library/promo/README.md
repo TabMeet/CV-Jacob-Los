@@ -134,6 +134,8 @@ A 28-second, fast, beat-cut listicle. Its structure comes from research into wha
 
 **The music** is `lofi.py`'s "rules" preset: 88 BPM, Fmaj9, G13, Em9, Am9, with the sound design built in.
 
+It's about 17 MB, at −14.5 LUFS. **`cover-rules.jpg`** (the hook: "this library has 3 rules.") works as a cover.
+
 **Using a trending sound.** If you post from a personal (not business) account, you can also add a trending sound in TikTok's editor at low volume under the original audio. Business accounts can only use TikTok's Commercial Music Library.
 
 Suggested caption:
