@@ -4,7 +4,10 @@
 ring-out. Rhodes-style electric piano (FM), soft boom-bap drums with swing, a
 round bass, a sparse melody, vinyl crackle, rain and gentle tape wobble.
 
-    python3 lofi.py out.wav [seconds]
+    python3 lofi.py out.wav [seconds] [preset]
+
+Presets: "cozy" (the first video: Fmaj9-Em7-Dm9-Cmaj9, 11 bars) and
+"shelves" (Ebmaj9-Dm7-Cm9-Bbmaj13, 12 bars, builds up as the shelves fill).
 """
 import sys
 import wave
@@ -110,26 +113,74 @@ def hat(open_=False):
 # --------------------------------------------------------------------------
 # The song
 
-# Fmaj9 - Em7 - Dm9 - Cmaj9 : a slow, warm descent.
-CHORDS = [
-    (41, [57, 60, 64, 67]),  # F2 | A3 C4 E4 G4
-    (40, [55, 59, 62, 67]),  # E2 | G3 B3 D4 G4
-    (38, [53, 57, 60, 64]),  # D2 | F3 A3 C4 E4
-    (36, [52, 55, 59, 62]),  # C2 | E3 G3 B3 D4
-]
-BARS = 11
-# Melody: (bar, beat offset, midi note) - pentatonic, sparse, answers the chords.
-MELODY = [
-    (2, 0.5, 79), (2, 1.5, 76), (2, 2.5, 74), (2, 3.25, 72),
-    (3, 1.0, 74), (3, 2.0, 76), (3, 3.0, 69),
-    (4, 0.5, 72), (4, 1.0, 74), (4, 2.5, 76), (4, 3.5, 79),
-    (5, 0.75, 81), (5, 2.0, 79), (5, 3.0, 76),
-    (6, 0.5, 79), (6, 1.5, 76), (6, 2.5, 74), (6, 3.25, 72),
-    (7, 1.0, 74), (7, 2.0, 72), (7, 3.0, 69),
-    (8, 0.5, 72), (8, 1.5, 76), (8, 2.5, 79), (8, 3.5, 84),
-    (9, 1.0, 81), (9, 2.5, 79),
-    (10, 0.5, 76), (10, 2.0, 72),
-]
+PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
+
+
+def pad(freqs, dur, vel=1.0):
+    """A soft, slow-swelling pad: pairs of gently detuned sines."""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    env = np.minimum(1, t / 1.4) * np.minimum(1, (dur - t) / 0.8).clip(0, 1)
+    s = sum(np.sin(2 * np.pi * f * t) + np.sin(2 * np.pi * f * 1.004 * t + 1.3) for f in freqs)
+    return s * env * vel / len(freqs)
+
+
+if PRESET == 'shelves':
+    # Ebmaj9 - Dm7(11) - Cm9 - Bbmaj13, and an arrangement that grows like the shelves.
+    CHORDS = [
+        (39, [55, 58, 62, 65]),
+        (38, [53, 57, 60, 67]),
+        (36, [51, 55, 58, 62]),
+        (34, [57, 62, 65, 67]),
+    ]
+    BARS = 12
+    MELODY = [
+        (2, 1.0, 77), (2, 2.5, 74), (3, 0.5, 72), (3, 2.0, 70),
+        (4, 0.5, 74), (4, 1.5, 77), (4, 2.5, 79), (5, 1.0, 77), (5, 2.0, 74), (5, 3.0, 72),
+        (6, 0.0, 82), (6, 1.5, 79), (6, 3.0, 77),
+        (7, 0.5, 74), (7, 1.0, 77), (7, 2.0, 79), (7, 3.5, 82), (8, 0.75, 84), (8, 2.0, 82), (8, 3.0, 79),
+        (9, 0.5, 77), (9, 1.5, 79), (9, 2.5, 82), (9, 3.25, 84), (10, 1.0, 86), (10, 2.5, 82), (10, 3.5, 79),
+        (11, 0.0, 77), (11, 1.5, 74), (11, 3.0, 70),
+    ]
+
+    def parts(bar):
+        return dict(
+            bass=2 <= bar <= 5 or bar >= 7,
+            drums='sparse' if bar in (4, 5) else 'full' if 7 <= bar <= 10 else None,
+            restrum=bar in (8, 9, 10),
+            pad=bar >= 7,
+            shaker=bar in (9, 10),
+        )
+else:
+    # Fmaj9 - Em7 - Dm9 - Cmaj9 : a slow, warm descent.
+    CHORDS = [
+        (41, [57, 60, 64, 67]),  # F2 | A3 C4 E4 G4
+        (40, [55, 59, 62, 67]),  # E2 | G3 B3 D4 G4
+        (38, [53, 57, 60, 64]),  # D2 | F3 A3 C4 E4
+        (36, [52, 55, 59, 62]),  # C2 | E3 G3 B3 D4
+    ]
+    BARS = 11
+    # Melody: (bar, beat offset, midi note) - pentatonic, sparse, answers the chords.
+    MELODY = [
+        (2, 0.5, 79), (2, 1.5, 76), (2, 2.5, 74), (2, 3.25, 72),
+        (3, 1.0, 74), (3, 2.0, 76), (3, 3.0, 69),
+        (4, 0.5, 72), (4, 1.0, 74), (4, 2.5, 76), (4, 3.5, 79),
+        (5, 0.75, 81), (5, 2.0, 79), (5, 3.0, 76),
+        (6, 0.5, 79), (6, 1.5, 76), (6, 2.5, 74), (6, 3.25, 72),
+        (7, 1.0, 74), (7, 2.0, 72), (7, 3.0, 69),
+        (8, 0.5, 72), (8, 1.5, 76), (8, 2.5, 79), (8, 3.5, 84),
+        (9, 1.0, 81), (9, 2.5, 79),
+        (10, 0.5, 76), (10, 2.0, 72),
+    ]
+
+    def parts(bar):
+        return dict(
+            bass=bar >= 1,
+            drums=None if bar < 1 or bar >= BARS - 1 else 'sparse' if bar >= BARS - 2 else 'full',
+            restrum=bar % 2 == 1,
+            pad=False,
+            shaker=False,
+        )
 
 keys = np.zeros(N)
 keys_r = np.zeros(N)
@@ -137,6 +188,7 @@ low = np.zeros(N)
 mel = np.zeros(N)
 drums = np.zeros(N)
 hats = np.zeros(N)
+pads = np.zeros(N)
 duck = np.zeros(N)
 
 kick_s, snare_s = kick(), snare()
@@ -146,38 +198,41 @@ for bar in range(BARS):
     start = bar * BAR
     root, voicing = CHORDS[bar % 4]
     last = bar == BARS - 1
-    # Rhodes: strummed chord on 1, a softer re-voice on the "and" of 3.
+    p = parts(bar)
+    # Rhodes: strummed chord on 1, sometimes a softer re-voice on the "and" of 3.
     for k, note in enumerate(voicing):
         jitter = k * 0.018 + rng.uniform(0, 0.008)
         dur = BAR * (1.9 if last else 1.0) + 0.6
         sig = rhodes(hz(note), dur, 0.34 * rng.uniform(0.85, 1.0))
         place(keys, sig, start + jitter)
         place(keys_r, sig, start + jitter + 0.011)  # a little width
-        if not last and bar % 2 == 1:
+        if not last and p['restrum']:
             sig2 = rhodes(hz(note), BEAT * 1.6, 0.13)
             place(keys, sig2, start + 2.5 * BEAT + jitter)
             place(keys_r, sig2, start + 2.5 * BEAT + jitter + 0.011)
-    # Bass from bar 1.
-    if bar >= 1 and not last:
+    if p['pad']:
+        place(pads, pad([hz(n) for n in voicing], BAR * (1.8 if last else 1.0) + 0.9, 0.5), start - 0.3)
+    if p['bass'] and not last:
         place(low, bass(hz(root), BEAT * 2.5 + swing + 0.3, 0.30), start)
         place(low, bass(hz(root + (7 if bar % 2 else 12)), BEAT * 1.5 + 0.3, 0.22), start + 2.5 * BEAT + swing)
-    if last:
+    if p['bass'] and last:
         place(low, bass(hz(root), BAR * 1.4, 0.26), start)
-    # Drums from bar 1; the last two bars thin out.
-    if 1 <= bar < BARS - 1:
-        sparse = bar >= BARS - 2
+    if p['drums']:
+        sparse = p['drums'] == 'sparse'
         for step in range(16):
             t = start + step * BEAT / 4 + (swing if step % 2 else 0)
             if step in (0, 7, 10) and not (sparse and step != 0):
                 place(drums, kick_s, t, 0.55 if step == 0 else 0.38)
                 place(duck, np.exp(-np.arange(int(0.5 * SR)) / SR * 7), t)
             if step in (4, 12):
-                place(drums, snare_s, t + 0.012, 0.42)
+                place(drums, snare_s, t + 0.012, 0.30 if sparse else 0.42)
             if step % 2 == 0:
                 place(hats, hat(), t, 0.16 if step % 4 == 0 else 0.10)
             elif not sparse and rng.random() < 0.25:
                 place(hats, hat(), t, 0.05)
-        if bar % 4 == 3:
+            if p['shaker'] and step % 2:
+                place(hats, hat(), t, 0.07)
+        if bar % 4 == 3 and not sparse:
             place(hats, hat(True), start + 3.5 * BEAT + swing, 0.08)
 
 for bar, beat, note in MELODY:
@@ -189,8 +244,8 @@ print('stem levels (dB RMS):', ', '.join(f'{k} {rms(v):.1f}' for k, v in dict(ke
 
 # Gentle sidechain pump and mixing.
 gain = 1 - 0.22 * np.clip(duck, 0, 1)
-music_l = (keys * gain + low * gain + mel * 1.05 + drums + hats * 7.0)
-music_r = (keys_r * gain + low * gain + mel * 0.85 + drums + hats * 8.5)
+music_l = (keys * gain + low * gain + mel * 1.05 + drums + hats * 7.0 + pads * 0.16 * gain)
+music_r = (keys_r * gain + low * gain + mel * 0.85 + drums + hats * 8.5 + pads * 0.16 * gain)
 
 # Tape: wobble (wow and flutter), a soft top end and warm saturation.
 t = np.arange(N) / SR

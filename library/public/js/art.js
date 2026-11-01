@@ -326,7 +326,7 @@ export function bookcaseSVG(genre, books) {
       const h = Math.round((ROW_H - 10) * s.height);
       const y = baseY - h;
       const lean = s.lean && x + w + 14 <= right ? ` transform="rotate(12 ${x + w} ${baseY})"` : '';
-      content += `<g${lean}><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.2" fill="${s.color}"/>`;
+      content += `<g class="book" data-book="${esc(books[i].id)}"${lean}><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.2" fill="${s.color}"/>`;
       if (s.bands) content += `<path d="M${x} ${y + 6}h${w}M${x} ${baseY - 7}h${w}" stroke="#e6c983" stroke-width="1.2" opacity=".7"/>`;
       content += `<rect x="${x + w - 2}" y="${y}" width="2" height="${h}" fill="#000" opacity=".18"/></g>`;
       x += w + (s.lean ? 6 : 1);

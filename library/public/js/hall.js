@@ -124,7 +124,7 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
 
   // -- movement ---------------------------------------------------------------
 
-  const state = { x: 120, target: null, mult: 1, pace: 1, zoom: 'fit', onArrive: null, facing: 1, cam: 0, scale: 1, offY: 0, enabled: true, zone: null, near: null };
+  const state = { x: 120, target: null, mult: 1, pace: 1, zoom: 'fit', closeUp: 1, focusY: 300, onArrive: null, facing: 1, cam: 0, scale: 1, offY: 0, enabled: true, zone: null, near: null };
   const keys = { left: false, right: false, run: false };
   const touchUI = matchMedia('(pointer: coarse)').matches;
   let frameListeners = [];
@@ -132,9 +132,12 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
   function measure() {
     const vw = viewport.clientWidth;
     const vh = viewport.clientHeight;
-    // 'fit' keeps at least 520 world units in view (phones); 'fill' fills the height (vertical video)
-    state.scale = state.zoom === 'fill' ? vh / WORLD_H : Math.min(vh / WORLD_H, vw / 520);
-    state.offY = Math.max(0, (vh - WORLD_H * state.scale) / 2);
+    // 'fit' keeps at least 520 world units in view (phones); 'fill' fills the height (vertical video).
+    // A close-up multiplies that, centred on focusY (a height in the hall, 0-600).
+    const base = state.zoom === 'fill' ? vh / WORLD_H : Math.min(vh / WORLD_H, vw / 520);
+    state.scale = base * Math.max(1, state.closeUp);
+    const h = WORLD_H * state.scale;
+    state.offY = h <= vh ? (vh - h) / 2 : Math.max(vh - h, Math.min(0, vh / 2 - state.focusY * state.scale));
     state.visibleW = vw / state.scale;
   }
   measure();
@@ -360,11 +363,32 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
 
   // -- public -----------------------------------------------------------------
 
-  function updateShelves(shelves) {
+  // Books already on display, so newly shelved ones can glow as they arrive.
+  // Arrival times are remembered, so a glow carries on smoothly even if the
+  // bookcase is redrawn while it's still glowing.
+  const shown = new Map();
+  const arrivedAt = new Map();
+  const GLOW_MS = 1400;
+  function updateShelves(shelves, { quiet = false } = {}) {
+    const now = performance.now();
     for (const s of shelves) {
       const node = shelfEls.get(s.id);
       const genre = genres.find((g) => g.id === s.id);
-      if (node && genre) node.innerHTML = art.bookcaseSVG(genre, s.books);
+      if (!node || !genre) continue;
+      const before = shown.get(s.id);
+      if (before && !quiet) for (const b of s.books) if (!before.has(b.id)) arrivedAt.set(b.id, now);
+      node.innerHTML = art.bookcaseSVG(genre, s.books);
+      for (const g of node.querySelectorAll('.book')) {
+        const t0 = arrivedAt.get(g.dataset.book);
+        if (t0 === undefined) continue;
+        if (now - t0 >= GLOW_MS) {
+          arrivedAt.delete(g.dataset.book);
+          continue;
+        }
+        g.classList.add('arrived');
+        g.style.animationDelay = `${-(now - t0)}ms`;
+      }
+      shown.set(s.id, new Set(s.books.map((b) => b.id)));
     }
   }
 
@@ -430,6 +454,13 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
     },
     setZoom(z) {
       state.zoom = z;
+      measure();
+      snapCamera();
+    },
+    /** A cinematic close-up: 1 = normal, 2 = twice as close, centred on a height in the hall. */
+    setCloseUp(factor, focusY = state.focusY) {
+      state.closeUp = factor;
+      state.focusY = focusY;
       measure();
       snapCamera();
     },
