@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Quiet Library</title>
+  <meta name="description" content="An anonymous library you can walk through. Read stories written by strangers, or write your own in the rooms at the back. You are not alone.">
+  <meta name="theme-color" content="#1b1512">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='4' width='6' height='24' rx='1' fill='%23a5443a'/%3E%3Crect x='12' y='7' width='5' height='21' rx='1' fill='%23c9a45c'/%3E%3Crect x='18' y='5' width='4' height='23' rx='1' fill='%233f6b5a'/%3E%3Crect x='23' y='9' width='5' height='19' rx='1' transform='rotate(8 25 18)' fill='%23f6efe1'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="css/library.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#directory-button">Skip to the library directory</a>
+
+  <div id="viewport" aria-label="The library hall. Walk with the arrow keys or by tapping where you want to go.">
+    <div id="world"></div>
+  </div>
+
+  <header class="hud" aria-label="Library">
+    <div class="hud-title">
+      <span class="hud-name" data-text="library">The Quiet Library</span>
+      <span class="hud-sub" id="hud-totals"></span>
+    </div>
+    <div class="hud-actions">
+      <span class="hud-presence" id="hud-presence" aria-live="polite" hidden></span>
+      <button class="hud-btn" id="sound-button" type="button" aria-pressed="false" title="Rain on the windows">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15a4 4 0 0 1 .5-8 5.5 5.5 0 0 1 10.4 1.6A3.5 3.5 0 0 1 17.5 15z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 18l-1 2M12 18l-1 2M16 18l-1 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span class="sr-only">Rain sounds</span>
+      </button>
+      <button class="hud-btn hud-btn-wide" id="directory-button" type="button" aria-label="Directory">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2z M9 4v14 M15 6v14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Directory</span>
+      </button>
+    </div>
+  </header>
+
+  <p class="hint" id="hint" aria-hidden="true"></p>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <div id="overlays"></div>
+
+  <noscript>
+    <p class="noscript">The Quiet Library needs JavaScript to open its doors. Please enable it and come in out of the rain.</p>
+  </noscript>
+</body>
+</html>
