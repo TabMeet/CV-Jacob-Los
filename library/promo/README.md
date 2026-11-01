@@ -37,17 +37,17 @@ The cuts land on the music's bar lines (72 BPM, so one bar is 3.3 s).
 
 ## 2 · The shelves grow fuller (`quiet-library-shelves.mp4`)
 
-A 40-second, more cinematic piece about one idea: every story someone writes makes the shelves a little fuller. It's shot like a short film, with no visible visitor, a free-moving camera and real crossfades between shots. The wording describes the vision ("it starts with one book… until every shelf is full"), because the library isn't open yet.
+A 42-second, more cinematic piece about one idea: every story someone writes makes the shelves a little fuller. It's shot like a short film, with no visible visitor, a free-moving camera and real crossfades between shots. The wording describes the vision ("it starts with one book… until every shelf is full"), because the library isn't open yet.
 
 | Time | Shot | Camera | On-screen text |
 | --- | --- | --- | --- |
 | 0–6.7 s | One book glows onto an empty shelf | Focus pull, then a slow pull-back from a 2.7× close-up | *watch this shelf · it starts with one book.* |
-| 6.7–13.3 s | The writing-room door glowing: "Someone is writing." | Slow push-in | *someone writes a story in a room at the back…* |
+| 6.7–13.3 s | The writing-room door glowing, with the silhouette of someone writing behind the frosted glass: "Someone is writing." | Slow push-in | *someone writes a story in a room at the back…* |
 | 13.3–20 s | Books land one by one, each with a warm glow, faster and faster. A counter starts. | Gentle push-in | *…and it finds a place on a shelf.* |
 | 20–23.3 s | Fade through black. Ink's window as the sky turns night → dawn → day → dusk → night. | Slow push-in | *night after night,* |
 | 23.3–30 s | Two bookcases fill in bursts, in time with the hi-hats. The counter climbs past 400. | Pull-back and drift | *more people write. the shelves grow fuller.* |
 | 30–36.7 s | Every shelf full, readers in the armchairs | One long tracking shot down the hall | *until every shelf is full of someone.* |
-| 36.7–40.5 s | End card over a full bookcase | Push-in | *every story makes the library a little less empty. · add yours. · The Quiet Library · opening soon* |
+| 36.7–42.5 s | End card over a full bookcase | Push-in | *every story makes the library a little less empty. · add yours. · The Quiet Library · opening soon* |
 
 **Dust and fades.** Dust drifts in the lamplight throughout. Shots are joined with crossfades on the bar lines, plus one fade through black for "night after night".
 
@@ -74,7 +74,7 @@ python3 promo/lofi.py promo/lofi.wav 38 cozy
 node promo/make-tiktok.cjs promo/lofi.wav promo/quiet-library-tiktok.mp4
 
 # video 2: the shelves grow fuller
-python3 promo/lofi.py promo/lofi-shelves.wav 41 shelves
+python3 promo/lofi.py promo/lofi-shelves.wav 43 shelves
 node promo/make-tiktok-shelves.cjs promo/lofi-shelves.wav promo/quiet-library-shelves.mp4
 ```
 

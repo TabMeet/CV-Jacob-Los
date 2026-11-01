@@ -4,7 +4,7 @@
 // lo-fi preset (72 BPM, so one bar = 3.333 s).
 //
 //   npm run build:local
-//   python3 promo/lofi.py promo/lofi-shelves.wav 41 shelves
+//   python3 promo/lofi.py promo/lofi-shelves.wav 43 shelves
 //   node promo/make-tiktok-shelves.cjs promo/lofi-shelves.wav promo/quiet-library-shelves.mp4
 
 const { spawnSync } = require('node:child_process');
@@ -21,7 +21,7 @@ if (!audio) {
 const FILE = path.join(__dirname, '..', 'dist', 'quiet-library-local.html');
 const WORK = fs.mkdtempSync(path.join(os.tmpdir(), 'ql-shelves-'));
 const B = (60 / 72) * 4; // one bar
-const LENGTH = 40.5;
+const LENGTH = 42.5;
 
 // -- the books that will fill the shelves ------------------------------------
 // Only spines are ever shown, so titles here just set each spine's width.
@@ -60,6 +60,7 @@ const FILM_CSS = `
     padding: 12px 26px 14px; border-radius: 22px; background: rgba(22,14,9,.62); backdrop-filter: blur(4px);
     box-shadow: 0 0 0 1px rgba(233,201,138,.25), 0 10px 30px rgba(0,0,0,.45); opacity: 0; transition: opacity .6s; }
   #tt-count.on { opacity: 1; }
+  #tt-count.high { top: 27%; }
   #tt-count b { display: block; font: 700 58px/1 'Cormorant Garamond', serif; color: #fbe7b8; font-variant-numeric: lining-nums tabular-nums;
     text-shadow: 0 0 22px rgba(255,214,140,.35); }
   #tt-count span { font: 600 25px/1 'Caveat', cursive; color: #e9c98a; }
@@ -69,13 +70,13 @@ const FILM_CSS = `
     text-align: center; gap: 4px; padding: 0 8% 150px; color: #fbf1dc;
     background: radial-gradient(ellipse at 50% 40%, rgba(22,14,9,.5), rgba(10,6,4,.9) 72%);
     backdrop-filter: blur(5px); animation: tt-fade 1.4s ease both; }
-  #tt-end .l1 { font: 600 36px/1.12 'Caveat', cursive; color: #fbf1dc; animation: tt-in 1.1s .2s both; }
-  #tt-end .l2 { font: italic 600 44px/1.1 'Cormorant Garamond', serif; color: #e9c98a; margin-top: 10px; animation: tt-in 1.1s .9s both;
+  #tt-end .l1 { font: 600 41px/1.12 'Caveat', cursive; color: #fbf1dc; animation: tt-in 1s .1s both; }
+  #tt-end .l2 { font: italic 600 52px/1.1 'Cormorant Garamond', serif; color: #e9c98a; margin-top: 12px; animation: tt-in 1s .6s both;
     text-shadow: 0 0 26px rgba(255,214,140,.3); }
-  #tt-end .orn { font-size: 22px; color: rgba(233,201,138,.7); margin: 22px 0 8px; animation: tt-in 1s 1.4s both; }
-  #tt-end h1 { margin: 0; font: 700 48px/1 'Cormorant Garamond', serif; animation: tt-in 1.1s 1.5s both; }
-  #tt-end .soon { margin-top: 14px; font: 500 15px/1 'EB Garamond', serif; letter-spacing: .32em; text-transform: uppercase;
-    color: rgba(251,241,220,.75); animation: tt-in 1s 1.8s both; }
+  #tt-end .orn { font-size: 24px; color: rgba(233,201,138,.75); margin: 24px 0 8px; animation: tt-in 1s 1s both; }
+  #tt-end h1 { margin: 0; font: 700 56px/1 'Cormorant Garamond', serif; text-shadow: 0 0 30px rgba(255,214,140,.25); animation: tt-in 1s 1.1s both; }
+  #tt-end .soon { margin-top: 16px; font: 500 17px/1 'EB Garamond', serif; letter-spacing: .32em; text-transform: uppercase;
+    color: rgba(251,241,220,.8); animation: tt-in 1s 1.4s both; }
   @keyframes tt-fade { from { opacity: 0; } }
 `;
 
@@ -129,13 +130,14 @@ function pageSetup() {
     }
   };
 
-  window.__frame = ({ x, zoom, focusY, blur, t, dust, count }) => {
+  window.__frame = ({ x, zoom, focusY, blur, t, dust, count, countHigh }) => {
     lib.hall.teleport(x);
     lib.hall.setCloseUp(zoom, focusY);
     document.getElementById('viewport').style.filter = blur > 0.05 ? `blur(${blur.toFixed(2)}px)` : '';
     window.__dust(t, dust);
     const box = document.getElementById('tt-count');
     box.classList.toggle('on', count != null);
+    box.classList.toggle('high', countHigh);
     if (count != null) {
       box.querySelector('b').textContent = Math.round(count).toLocaleString('en');
       box.querySelector('span').textContent = Math.round(count) === 1 ? 'story on the shelves' : 'stories on the shelves';
@@ -164,7 +166,7 @@ function pageSetup() {
   const presence = (zones) => js((z) => window.__setPresence({ total: 1 + Object.values(z).reduce((a, b) => a + b, 0), zones: z }, 'hall'), zones);
 
   // A shot: from `start` to `end` on the global timeline, with a camera and timed events.
-  async function shot(name, { start, end, setup, camera, events = [], dust = 1, count = () => null }) {
+  async function shot(name, { start, end, setup, camera, events = [], dust = 1, count = () => null, countHigh = false }) {
     dir = path.join(WORK, name);
     fs.mkdirSync(dir);
     n = 0;
@@ -175,7 +177,7 @@ function pageSetup() {
       const g = start + i / FPS;
       while (queue.length && queue[0].at <= g) await queue.shift().run();
       const c = camera(g);
-      await js((f) => window.__frame(f), { x: c.x, zoom: c.zoom, focusY: c.focusY, blur: c.blur ?? 0, t: g, dust: typeof dust === 'function' ? dust(g) : dust, count: count(g) });
+      await js((f) => window.__frame(f), { x: c.x, zoom: c.zoom, focusY: c.focusY, blur: c.blur ?? 0, t: g, dust: typeof dust === 'function' ? dust(g) : dust, count: count(g), countHigh });
       await film.shoot();
     }
     console.log(`  shot ${name}: ${frames} frames`);
@@ -195,7 +197,7 @@ function pageSetup() {
     setup: async () => { await shelves(empty, true); await presence({}); },
     camera: (g) => ({
       x: tween(g, 0.4, 7, 1292, 1365), zoom: tween(g, 0.4, 7, 2.7, 1.12), focusY: tween(g, 0.4, 7, 186, 300),
-      blur: tween(g, 0.1, 1.9, 7, 0),
+      blur: tween(g, 0.05, 1.4, 4.5, 0),
     }),
     events: [
       { at: 0.0, run: () => caption('it starts with one book.', 'watch this shelf') },
@@ -208,7 +210,7 @@ function pageSetup() {
   shots.push(await shot('b', {
     start: 2 * B - T.fade / 2, end: 4 * B + T.fade / 2,
     setup: () => presence({ 'writing:1': 1 }),
-    camera: (g) => ({ x: writingX, zoom: tween(g, 6.3, 13.8, 1.05, 1.55), focusY: tween(g, 6.3, 13.8, 260, 215) }),
+    camera: (g) => ({ x: writingX, zoom: tween(g, 6.3, 13.8, 1.02, 1.32), focusY: tween(g, 6.3, 13.8, 270, 225) }),
     events: [
       { at: 7.0, run: () => caption('someone writes a story<br>in a room at the back…') },
       { at: 12.6, run: () => caption(null) },
@@ -243,6 +245,7 @@ function pageSetup() {
       { at: 23.0, run: () => caption(null) },
     ],
     dust: 0.6,
+    countHigh: true, // keep Ink in view
     count: (g) => tween(g, 20.0, 23.4, 13, 64, (t) => t),
   }));
 
@@ -290,9 +293,9 @@ function pageSetup() {
   shots.push(await shot('g', {
     start: 11 * B - T.fade / 2, end: LENGTH,
     setup: () => presence({ reading: 3 }),
-    camera: (g) => ({ x: tween(g, 36.2, 40.5, 4060, 4050), zoom: tween(g, 36.2, 40.5, 1.08, 1.38), focusY: tween(g, 36.2, 40.5, 300, 285) }),
+    camera: (g) => ({ x: tween(g, 36.2, LENGTH, 4060, 4050), zoom: tween(g, 36.2, LENGTH, 1.08, 1.42), focusY: tween(g, 36.2, LENGTH, 300, 285) }),
     events: [
-      { at: 36.9, run: () => js(() => document.body.insertAdjacentHTML('beforeend', `<div id="tt-end">
+      { at: 36.8, run: () => js(() => document.body.insertAdjacentHTML('beforeend', `<div id="tt-end">
         <div class="l1">every story makes the library<br>a little less empty.</div>
         <div class="l2">add yours.</div><div class="orn">❦</div>
         <h1>The Quiet Library</h1><div class="soon">opening soon</div></div>`)) },
@@ -318,7 +321,7 @@ function pageSetup() {
     'colorbalance=rs=0.04:gs=0.01:bs=-0.05:rm=0.05:bm=-0.04:rh=0.03:bh=-0.03',
     'split[a][b];[b]gblur=sigma=18[g];[a][g]blend=all_mode=screen:all_opacity=0.15',
     'vignette=angle=PI/4.4', 'noise=alls=5:allf=t+u',
-    'fade=t=in:st=0:d=0.5', `fade=t=out:st=${LENGTH - 1.1}:d=1.1`, 'format=yuv420p',
+    'fade=t=in:st=0:d=0.25', `fade=t=out:st=${LENGTH - 1.1}:d=1.1`, 'format=yuv420p',
   ].join(',');
   graph += `${last}${grade}[v];[${shots.length}:a]loudnorm=I=-14:TP=-1.5:LRA=11,afade=t=out:st=${LENGTH - 1.4}:d=1.4,aresample=48000[a]`;
 

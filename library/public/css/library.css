@@ -244,6 +244,11 @@ button { cursor: pointer; }
 
 .writing-door .door-glow { opacity: .15; transition: opacity 1s; }
 .writing-door.lit .door-glow { opacity: 1; }
+/* behind the frosted glass: someone at a desk, only while a room is in use */
+.writing-door .door-writer { opacity: 0; transition: opacity 1.2s; }
+.writing-door.lit .door-writer { opacity: .6; }
+.writing-door .frost { opacity: .55; transition: opacity 1s; }
+.writing-door.lit .frost { opacity: .2; }
 .door-sign {
   position: absolute; z-index: 2; transform: translateX(-50%) rotate(-2deg); width: 150px; text-align: center;
   background: var(--paper); color: var(--ink-soft); font-family: var(--hand); font-size: 19px; line-height: 1.05;

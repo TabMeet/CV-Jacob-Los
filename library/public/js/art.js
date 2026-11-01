@@ -403,9 +403,17 @@ export function writingDoorSVG() {
   return `<svg viewBox="0 0 300 400" class="art" aria-hidden="true">
     <rect x="10" y="20" width="280" height="380" fill="#24160f"/>
     <rect x="24" y="34" width="252" height="366" fill="#3a241a"/>
-    <g class="door-glow"><rect x="44" y="60" width="96" height="150" rx="4" fill="#f6dba6"/><rect x="160" y="60" width="96" height="150" rx="4" fill="#f6dba6"/></g>
-    <rect x="44" y="60" width="96" height="150" rx="4" fill="#e8dcc6" opacity=".55"/><rect x="160" y="60" width="96" height="150" rx="4" fill="#e8dcc6" opacity=".55"/>
-    <g font-family="Cormorant Garamond, serif" font-weight="700" fill="#9a7638" text-anchor="middle" letter-spacing="3">
+    <defs>
+      <radialGradient id="g-doorlight" cx="50%" cy="58%" r="75%"><stop offset="0" stop-color="#ffe7b4"/><stop offset=".65" stop-color="#f2c37a"/><stop offset="1" stop-color="#c88743"/></radialGradient>
+      <filter id="f-frost" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.2"/></filter>
+    </defs>
+    <g class="door-glow"><rect x="44" y="60" width="96" height="150" rx="4" fill="url(#g-doorlight)"/><rect x="160" y="60" width="96" height="150" rx="4" fill="url(#g-doorlight)"/></g>
+    <g class="door-writer" filter="url(#f-frost)" fill="#4a2d1a">
+      <circle cx="196" cy="142" r="12"/><path d="M174 192q2-34 22-38 20 4 22 38z"/>
+      <rect x="164" y="190" width="80" height="6" rx="2"/><path d="M236 166l-9 14h18z"/><rect x="234" y="179" width="3" height="12"/>
+    </g>
+    <g class="frost"><rect x="44" y="60" width="96" height="150" rx="4" fill="#e8dcc6"/><rect x="160" y="60" width="96" height="150" rx="4" fill="#e8dcc6"/></g>
+    <g font-family="Cormorant Garamond, serif" font-weight="700" fill="#5c3d1c" text-anchor="middle" letter-spacing="3">
       <text x="92" y="128" font-size="15">WRITING</text><text x="208" y="128" font-size="15">ROOMS</text>
       <text x="150" y="160" font-size="10" letter-spacing="2" font-style="italic" font-weight="500">— at the back —</text>
     </g>
