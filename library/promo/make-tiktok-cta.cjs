@@ -45,15 +45,18 @@ const FILM_CSS = `
   .tt-line { font: italic 600 35px/1.14 'Cormorant Garamond', serif; color: #fbf1dc; letter-spacing: .01em;
     text-shadow: 0 2px 16px rgba(0,0,0,.9), 0 0 3px rgba(0,0,0,.7); }
   .tt-cap.big .tt-line { font-size: 41px; line-height: 1.12; }
+  .tt-cap.pill .tt-pill { display: inline-block; padding: 12px 22px 14px; border-radius: 20px; background: rgba(24,16,11,.8);
+    box-shadow: 0 8px 26px rgba(0,0,0,.35), 0 0 0 1px rgba(233,201,138,.18); }
+  .room .name-choice, .room .anon-note, .room .sheet > .row, .room .title-ideas { display: none !important; }
   @keyframes tt-in { from { opacity: 0; transform: translateY(12px); filter: blur(6px); } }
   @keyframes tt-out { to { opacity: 0; transform: translateY(-8px); filter: blur(6px); } }
 
   /* the call to action */
   #tt-cta { position: fixed; inset: 0; z-index: 999; pointer-events: none; }
-  #tt-cta .wrap { position: absolute; left: 6%; right: 6%; top: 15%; text-align: center; }
-  #tt-cta .ask { font: 700 47px/1.08 'Cormorant Garamond', serif; color: #fff4dc; text-shadow: 0 0 30px rgba(255,214,140,.35), 0 2px 16px rgba(0,0,0,.9);
+  #tt-cta .wrap { position: absolute; left: 6%; right: 6%; top: 20%; text-align: center; }
+  #tt-cta .tt-ask { font: 700 47px/1.08 'Cormorant Garamond', serif; color: #fff4dc; text-shadow: 0 0 30px rgba(255,214,140,.35), 0 2px 16px rgba(0,0,0,.9);
     animation: tt-in .9s cubic-bezier(.2,.7,.2,1) both; }
-  #tt-cta .ask em { color: #f2c46d; font-style: italic; }
+  #tt-cta .tt-ask em { color: #f2c46d; font-style: italic; }
   #tt-cta .sub { margin-top: 12px; font: 600 33px/1 'Caveat', cursive; color: #e9c98a; text-shadow: 0 2px 10px rgba(0,0,0,.85);
     animation: tt-in .9s .5s cubic-bezier(.2,.7,.2,1) both; }
   #tt-cta svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -91,7 +94,7 @@ function pageSetup() {
   window.__setPresence = lib.hall.setPresence;
   lib.hall.setPresence = () => {};
 
-  window.__caption = (html, { kicker = '', big = false } = {}) => {
+  window.__caption = (html, { kicker = '', big = false, pill = false } = {}) => {
     for (const old of document.querySelectorAll('.tt-cap:not(.out)')) {
       old.classList.add('out');
       setTimeout(() => old.remove(), 700);
@@ -99,8 +102,9 @@ function pageSetup() {
     document.getElementById('tt-shade').classList.toggle('on', Boolean(html));
     if (!html) return;
     const box = document.createElement('div');
-    box.className = `tt-cap${big ? ' big' : ''}`;
-    box.innerHTML = `${kicker ? `<div class="tt-kicker">${kicker}</div>` : ''}<div class="tt-line">${html}</div>`;
+    box.className = `tt-cap${big ? ' big' : ''}${pill ? ' pill' : ''}`;
+    const inner = `${kicker ? `<div class="tt-kicker">${kicker}</div>` : ''}<div class="tt-line">${html}</div>`;
+    box.innerHTML = pill ? `<div class="tt-pill">${inner}</div>` : inner;
     document.body.append(box);
   };
 
@@ -220,17 +224,19 @@ function pageSetup() {
         const input = document.querySelector('.title-input');
         input.value = title;
         input.dispatchEvent(new Event('input', { bubbles: true }));
-        document.querySelector('.story-input').focus();
+        const story = document.querySelector('.story-input');
+        story.placeholder = '';
+        story.focus();
       }, TITLE);
     },
     camera: (g) => (g < 9.3
-      ? { el: { sel: '.room', scale: tween(g, 0, 7.6, 1.62, 1.0), origin: '50% 31%' } }
+      ? { el: { sel: '.room', scale: tween(g, 0, 7.6, 1.16, 1.0), origin: '50% 24%' } }
       : { el: { sel: '.overlay .panel.shelved', scale: tween(g, 9.3, 13.8, 1.0, 1.07), origin: '50% 40%' } }),
     events: [
-      { at: 0.0, run: () => caption('every book here starts<br>with a blank page.', { kicker: 'the quiet library' }) },
+      { at: 0.0, run: () => caption('every book here starts<br>with a blank page.', { kicker: 'the quiet library', pill: true }) },
       { at: 0.9, type: LETTER, every: 2 },
       { at: 6.2, run: () => caption(null) },
-      { at: 6.9, run: () => caption('no name. no profile.<br>just your words.') },
+      { at: 6.9, run: () => caption('no name. no profile.<br>just your words.', { pill: true }) },
       { at: 8.0, run: () => click('.sheet-foot .btn') },
       { at: 12.9, run: () => caption(null) },
     ],
@@ -290,9 +296,9 @@ function pageSetup() {
       { at: 20.1, run: () => caption('if you could leave one sentence<br>for a stranger,<br>what would it say?', { big: true }) },
       { at: 23.0, run: () => caption(null) },
       { at: 23.4, run: () => js(() => document.body.insertAdjacentHTML('beforeend', `<div id="tt-cta">
-          <div class="wrap"><div class="ask">leave it in<br><em>the comments.</em></div><div class="sub">Ink reads every single one.</div></div>
+          <div class="wrap"><div class="tt-ask">leave it in<br><em>the comments.</em></div><div class="sub">Ink reads every single one.</div></div>
           <svg viewBox="0 0 540 960" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M330 342C420 360 474 440 478 588"/><path class="head" d="M458 566L478 594L497 568"/>
+            <path d="M352 378C430 396 476 460 478 588"/><path class="head" d="M458 566L478 594L497 568"/>
             <circle cx="490" cy="612" r="26"/>
           </svg></div>`)) },
       { at: 26.7, run: () => js(() => {
