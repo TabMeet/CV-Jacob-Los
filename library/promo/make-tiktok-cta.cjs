@@ -47,6 +47,7 @@ const FILM_CSS = `
   .tt-cap.big .tt-line { font-size: 41px; line-height: 1.12; }
   .tt-cap.pill .tt-pill { display: inline-block; padding: 12px 22px 14px; border-radius: 20px; background: rgba(24,16,11,.8);
     box-shadow: 0 8px 26px rgba(0,0,0,.35), 0 0 0 1px rgba(233,201,138,.18); }
+  .tt-cap.low { top: auto; bottom: 31%; }
   .room .name-choice, .room .anon-note, .room .sheet > .row, .room .title-ideas { display: none !important; }
   @keyframes tt-in { from { opacity: 0; transform: translateY(12px); filter: blur(6px); } }
   @keyframes tt-out { to { opacity: 0; transform: translateY(-8px); filter: blur(6px); } }
@@ -94,15 +95,15 @@ function pageSetup() {
   window.__setPresence = lib.hall.setPresence;
   lib.hall.setPresence = () => {};
 
-  window.__caption = (html, { kicker = '', big = false, pill = false } = {}) => {
+  window.__caption = (html, { kicker = '', big = false, pill = false, low = false } = {}) => {
     for (const old of document.querySelectorAll('.tt-cap:not(.out)')) {
       old.classList.add('out');
       setTimeout(() => old.remove(), 700);
     }
-    document.getElementById('tt-shade').classList.toggle('on', Boolean(html));
+    document.getElementById('tt-shade').classList.toggle('on', Boolean(html) && !low);
     if (!html) return;
     const box = document.createElement('div');
-    box.className = `tt-cap${big ? ' big' : ''}${pill ? ' pill' : ''}`;
+    box.className = `tt-cap${big ? ' big' : ''}${pill ? ' pill' : ''}${low ? ' low' : ''}`;
     const inner = `${kicker ? `<div class="tt-kicker">${kicker}</div>` : ''}<div class="tt-line">${html}</div>`;
     box.innerHTML = pill ? `<div class="tt-pill">${inner}</div>` : inner;
     document.body.append(box);
@@ -233,10 +234,10 @@ function pageSetup() {
       ? { el: { sel: '.room', scale: tween(g, 0, 7.6, 1.16, 1.0), origin: '50% 24%' } }
       : { el: { sel: '.overlay .panel.shelved', scale: tween(g, 9.3, 13.8, 1.0, 1.07), origin: '50% 40%' } }),
     events: [
-      { at: 0.0, run: () => caption('every book here starts<br>with a blank page.', { kicker: 'the quiet library', pill: true }) },
+      { at: 0.0, run: () => caption('every book here starts<br>with a blank page.', { kicker: 'the quiet library', pill: true, low: true }) },
       { at: 0.9, type: LETTER, every: 2 },
       { at: 6.2, run: () => caption(null) },
-      { at: 6.9, run: () => caption('no name. no profile.<br>just your words.', { pill: true }) },
+      { at: 6.9, run: () => caption('no name. no profile.<br>just your words.', { pill: true, low: true }) },
       { at: 8.0, run: () => click('.sheet-foot .btn') },
       { at: 12.9, run: () => caption(null) },
     ],

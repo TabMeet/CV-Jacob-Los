@@ -73,6 +73,32 @@ Suggested caption:
 >
 > #booktok #lofi #cozy #writingcommunity #indiedev #youarenotalone #cozyaesthetic #library
 
+## 3 · The blank page, with a call to action (`quiet-library-cta.mp4`)
+
+A 32-second video built around two asks. The main one is **comment**: an easy question that invites an answer. The second is **follow**, so viewers are there for opening night. Comments are what push a TikTok to more people, and a following is what you'll need on launch day.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–9 s | A writing room. *"Dear stranger, I don't know you, but I hope tonight is gentle with you."* is typed onto the page. | *the quiet library · every book here starts with a blank page.* |
+| 7–13 s | It's brought to the front desk, and Mrs. Wren binds it: "For Whoever Reads This" | *no name. no profile. just your words.* |
+| 13–17 s | It glows onto the Letters & Diaries shelf | *it finds a place on a shelf…* |
+| 17–20 s | A stranger reads it, ending on "The first reader… Today that was you." | *…and one day, a stranger sits down and reads it.* |
+| 20–23 s | Fade through black to Ink in the rainy window | *if you could leave one sentence for a stranger, what would it say?* |
+| 23–27 s | **The call to action.** A hand-drawn arrow draws itself to TikTok's comment button and pulses there. | **leave it in the comments.** *Ink reads every single one.* |
+| 27–32.5 s | **The follow card:** Ink's profile picture with a pulsing red follow "+" | **follow, so you're here when the doors open.** *· The Quiet Library · opening soon* |
+
+**The music** is `lofi.py`'s "letter" preset (Am9, Dm9, G13, Cmaj9). It drops to piano and melody for the question, then the whole band comes back for the call to action.
+
+**Replying to comments.** "Ink reads every single one" is a promise: reply to some comments in Ink's voice (for example *mrrp. this one's going on the shelf.*). Replies are also good for reach.
+
+It's about 18 MB, at −14 LUFS.
+
+Suggested caption, with the question repeated so people can answer without watching again:
+
+> if you could leave one sentence for a stranger, what would it say? leave it below. Ink reads every one. 🐈‍⬛ the quiet library opens soon, follow so you're here when the doors open.
+>
+> #booktok #lofi #cozy #writingcommunity #youarenotalone #strangers #cozyaesthetic #library
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -88,8 +114,12 @@ node promo/make-tiktok.cjs promo/lofi.wav promo/quiet-library-tiktok.mp4
 # video 2: the shelves grow fuller
 python3 promo/lofi.py promo/lofi-shelves.wav 43 shelves
 node promo/make-tiktok-shelves.cjs promo/lofi-shelves.wav promo/quiet-library-shelves.mp4
+
+# video 3: the blank page, with a call to action
+python3 promo/lofi.py promo/lofi-letter.wav 34 letter
+node promo/make-tiktok-cta.cjs promo/lofi-letter.wav promo/quiet-library-cta.mp4
 ```
 
 Each takes 5–10 minutes. Every frame is rendered on a paused clock, so walks, blinks and page turns are perfectly smooth, and the result is the same on every run.
 
-To change the scenes, the words or the timing, edit `make-tiktok.cjs` or `make-tiktok-shelves.cjs`. In the second script, each shot is a `shot()` with a camera function: position, zoom and focus over time. The captions are plain HTML strings, and `BAR` is one bar of music. The palette, chords and tempo are at the top of `lofi.py`. If you change `BPM` there, change `BAR` in `make-tiktok.cjs` to match.
+To change the scenes, the words or the timing, edit `make-tiktok.cjs`, `make-tiktok-shelves.cjs` or `make-tiktok-cta.cjs`. In the second and third scripts, each shot is a `shot()` with a camera function: position, zoom and focus over time. The captions are plain HTML strings, and `BAR` is one bar of music. The palette, chords and tempo are at the top of `lofi.py`. If you change `BPM` there, change `BAR` in `make-tiktok.cjs` to match.
