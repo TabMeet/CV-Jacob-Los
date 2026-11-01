@@ -55,6 +55,8 @@ A 42-second, more cinematic piece about one idea: every story someone writes mak
 
 **Staged numbers.** The books, the counter and the readers' silhouettes are staged for the video. The captions describe what the library is for, not real numbers.
 
+It's about 26 MB, at −14 LUFS. **`cover-shelves.jpg`** (the opening frame: one glowing book) works as a cover.
+
 Suggested caption:
 
 > it starts with one book. every story someone writes takes a place on a shelf, until the whole library is full of people who aren't alone anymore. would you add yours?

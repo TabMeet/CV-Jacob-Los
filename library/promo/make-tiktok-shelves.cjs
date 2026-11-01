@@ -323,7 +323,7 @@ function pageSetup() {
     'vignette=angle=PI/4.4', 'noise=alls=5:allf=t+u',
     'fade=t=in:st=0:d=0.25', `fade=t=out:st=${LENGTH - 1.1}:d=1.1`, 'format=yuv420p',
   ].join(',');
-  graph += `${last}${grade}[v];[${shots.length}:a]loudnorm=I=-14:TP=-1.5:LRA=11,afade=t=out:st=${LENGTH - 1.4}:d=1.4,aresample=48000[a]`;
+  graph += `${last}${grade}[v];[${shots.length}:a]loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,alimiter=limit=0.72:attack=1:release=80:level=disabled,afade=t=out:st=${LENGTH - 1.4}:d=1.4[a]`;
 
   const res = spawnSync('ffmpeg', [
     '-y', '-hide_banner', '-loglevel', 'error', ...inputs, '-i', audio,
