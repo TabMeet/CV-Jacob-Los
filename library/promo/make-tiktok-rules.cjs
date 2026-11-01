@@ -84,12 +84,14 @@ const FILM_CSS = `
   #world { will-change: auto !important; }
   #tt-shade { position: fixed; left: 0; right: 0; top: 0; height: 300px; z-index: 998; pointer-events: none;
     background: linear-gradient(rgba(14,9,6,.7), rgba(14,9,6,.28) 60%, rgba(14,9,6,0)); }
-  .tt-kin { position: fixed; left: 4%; right: 4%; top: 80px; z-index: 999; text-align: center; pointer-events: none; }
+  .tt-kin { position: fixed; left: 4%; right: 4%; top: 80px; z-index: 999; text-align: center; pointer-events: none; font-variant-numeric: lining-nums; }
   .tt-kin.out { animation: kin-out .16s ease-in both; }
   .tt-kin .kk { font: 700 30px/1 'Caveat', cursive; color: #f2c46d; margin-bottom: 6px; text-shadow: 0 2px 10px rgba(0,0,0,.9);
     animation: kin-pop .35s cubic-bezier(.2,1.5,.35,1) both; }
-  .tt-kin .ln { font: 700 46px/1.06 'Cormorant Garamond', serif; color: #fff6e2; letter-spacing: .005em;
-    text-shadow: 0 3px 14px rgba(0,0,0,.95), 0 0 2px rgba(0,0,0,.8); }
+  .tt-kin .ln { display: table; margin: 4px auto 0; padding: 2px 16px 8px; border-radius: 16px; background: rgba(22,14,9,.78);
+    box-shadow: 0 6px 20px rgba(0,0,0,.35); font: 700 46px/1.06 'Cormorant Garamond', serif; color: #fff6e2; letter-spacing: .005em;
+    text-shadow: 0 2px 8px rgba(0,0,0,.6); animation: kin-pop .35s cubic-bezier(.2,1.5,.35,1) both; }
+  .tt-kin .kk { display: table; margin: 0 auto; padding: 4px 14px 6px; border-radius: 12px; background: rgba(22,14,9,.78); }
   .tt-kin.xl .ln { font-size: 60px; }
   .tt-kin .w { display: inline-block; animation: kin-pop .42s cubic-bezier(.2,1.6,.35,1) both; }
   .tt-kin .k { color: #f6c25b; text-shadow: 0 0 24px rgba(246,194,91,.45), 0 3px 14px rgba(0,0,0,.95); }
@@ -99,11 +101,11 @@ const FILM_CSS = `
   #tt-chap { position: fixed; inset: 0; z-index: 997; display: flex; flex-direction: column; align-items: center; justify-content: center;
     background: rgba(12,8,5,.62); backdrop-filter: blur(6px); animation: chap 0.48s ease both; pointer-events: none; }
   #tt-chap .r { font: 700 44px/1 'Caveat', cursive; color: #f2c46d; }
-  #tt-chap .n { font: 700 260px/0.9 'Cormorant Garamond', serif; color: #fff6e2; text-shadow: 0 0 60px rgba(246,194,91,.45); }
+  #tt-chap .n { font-variant-numeric: lining-nums; font: 700 260px/0.9 'Cormorant Garamond', serif; color: #fff6e2; text-shadow: 0 0 60px rgba(246,194,91,.45); }
   @keyframes chap { 0% { opacity: 0; transform: scale(1.15); } 22% { opacity: 1; transform: scale(1); } 78% { opacity: 1; } 100% { opacity: 0; transform: scale(.94); } }
 
-  .tt-mrrp { position: fixed; left: 0; right: 0; top: 66%; z-index: 999; text-align: center; font: 700 46px/1 'Caveat', cursive; color: #fff6e2;
-    text-shadow: 0 3px 14px rgba(0,0,0,.95); animation: kin-pop .5s cubic-bezier(.2,1.6,.35,1) both; pointer-events: none; }
+  .tt-mrrp { position: fixed; left: 64%; top: 47%; z-index: 999; padding: 4px 16px 8px; border-radius: 16px; background: rgba(22,14,9,.8);
+    font: 700 44px/1 'Caveat', cursive; color: #fff6e2; transform: rotate(-6deg); animation: kin-pop .5s cubic-bezier(.2,1.6,.35,1) both; pointer-events: none; }
 
   #tt-end4 { position: fixed; inset: 0; z-index: 997; pointer-events: none;
     background: radial-gradient(ellipse at 50% 38%, rgba(22,14,9,.45), rgba(10,6,4,.88) 74%); animation: chap-in .5s ease both; }
@@ -134,6 +136,7 @@ function pageSetup() {
     if (html) document.body.insertAdjacentHTML('beforeend', html);
   };
   window.__chapter = (n) => {
+    window.__kin(null);
     document.getElementById('tt-chap')?.remove();
     document.body.insertAdjacentHTML('beforeend', `<div id="tt-chap"><div class="r">rule</div><div class="n">${n}</div></div>`);
     setTimeout(() => document.getElementById('tt-chap')?.remove(), 480);

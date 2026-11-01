@@ -99,6 +99,51 @@ Suggested caption, with the question repeated so people can answer without watch
 >
 > #booktok #lofi #cozy #writingcommunity #youarenotalone #strangers #cozyaesthetic #library
 
+## 4 · "This library has 3 rules" (`quiet-library-rules.mp4`)
+
+A 28-second, fast, beat-cut listicle. Its structure comes from research into what's working on TikTok in late 2026 (sources below).
+
+**What the research said**, and how this video does it:
+
+| What works now | In this video |
+| --- | --- |
+| 20–35 s is the reach sweet spot; 60-second videos "that should have been 25" underperform | 28.4 s |
+| A half-second flash of the payoff before the hook lifts 2-second retention; hook within 1–3 s (TikTok counts a "qualified view" at 5 s) | 0.7 s of Ink's eyes, then the hook at 0.7 s |
+| A numbered promise ("3 rules", "5 mistakes") gives a built-in reason to keep watching | "this library has **3 rules.**" |
+| Chapter cards every 5–8 s; a pattern interrupt about every 4 s; cuts on the beat | Chapter cards at 2.7, 8.2 and 13.6 s; 17 hard cuts on the beat (88 BPM) |
+| "Static captions are dead": word-by-word timing, pops on keywords, a colour shift on the twist | Words pop in one by one, keywords in gold, on TikTok-style dark text boxes |
+| Sound design: whooshes on transitions, risers into reveals, a silent beat before the punchline | Whooshes on every chapter card, a riser through bar 7, a **tape-stop into a frozen, silent beat**, then an impact on "the cat sees everything" |
+| Polished editing on casual-feeling footage; no long branded intros or outros, no heavy transition packs | Hard cuts only, and a 3.9 s end card |
+| Hook text top-centre, bottom 20% clear | All text in the top third, plus one end line at 57% |
+| Cozy is fall 2026's dominant mood; BookTok is moving toward "books that feel like a hug" | Rain, lamplight, a cat, and a library that's kind to you |
+
+**The cut:**
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–0.7 s | Payoff flash: Ink's eyes | none |
+| 0.7–2.7 s | Mrs. Wren at the front desk | *this library has* **3 rules.** |
+| 2.7–8.2 s | Chapter card **1**, then the Letters case, the shelf of titles, Mrs. Wren's face, a book card | **no names.** · *nobody knows who wrote what.* · *not even mrs. wren.* · *no author. just the story.* |
+| 8.2–13.6 s | Chapter card **2**, then the Poetry case, read counts on the spines, an unread book, "The first reader" | *the only number: how many read it.* · *no likes. no followers.* · *nobody has read this one yet…* · *so… be the first.* |
+| 13.6–19.1 s | Chapter card **3**, then a reader in an armchair, the glowing writing-room door, a pan past readers, a second armchair | *you're never the only one here.* · *someone's always writing… reading…* · *even at 3 a.m.* |
+| 19.1–21.8 s | A slow push in on Ink. The riser, then a tape-stop into a frozen, silent frame. | *oh, and one more thing…* |
+| 21.8–24.5 s | **Drop:** close on Ink, eyes darting left and right on the beat | **the cat sees everything.** *mrrp.* |
+| 24.5–28.4 s | End card: an arrow to the comment button | *your turn · which rule would you* **break first?** · *The Quiet Library · opening soon · follow for opening night* |
+
+**Staged content.** The library in this video is staged: the extra book titles, the read counts and the readers' silhouettes. The library isn't open yet.
+
+**The music** is `lofi.py`'s "rules" preset: 88 BPM, Fmaj9, G13, Em9, Am9, with the sound design built in.
+
+**Using a trending sound.** If you post from a personal (not business) account, you can also add a trending sound in TikTok's editor at low volume under the original audio. Business accounts can only use TikTok's Commercial Music Library.
+
+Suggested caption:
+
+> this library has 3 rules. which one would you break first? 👀 the quiet library opens soon, follow so you're here when the doors open.
+>
+> #booktok #cozy #lofi #library #writingcommunity #youarenotalone #catsoftiktok #cozyaesthetic
+
+Research sources: [Vortex Xcel: TikTok editing trends 2026](https://vortexxcel.com/tiktok-editing-trends-2026/) · [HookClone: trending formats 2026](https://www.hookclone.com/blog/trending-tiktok-formats-2026) · [OpusClip: length and retention](https://www.opus.pro/blog/tiktok-length-format-retention-data) · [Sprout Social: TikTok algorithm 2026](https://sproutsocial.com/insights/tiktok-algorithm/) · [SocialPilot: November 2026 trends](https://www.socialpilot.co/blog/tiktok-trends) · [NewEngen: October 2026 trends](https://newengen.com/insights/tiktok-trends/) · [INFLOW: TikTok's autumn feed](https://inflownetwork.com/tiktok-trends-october-2026/) · [Lit Love Box: BookTok 2026](https://litlovebox.com/blogs/lit-love-bookish-blog/the-most-popular-booktok-books-right-now-2026-edition). Most of these are marketing blogs rather than TikTok itself, so treat the numbers as rough.
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -118,6 +163,10 @@ node promo/make-tiktok-shelves.cjs promo/lofi-shelves.wav promo/quiet-library-sh
 # video 3: the blank page, with a call to action
 python3 promo/lofi.py promo/lofi-letter.wav 34 letter
 node promo/make-tiktok-cta.cjs promo/lofi-letter.wav promo/quiet-library-cta.mp4
+
+# video 4: this library has 3 rules
+python3 promo/lofi.py promo/lofi-rules.wav 29.5 rules
+node promo/make-tiktok-rules.cjs promo/lofi-rules.wav promo/quiet-library-rules.mp4
 ```
 
 Each takes 5–10 minutes. Every frame is rendered on a paused clock, so walks, blinks and page turns are perfectly smooth, and the result is the same on every run.
