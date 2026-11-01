@@ -76,7 +76,7 @@ function kin(text, { kicker = '', size = '', step = 0.075 } = {}) {
     if (w.endsWith('*')) { key = false; w = w.slice(0, -1); }
     return `<span class="w${k ? ' k' : ''}" style="animation-delay:${(i++ * step).toFixed(3)}s">${escHTML(w)}</span>`;
   }).join(' '));
-  return `<div class="tt-kin ${size}">${kicker ? `<div class="kk">${escHTML(kicker)}</div>` : ''}${lines.map((l) => `<div class="ln">${l}</div>`).join('')}</div>`;
+  return `<div class="tt-kin ${size}">${kicker ? `<div class="kk"><span class="bx">${escHTML(kicker)}</span></div>` : ''}${lines.map((l) => `<div class="ln"><span class="bx">${l}</span></div>`).join('')}</div>`;
 }
 
 const FILM_CSS = `
@@ -88,11 +88,13 @@ const FILM_CSS = `
   .tt-kin.out { animation: kin-out .16s ease-in both; }
   .tt-kin .kk { font: 700 30px/1 'Caveat', cursive; color: #f2c46d; margin-bottom: 6px; text-shadow: 0 2px 10px rgba(0,0,0,.9);
     animation: kin-pop .35s cubic-bezier(.2,1.5,.35,1) both; }
-  .tt-kin .ln { display: table; margin: 4px auto 0; padding: 2px 16px 8px; border-radius: 16px; background: rgba(22,14,9,.78);
-    box-shadow: 0 6px 20px rgba(0,0,0,.35); font: 700 46px/1.06 'Cormorant Garamond', serif; color: #fff6e2; letter-spacing: .005em;
-    text-shadow: 0 2px 8px rgba(0,0,0,.6); animation: kin-pop .35s cubic-bezier(.2,1.5,.35,1) both; }
-  .tt-kin .kk { display: table; margin: 0 auto; padding: 4px 14px 6px; border-radius: 12px; background: rgba(22,14,9,.78); }
+  .tt-kin .ln { margin-top: 4px; font: 700 46px/1.06 'Cormorant Garamond', serif; font-variant-numeric: lining-nums; color: #fff6e2; letter-spacing: .005em;
+    text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+  .tt-kin .bx { display: inline-block; padding: 2px 16px 8px; border-radius: 16px; background: rgba(22,14,9,.78);
+    box-shadow: 0 6px 20px rgba(0,0,0,.35); animation: kin-pop .35s cubic-bezier(.2,1.5,.35,1) both; }
+  .tt-kin .kk .bx { padding: 4px 14px 6px; border-radius: 12px; }
   .tt-kin.xl .ln { font-size: 60px; }
+  .tt-kin .ln, .tt-kin .w { font-feature-settings: 'lnum' 1; }
   .tt-kin .w { display: inline-block; animation: kin-pop .42s cubic-bezier(.2,1.6,.35,1) both; }
   .tt-kin .k { color: #f6c25b; text-shadow: 0 0 24px rgba(246,194,91,.45), 0 3px 14px rgba(0,0,0,.95); }
   @keyframes kin-pop { 0% { opacity: 0; transform: translateY(14px) scale(1.45); filter: blur(5px); } 55% { opacity: 1; transform: scale(.95); filter: blur(0); } 100% { transform: none; } }
@@ -101,7 +103,7 @@ const FILM_CSS = `
   #tt-chap { position: fixed; inset: 0; z-index: 997; display: flex; flex-direction: column; align-items: center; justify-content: center;
     background: rgba(12,8,5,.62); backdrop-filter: blur(6px); animation: chap 0.48s ease both; pointer-events: none; }
   #tt-chap .r { font: 700 44px/1 'Caveat', cursive; color: #f2c46d; }
-  #tt-chap .n { font-variant-numeric: lining-nums; font: 700 260px/0.9 'Cormorant Garamond', serif; color: #fff6e2; text-shadow: 0 0 60px rgba(246,194,91,.45); }
+  #tt-chap .n { font: 700 260px/0.9 'Cormorant Garamond', serif; font-variant-numeric: lining-nums; font-feature-settings: 'lnum' 1; color: #fff6e2; text-shadow: 0 0 60px rgba(246,194,91,.45); }
   @keyframes chap { 0% { opacity: 0; transform: scale(1.15); } 22% { opacity: 1; transform: scale(1); } 78% { opacity: 1; } 100% { opacity: 0; transform: scale(.94); } }
 
   .tt-mrrp { position: fixed; left: 64%; top: 47%; z-index: 999; padding: 4px 16px 8px; border-radius: 16px; background: rgba(22,14,9,.8);
