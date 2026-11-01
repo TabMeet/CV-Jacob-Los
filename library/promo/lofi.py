@@ -7,7 +7,8 @@ round bass, a sparse melody, vinyl crackle, rain and gentle tape wobble.
     python3 lofi.py out.wav [seconds] [preset]
 
 Presets: "cozy" (the first video: Fmaj9-Em7-Dm9-Cmaj9, 11 bars) and
-"shelves" (Ebmaj9-Dm7-Cm9-Bbmaj13, 12 bars, builds up as the shelves fill).
+"shelves" (Ebmaj9-Dm7-Cm9-Bbmaj13, 12 bars, builds up as the shelves fill) and
+"letter" (Am9-Dm9-G13-Cmaj9, 10 bars, drops to piano for the question, lifts for the call to action).
 """
 import sys
 import wave
@@ -150,6 +151,34 @@ if PRESET == 'shelves':
             restrum=bar in (8, 9, 10),
             pad=bar >= 7,
             shaker=bar in (9, 10),
+        )
+elif PRESET == 'letter':
+    # Am9 - Dm9 - G13 - Cmaj9: a warm ii-V-I that feels like a letter being written.
+    # Piano alone for the typing, a lift as the book is shelved, a hush for the question,
+    # then everything back for the call to action.
+    CHORDS = [
+        (45, [60, 64, 67, 71]),
+        (38, [53, 57, 60, 64]),
+        (43, [53, 59, 64, 69]),
+        (36, [52, 55, 59, 62]),
+    ]
+    BARS = 10
+    MELODY = [
+        (4, 1.0, 76), (4, 2.5, 79),
+        (5, 0.5, 81), (5, 1.5, 79), (5, 2.5, 76), (5, 3.25, 74),
+        (6, 0.0, 72), (6, 1.0, 74), (6, 2.0, 76), (6, 3.0, 79),
+        (7, 0.5, 81), (7, 1.5, 84), (7, 2.5, 81), (7, 3.5, 79),
+        (8, 0.5, 76), (8, 1.5, 79), (8, 2.5, 74), (8, 3.25, 72),
+        (9, 0.0, 76), (9, 1.5, 72),
+    ]
+
+    def parts(bar):
+        return dict(
+            bass=2 <= bar <= 5 or bar >= 7,
+            drums='sparse' if bar in (2, 3) else 'full' if bar in (4, 5, 7, 8) else None,
+            restrum=bar in (7, 8),
+            pad=bar >= 6,
+            shaker=bar in (7, 8),
         )
 else:
     # Fmaj9 - Em7 - Dm9 - Cmaj9 : a slow, warm descent.
