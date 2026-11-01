@@ -5,19 +5,24 @@ const { chromium } = require('playwright');
 
 const FPS = 30;
 
-async function openLibrary({ file, width = 540, height = 960, scale = 2, startTime, studio, seed = 7 }) {
+async function openLibrary({ file, width = 540, height = 960, scale = 2, startTime, studio, seed = 7, storage = {} }) {
   const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: scale });
   const page = await context.newPage();
   page.on('pageerror', (e) => console.error('pageerror:', e.message));
   await page.clock.install({ time: startTime });
-  await page.addInitScript(({ studio, seed }) => {
+  await page.addInitScript(({ studio, seed, storage }) => {
     // Same "random" choices on every run.
     let s = seed >>> 0;
     Math.random = () => ((s = (Math.imul(s ^ (s >>> 15), 2246822507) + 0x6d2b79f5) >>> 0) / 4294967296);
     localStorage.setItem('ql.studio', JSON.stringify(studio));
     localStorage.setItem('ql.local.welcomed', 'true');
     localStorage.setItem('ql.visited', 'true');
+    // Staged content for a video (e.g. a library with read counts), set before the app loads.
+    if (!sessionStorage.getItem('tt.staged')) {
+      for (const [k, v] of Object.entries(storage)) localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+      sessionStorage.setItem('tt.staged', '1');
+    }
     addEventListener('library:ready', (e) => { window.__lib = e.detail; });
     // Step every CSS animation/transition to the page's (fake) time.
     const seen = new WeakMap();
@@ -32,7 +37,7 @@ async function openLibrary({ file, width = 540, height = 960, scale = 2, startTi
         a.currentTime = st.offset + (now - st.start);
       }
     };
-  }, { studio, seed });
+  }, { studio, seed, storage });
   await page.goto(`file://${file}`);
   await page.waitForFunction(() => window.__lib);
   await page.evaluate(() => document.fonts.ready);

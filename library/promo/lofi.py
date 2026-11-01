@@ -8,7 +8,8 @@ round bass, a sparse melody, vinyl crackle, rain and gentle tape wobble.
 
 Presets: "cozy" (the first video: Fmaj9-Em7-Dm9-Cmaj9, 11 bars) and
 "shelves" (Ebmaj9-Dm7-Cm9-Bbmaj13, 12 bars, builds up as the shelves fill) and
-"letter" (Am9-Dm9-G13-Cmaj9, 10 bars, drops to piano for the question, lifts for the call to action).
+"letter" (Am9-Dm9-G13-Cmaj9, 10 bars, drops to piano for the question, lifts for the call to action) and
+"rules" (88 BPM, Fmaj9-G13-Em9-Am9, 11 bars, whooshes, a riser, a tape-stop and a drop for a fast edit).
 """
 import sys
 import wave
@@ -16,7 +17,8 @@ import wave
 import numpy as np
 
 SR = 44100
-BPM = 72
+PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
+BPM = 88 if PRESET == 'rules' else 72
 BEAT = 60 / BPM
 BAR = 4 * BEAT
 DURATION = float(sys.argv[2]) if len(sys.argv) > 2 else 38.0
@@ -114,9 +116,6 @@ def hat(open_=False):
 # --------------------------------------------------------------------------
 # The song
 
-PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
-
-
 def pad(freqs, dur, vel=1.0):
     """A soft, slow-swelling pad: pairs of gently detuned sines."""
     n = int(dur * SR)
@@ -151,6 +150,32 @@ if PRESET == 'shelves':
             restrum=bar in (8, 9, 10),
             pad=bar >= 7,
             shaker=bar in (9, 10),
+        )
+elif PRESET == 'rules':
+    # 88 BPM, Fmaj9 - G13 - Em9 - Am9: brighter and bouncier for a fast, beat-cut edit.
+    # Bar 7 thins to hats with a riser and tape-stops into a silent beat; bar 8 drops.
+    CHORDS = [
+        (41, [57, 60, 64, 67]),
+        (43, [53, 59, 64, 69]),
+        (40, [55, 59, 62, 66]),
+        (45, [55, 60, 64, 71]),
+    ]
+    BARS = 11
+    MELODY = [
+        (1, 0.5, 76), (1, 1.5, 79), (1, 2.5, 81), (2, 0.5, 79), (2, 2.0, 76),
+        (3, 0.5, 72), (3, 1.5, 74), (3, 2.5, 76), (4, 0.5, 79), (4, 2.0, 74),
+        (5, 0.5, 81), (5, 1.5, 84), (5, 2.5, 81), (6, 0.5, 79), (6, 2.0, 76), (6, 3.0, 74),
+        (8, 0.0, 84), (8, 1.0, 81), (8, 2.0, 79), (8, 3.0, 76),
+        (9, 0.5, 74), (9, 2.0, 72), (10, 0.0, 77),
+    ]
+
+    def parts(bar):
+        return dict(
+            bass=bar not in (7,),
+            drums='full' if bar <= 6 or bar == 8 else 'hats' if bar == 7 else 'sparse' if bar == 9 else None,
+            restrum=bar in (2, 4, 6, 8),
+            pad=bar in (5, 6, 8, 9, 10),
+            shaker=bar in (5, 6, 8),
         )
 elif PRESET == 'letter':
     # Am9 - Dm9 - G13 - Cmaj9: a warm ii-V-I that feels like a letter being written.
@@ -248,8 +273,12 @@ for bar in range(BARS):
         place(low, bass(hz(root), BAR * 1.4, 0.26), start)
     if p['drums']:
         sparse = p['drums'] == 'sparse'
+        hats_only = p['drums'] == 'hats'
         for step in range(16):
             t = start + step * BEAT / 4 + (swing if step % 2 else 0)
+            if hats_only:
+                place(hats, hat(), t, 0.06 + 0.10 * step / 15)
+                continue
             if step in (0, 7, 10) and not (sparse and step != 0):
                 place(drums, kick_s, t, 0.55 if step == 0 else 0.38)
                 place(duck, np.exp(-np.arange(int(0.5 * SR)) / SR * 7), t)
@@ -303,8 +332,65 @@ rain_level = np.interp(t, [0, 3.0, 3.6, DURATION - 3, DURATION], [0.20, 0.20, 0.
 left = music_l * 0.55 + crackle + hiss + rain_channel() * rain_level
 right = music_r * 0.55 + crackle + hiss + rain_channel() * rain_level
 
+if PRESET == 'rules':
+    # Sound design for a fast edit: whooshes on cuts and chapter cards, a riser into the
+    # reveal, a tape-stop and a silent beat before the punchline, and an impact on the drop.
+    def one_pole(x, cutoff):
+        # time-varying one-pole lowpass; cutoff is an array (Hz) the same length as x
+        a = np.broadcast_to(np.exp(-2 * np.pi * np.asarray(cutoff, dtype=float) / SR), x.shape)
+        y = np.empty_like(x)
+        acc = 0.0
+        for i in range(len(x)):
+            acc = (1 - a[i]) * x[i] + a[i] * acc
+            y[i] = acc
+        return y
+
+    def whoosh(dur=0.5, level=0.42):
+        n = int(dur * SR)
+        u = np.linspace(0, 1, n)
+        w = one_pole(rng.standard_normal(n), 300 + 5200 * np.sin(np.pi * u) ** 2)
+        w = w / (np.abs(w).max() + 1e-9) * np.sin(np.pi * u) ** 2 * level
+        return w * (1 - u), w * u  # sweeps left to right
+
+    def riser(dur, level=0.22):
+        n = int(dur * SR)
+        u = np.linspace(0, 1, n)
+        noise = one_pole(rng.standard_normal(n), 250 + 6500 * u ** 2)
+        noise /= np.abs(noise).max() + 1e-9
+        tone = np.sin(2 * np.pi * np.cumsum(220 + 700 * u ** 2) / SR) * 0.35
+        return (noise + tone) * u ** 2.2 * level
+
+    def impact(level=0.42):
+        n = int(1.0 * SR)
+        tt = np.arange(n) / SR
+        boom = np.sin(2 * np.pi * np.cumsum(38 + 60 * np.exp(-tt * 18)) / SR) * np.exp(-tt * 4.5)
+        crack = one_pole(rng.standard_normal(n), 3000 * np.exp(-tt * 30) + 200) * np.exp(-tt * 25)
+        return np.tanh(1.5 * (boom + crack * 0.6)) * level
+
+    b8 = 8 * BAR
+    stop_at = b8 - 0.26
+    # riser through bar 7, up to the stop
+    place(left, riser(stop_at - 7 * BAR), 7 * BAR)
+    place(right, riser(stop_at - 7 * BAR), 7 * BAR)
+    # tape stop: the playback slows to nothing over 0.45 s, then a silent beat
+    i0, i1, i2 = int((stop_at - 0.45) * SR), int(stop_at * SR), int(b8 * SR)
+    for ch in (left, right):
+        seg = ch[i0:i2].copy()
+        u = np.linspace(0, 1, i1 - i0)
+        pos = np.cumsum((1 - u) ** 1.6)  # playback position, slowing down
+        ch[i0:i1] = np.interp(pos, np.arange(len(seg)), seg) * (1 - u ** 3)
+        ch[i1:i2] = 0
+    # whooshes: the payoff flash, the hook cut, each chapter card, and the end card
+    for at in (0.0, BEAT, BAR, 3 * BAR, 5 * BAR, 9 * BAR):
+        l_w, r_w = whoosh()
+        place(left, l_w, max(0, at - 0.22))
+        place(right, r_w, max(0, at - 0.22))
+    hit = impact()
+    place(left, hit, b8)
+    place(right, hit, b8)
+
 # Fade in the first moment, ring out at the end.
-fade = np.interp(t, [0, 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])
+fade = np.interp(t, [0, 0.01 if PRESET == 'rules' else 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])
 stereo = np.stack([left * fade, right * fade], axis=1)
 stereo /= np.abs(stereo).max() / 0.89
 
