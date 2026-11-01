@@ -91,7 +91,7 @@ A 32-second video built around two asks. The main one is **comment**: an easy qu
 
 **Replying to comments.** "Ink reads every single one" is a promise: reply to some comments in Ink's voice (for example *mrrp. this one's going on the shelf.*). Replies are also good for reach.
 
-It's about 18 MB, at −14 LUFS.
+It's about 18 MB, at −14 LUFS. **`cover-cta.jpg`** (Ink under the question) makes a strong cover for your profile grid.
 
 Suggested caption, with the question repeated so people can answer without watching again:
 
