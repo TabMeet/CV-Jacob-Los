@@ -7,9 +7,9 @@
 // library still works (more plainly) without an API key or when a call fails.
 
 import Anthropic from '@anthropic-ai/sdk';
-import { GENRES, GENRE_IDS, isGenre } from './genres.js';
-import * as offline from './fallback.js';
-import { LIBRARIAN, CAT } from './characters.js';
+import { GENRES, GENRE_IDS, isGenre } from '../shared/genres.js';
+import * as offline from '../shared/fallback.js';
+import { LIBRARIAN, CAT } from '../shared/characters.js';
 
 const MODEL = process.env.LIBRARY_MODEL || 'claude-opus-5-5';
 const EFFORT = process.env.LIBRARY_EFFORT || 'low';
@@ -249,33 +249,5 @@ export async function askLibrarian(message, history, catalog, ctx) {
 }
 
 function offlineLibrarian(message, { db }) {
-  if (offline.soundsLikeCrisis(message)) {
-    return {
-      reply: `Oh, my dear. I'm so glad you told me. You matter, and you don't have to carry this alone. Please reach out to someone right now: a person you trust, your local emergency number, or a free helpline (findahelpline.com lists them). I'll keep a chair warm for you here.`,
-      bookIds: db.random(1, { genre: 'life' }).map((b) => b.id),
-      walkTo: null,
-      by: 'offline',
-    };
-  }
-  const words = offline.keywords(message);
-  const genre = offline.genreFromRequest(message);
-  const wantsUnread = /\b(unread|nobody|no one|no-one|first|new)\b/i.test(message);
-  const surprise = /\b(surprise|anything|random|whatever)\b/i.test(message);
-  let books = [];
-  if (wantsUnread) books = db.random(3, { unreadFirst: true });
-  if (!books.length && genre) books = db.random(3, { genre });
-  if (!books.length && !surprise) books = db.search(words, 3);
-  if (!books.length && surprise) books = db.random(3);
-
-  let reply;
-  if (books.length) {
-    reply = wantsUnread
-      ? `These are still waiting for their very first reader. Wouldn't it be lovely to be the one?`
-      : `I think one of these might be what you're after, dear. Take your time.`;
-  } else if (genre) {
-    reply = `I don't have quite the thing on hand, I'm afraid. You might have a wander along the ${GENRES.find((g) => g.id === genre).name} shelf, though.`;
-  } else {
-    reply = `I'm not sure I have that one yet, dear. Perhaps it's waiting for you to write it; the writing rooms are just at the back.`;
-  }
-  return { reply, bookIds: books.map((b) => b.id), walkTo: genre, by: 'offline' };
+  return { ...offline.offlineLibrarian(message, db), by: 'offline' };
 }

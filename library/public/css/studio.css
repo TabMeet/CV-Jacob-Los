@@ -1,0 +1,68 @@
+/* The Studio (local edition only). Deliberately looks like a tool, not like the library. */
+
+body.framed { background: #0b0908; }
+body.framed #stage { box-shadow: 0 0 0 1px rgba(246,239,225,.22), 0 20px 60px rgba(0,0,0,.6); }
+.frame-label {
+  position: fixed; z-index: 150; font: 13px/1 system-ui, sans-serif; color: rgba(246,239,225,.6); letter-spacing: .02em;
+}
+
+body.clean-shot .hud,
+body.clean-shot .hint,
+body.clean-shot .prompt,
+body.clean-shot .skip-link { display: none !important; }
+body.clean-shot:not(.framed) .studio-toggle { opacity: 0; }
+body.clean-shot:not(.framed) .studio-toggle:hover, body.clean-shot:not(.framed) .studio-toggle:focus-visible { opacity: 1; }
+body.recording:not(.framed) .studio-toggle { opacity: 0; pointer-events: none; }
+
+.studio-toggle {
+  position: fixed; right: 14px; bottom: 14px; z-index: 201; display: inline-flex; align-items: center; gap: 8px;
+  height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(246,239,225,.3);
+  background: rgba(20,16,14,.85); color: #f3e7cf; font: 600 14px/1 system-ui, sans-serif; transition: opacity .3s;
+}
+.studio-toggle .rec-dot { width: 9px; height: 9px; border-radius: 50%; background: #9a8f80; }
+.studio-toggle.is-recording .rec-dot { background: #e5484d; animation: rec 1s steps(2) infinite; }
+@keyframes rec { 50% { opacity: .25; } }
+
+.studio {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 340px; z-index: 200; overflow-y: auto;
+  background: #18130f; color: #eae2d2; border-left: 1px solid rgba(246,239,225,.12);
+  font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 0 0 70px;
+  box-shadow: -12px 0 40px rgba(0,0,0,.4);
+}
+.studio[hidden] { display: none; }
+.studio-head { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: #18130f; border-bottom: 1px solid rgba(246,239,225,.1); }
+.studio-head strong { display: block; font-size: 16px; }
+.studio-head small { color: #a99d8b; }
+.studio .x { background: none; border: 0; color: #a99d8b; font-size: 24px; width: 34px; height: 34px; border-radius: 8px; }
+.studio .x:hover { background: rgba(246,239,225,.08); }
+.studio details { border-bottom: 1px solid rgba(246,239,225,.08); }
+.studio summary { cursor: pointer; padding: 12px 16px; font-weight: 650; letter-spacing: .02em; text-transform: uppercase; font-size: 12px; color: #c9a45c; }
+.studio .sec { padding: 0 16px 14px; display: flex; flex-direction: column; gap: 8px; }
+.studio .label { margin: 6px 0 0; color: #a99d8b; font-size: 12px; }
+.studio .note { margin: 0; color: #a99d8b; font-size: 12.5px; }
+.studio .keys { padding: 12px 16px; }
+.studio button, .studio .file {
+  font: inherit; color: #eae2d2; background: rgba(246,239,225,.06); border: 1px solid rgba(246,239,225,.14);
+  border-radius: 8px; padding: 7px 10px; cursor: pointer; text-align: left;
+}
+.studio button:hover, .studio .file:hover { background: rgba(246,239,225,.12); }
+.studio button[aria-pressed="true"] { background: #c9a45c; color: #1b1512; border-color: #c9a45c; font-weight: 600; }
+.studio .stack { display: flex; flex-direction: column; gap: 4px; }
+.studio .seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.studio .seg button { padding: 6px 9px; }
+.studio .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.studio .chip { font-size: 12.5px; padding: 5px 8px; }
+.studio .big { padding: 10px 12px; font-weight: 650; text-align: center; }
+.studio .big.rec { background: #8c2b2b; border-color: #b33a3a; }
+.studio .big.rec:hover { background: #a33232; }
+.studio .file input { display: none; }
+.studio .check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.studio .check input { margin-top: 3px; accent-color: #c9a45c; }
+.studio .check small { display: block; color: #a99d8b; font-size: 12px; }
+.studio .slider { display: flex; flex-direction: column; gap: 4px; }
+.studio .slider > span { display: flex; justify-content: space-between; }
+.studio .slider output { color: #c9a45c; font-variant-numeric: tabular-nums; }
+.studio input[type="range"] { accent-color: #c9a45c; }
+.studio textarea, .studio input[type="text"] {
+  font: inherit; color: #eae2d2; background: #0f0c0a; border: 1px solid rgba(246,239,225,.16); border-radius: 8px; padding: 8px 10px; resize: vertical;
+}

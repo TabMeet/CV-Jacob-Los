@@ -40,6 +40,11 @@ export const local = storage('localStorage');
 export const session = storage('sessionStorage');
 
 let memoReader = null;
+export function resetReader() {
+  memoReader = null;
+  local.remove('ql.reader');
+  session.remove('ql.desk');
+}
 export function readerToken() {
   if (memoReader) return memoReader;
   memoReader = local.get('ql.reader') ?? randomId();
@@ -63,7 +68,23 @@ export class ApiError extends Error {
   }
 }
 
+// The local edition swaps the server for a backend that lives in this browser.
+let backend = null;
+export function useLocalBackend(b) {
+  backend = b;
+}
+export const isLocal = () => backend !== null;
+
+/** Live updates: who is here, and what's happening. */
+export function connectEvents(handlers) {
+  if (backend) return backend.connect(handlers);
+  const events = new EventSource('/api/events');
+  for (const [type, fn] of Object.entries(handlers)) events.addEventListener(type, (e) => fn(JSON.parse(e.data)));
+  return () => events.close();
+}
+
 export async function api(path, { method = 'GET', body } = {}) {
+  if (backend) return backend.request(path, { method, body });
   let res;
   try {
     res = await fetch(path, {

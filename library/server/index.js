@@ -4,7 +4,7 @@ import { openLibraryDb } from './db.js';
 import { createPresence } from './presence.js';
 import { createApp } from './app.js';
 import { aiEnabled } from './ai.js';
-import { LIBRARY } from './characters.js';
+import { LIBRARY } from '../shared/characters.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const DB_FILE = process.env.LIBRARY_DB || join(here, '..', 'data', 'library.db');

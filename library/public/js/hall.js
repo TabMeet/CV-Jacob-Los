@@ -124,7 +124,7 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
 
   // -- movement ---------------------------------------------------------------
 
-  const state = { x: 120, target: null, mult: 1, onArrive: null, facing: 1, cam: 0, scale: 1, offY: 0, enabled: true, zone: null, near: null };
+  const state = { x: 120, target: null, mult: 1, pace: 1, zoom: 'fit', onArrive: null, facing: 1, cam: 0, scale: 1, offY: 0, enabled: true, zone: null, near: null };
   const keys = { left: false, right: false, run: false };
   const touchUI = matchMedia('(pointer: coarse)').matches;
   let frameListeners = [];
@@ -132,15 +132,17 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
   function measure() {
     const vw = viewport.clientWidth;
     const vh = viewport.clientHeight;
-    state.scale = Math.min(vh / WORLD_H, vw / 520);
+    // 'fit' keeps at least 520 world units in view (phones); 'fill' fills the height (vertical video)
+    state.scale = state.zoom === 'fill' ? vh / WORLD_H : Math.min(vh / WORLD_H, vw / 520);
     state.offY = Math.max(0, (vh - WORLD_H * state.scale) / 2);
     state.visibleW = vw / state.scale;
   }
   measure();
-  addEventListener('resize', () => {
+  // The stage can change size (window resize, or the Studio's frames).
+  new ResizeObserver(() => {
     measure();
     snapCamera();
-  });
+  }).observe(viewport);
 
   function clampCam(c) {
     return Math.max(0, Math.min(width - state.visibleW, c));
@@ -194,10 +196,10 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
       if (dir) {
         state.target = null;
         state.onArrive = null;
-        moved = dir * SPEED * (keys.run ? RUN : 1) * dt;
+        moved = dir * SPEED * state.pace * (keys.run ? RUN : 1) * dt;
       } else if (state.target !== null) {
         const dx = state.target - state.x;
-        const step = SPEED * state.mult * dt;
+        const step = SPEED * state.pace * state.mult * dt;
         if (Math.abs(dx) <= step) {
           moved = dx;
           state.target = null;
@@ -402,9 +404,37 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
     get x() {
       return state.x;
     },
+    get width() {
+      return width;
+    },
+    get walking() {
+      return state.target !== null;
+    },
     onFrame(fn) {
       frameListeners.push(fn);
     },
     hideHint,
+    // for the Studio in the local edition
+    teleport(x) {
+      state.x = Math.max(50, Math.min(width - 60, x));
+      state.target = null;
+      state.onArrive = null;
+      snapCamera();
+    },
+    stop() {
+      state.target = null;
+      state.onArrive = null;
+    },
+    setPace(p) {
+      state.pace = p;
+    },
+    setZoom(z) {
+      state.zoom = z;
+      measure();
+      snapCamera();
+    },
+    setVisitorVisible(on) {
+      visitor.style.visibility = on ? '' : 'hidden';
+    },
   };
 }

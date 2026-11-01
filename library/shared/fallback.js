@@ -1,7 +1,8 @@
 // Offline helpers, used when no AI is configured or when an AI call fails.
 // They're simple on purpose: the library should keep working with no API key.
 
-import { GENRES, isGenre } from './genres.js';
+import { GENRES, isGenre, genreName } from './genres.js';
+import { LIBRARIAN, CAT } from './characters.js';
 
 const STOP = new Set(`first last next really maybe since though until upon onto towards something nothing
 make makes making take took tell told give gave find found need needed keep kept seem seemed
@@ -145,4 +146,79 @@ export function genreFromRequest(text) {
     if (list.some((w) => words.has(w))) return genre;
   }
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// The librarian without AI: a handful of kind, mood-aware replies.
+
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+const MOOD_LINES = [
+  { test: /\b(lonely|alone|no one|nobody (cares|understands)|isolated)\b/i, genre: 'life',
+    lines: ['Then you’ve come to the right place, dear. Everyone on these shelves has felt that way at some point. Start with this one.', 'Sit a while, dear. You’re not the only one who has felt that. These were written by people who have.'] },
+  { test: /\b(grief|griev|loss|lost (my|a|someone)|losing|died|death|passed away|miss (him|her|them))\b/i, genre: 'life',
+    lines: ['Ah. Grief is heavy to carry on your own. These were written by people who have carried it too.', 'Oh, my dear. Take your time with these. There’s no hurry in here.'] },
+  { test: /\b(laugh|funny|cheer|silly|smile|humou?r)\b/i, genre: 'humor',
+    lines: [`A smile, is it? I know just the shelf. Mind you don’t laugh too loudly; ${CAT.name} is napping.`, 'Something to make you laugh. Here, these should do it.'] },
+  { test: /\b(comfort|cosy|cozy|gentle|soft|calm|warm|kind)\b/i, genre: null,
+    lines: ['Something gentle, then. About a cup of tea’s worth of reading.', 'Here, dear. These are like a warm blanket.'] },
+  { test: /\b(scary|scare|ghost|horror|creepy|spooky|frighten)\b/i, genre: 'horror',
+    lines: ['Brave, aren’t you? Keep the lamp on for this one.', 'I wouldn’t read these alone. Mind you, you’re not alone in here.'] },
+  { test: /\b(love|romance|romantic|heartbreak|crush)\b/i, genre: 'romance',
+    lines: ['Ah, love. We have a whole shelf of hearts, dear.', 'Love stories. I still read one most evenings, you know.'] },
+  { test: /\b(hope|hopeful|uplift|inspir)\b/i, genre: null,
+    lines: ['Hope. Yes, we keep plenty of that here.', 'These ones end with the window open, so to speak.'] },
+];
+
+/**
+ * @param {string} message
+ * @param {{ random(n: number, opts?: object): object[], search(words: string[], n: number): object[] }} store
+ */
+export function offlineLibrarian(message, store) {
+  const text = String(message ?? '');
+  if (soundsLikeCrisis(text)) {
+    return {
+      reply: `Oh, my dear. I’m so glad you told me. You matter, and you don’t have to carry this alone. Please reach out to someone right now: a person you trust, your local emergency number, or a free helpline (findahelpline.com lists them). I’ll keep a chair warm for you here.`,
+      bookIds: store.random(1, { genre: 'life' }).map((b) => b.id),
+      walkTo: null,
+    };
+  }
+
+  // Small talk first.
+  if (/\b(who wrote|author|writer of|wrote this|who made)\b/i.test(text)) {
+    return { reply: 'Nobody knows, dear, not even me. That’s rather the point. All we know is how many people have read it.', bookIds: [], walkTo: null };
+  }
+  if (new RegExp(`\\b(cat|kitty|${CAT.name})\\b`, 'i').test(text)) {
+    return { reply: `That’s ${CAT.name}. Sits in the window and watches over everyone. Been here longer than I have, I sometimes think.`, bookIds: [], walkTo: null };
+  }
+  if (/\b(thank|thanks|lovely|sweet)\b/i.test(text) && text.length < 60) {
+    return { reply: pick(['You’re very welcome, dear.', 'Any time. That’s what I’m here for.', 'Oh, it’s my pleasure, dear.']), bookIds: [], walkTo: null };
+  }
+  if (/\b(write|writing|my own story)\b/i.test(text) && !/\b(read|book about)\b/i.test(text)) {
+    return { reply: 'The writing rooms are at the very back, dear. Close the door, take your time, and bring it to me when it’s done. I’ll find it a shelf.', bookIds: [], walkTo: null };
+  }
+  if (/^\s*(hi|hello|hey|good (morning|afternoon|evening))\b/i.test(text) && text.length < 40) {
+    return { reply: `Hello, dear. I’m ${LIBRARIAN.name}. What are you in the mood for today?`, bookIds: [], walkTo: null };
+  }
+
+  const mood = MOOD_LINES.find((m) => m.test.test(text));
+  const genre = genreFromRequest(text) ?? mood?.genre ?? null;
+  const wantsUnread = /\b(unread|nobody has|no one has|first reader|new|fresh)\b/i.test(text);
+  const surprise = /\b(surprise|anything|random|whatever|you choose|you pick)\b/i.test(text);
+
+  let books = [];
+  if (wantsUnread) books = store.random(3, { unreadFirst: true });
+  if (!books.length && genre) books = store.random(3, { genre });
+  if (!books.length && !surprise) books = store.search(keywords(text), 3);
+  if (!books.length && (surprise || mood)) books = store.random(3);
+
+  let reply;
+  if (books.length && wantsUnread) reply = 'These are still waiting for their very first reader. Wouldn’t it be lovely to be the one?';
+  else if (books.length && surprise) reply = pick(['Close your eyes and hold out your hand. There.', 'Let’s see what the shelves want you to read today.']);
+  else if (books.length && mood) reply = pick(mood.lines);
+  else if (books.length) reply = pick(['I think one of these might be what you’re after, dear. Take your time.', 'Ah, yes. Try one of these.']);
+  else if (genre) reply = `I don’t have quite the thing on hand, I’m afraid. You might have a wander along the ${genreName(genre)} shelf, though.`;
+  else reply = 'I’m not sure I have that one yet, dear. Perhaps it’s waiting for you to write it. The writing rooms are just at the back.';
+
+  return { reply, bookIds: books.map((b) => b.id), walkTo: books.length ? null : genre };
 }

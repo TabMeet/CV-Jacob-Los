@@ -53,6 +53,8 @@ export function createCat({ hall, catName, genres, isMine }) {
         return `Someone finished “${e.title}” and sat quietly for a moment.`;
       case 'writing':
         return `Someone slipped into writing room ${e.room}. A pen started scratching.`;
+      case 'custom':
+        return e.text;
       default:
         return null;
     }

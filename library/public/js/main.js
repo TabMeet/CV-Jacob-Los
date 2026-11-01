@@ -1,7 +1,7 @@
 // Opening the doors: builds the hall and connects everyone to everyone else.
 
 import * as art from './art.js';
-import { api, sessionId } from './api.js';
+import { api, sessionId, connectEvents, isLocal } from './api.js';
 import { el, openLayer, closeButton, toast, plural } from './ui.js';
 import { createHall } from './hall.js';
 import { createCat } from './cat.js';
@@ -13,16 +13,17 @@ import { setSound, soundOn } from './sound.js';
 
 const root = document.documentElement;
 
+let todOverride = null; // the local edition's Studio can pin the time of day
 function setTimeOfDay() {
   const h = new Date().getHours();
-  const tod = h < 6 || h >= 21 ? 'tod-night' : h < 9 ? 'tod-dawn' : h < 18 ? 'tod-day' : 'tod-dusk';
+  const tod = todOverride ?? (h < 6 || h >= 21 ? 'night' : h < 9 ? 'dawn' : h < 18 ? 'day' : 'dusk');
   root.classList.remove('tod-night', 'tod-dawn', 'tod-day', 'tod-dusk');
-  root.classList.add(tod);
+  root.classList.add(`tod-${tod}`);
 }
 setTimeOfDay();
 setInterval(setTimeOfDay, 5 * 60_000);
 
-const rainingOutside = Math.random() < 0.6;
+let rainingOutside = Math.random() < 0.6;
 root.classList.toggle('raining', rainingOutside);
 document.body.insertAdjacentHTML('afterbegin', art.defsSVG());
 
@@ -103,19 +104,19 @@ async function boot() {
   reportPresence();
   setInterval(reportPresence, 15_000);
   addEventListener('pagehide', () => {
-    navigator.sendBeacon?.('/api/presence/leave', new Blob([JSON.stringify({ sid: sessionId() })], { type: 'application/json' }));
+    if (!isLocal()) navigator.sendBeacon?.('/api/presence/leave', new Blob([JSON.stringify({ sid: sessionId() })], { type: 'application/json' }));
   });
   addEventListener('pageshow', (e) => {
     if (e.persisted) reportPresence();
   });
 
-  const events = new EventSource('/api/events');
-  events.addEventListener('presence', (e) => applyPresence(JSON.parse(e.data)));
-  events.addEventListener('backlog', (e) => cat.load(JSON.parse(e.data)));
-  events.addEventListener('happening', (e) => {
-    const ev = JSON.parse(e.data);
-    cat.onEvent(ev);
-    if (ev.type === 'shelved' || ev.type === 'opened') refreshShelvesSoon();
+  connectEvents({
+    presence: applyPresence,
+    backlog: (list) => cat.load(list),
+    happening: (ev) => {
+      cat.onEvent(ev);
+      if (ev.type === 'shelved' || ev.type === 'opened') refreshShelvesSoon();
+    },
   });
 
   // -- the shelves in the hall ----------------------------------------------
@@ -278,6 +279,28 @@ async function boot() {
     soundBtn.setAttribute('aria-pressed', String(on));
     root.classList.toggle('raining', on || rainingOutside);
   });
+
+  // Hooks for the local edition's Studio (unused by the hosted library).
+  window.dispatchEvent(new CustomEvent('library:ready', {
+    detail: {
+      config,
+      hall,
+      cat,
+      genres,
+      setTimeOfDay(tod) {
+        todOverride = tod;
+        setTimeOfDay();
+      },
+      setRain(on) {
+        rainingOutside = on;
+        root.classList.toggle('raining', on || soundOn());
+      },
+      refresh() {
+        reportPresence();
+        refreshShelvesSoon(30);
+      },
+    },
+  }));
 }
 
 boot();

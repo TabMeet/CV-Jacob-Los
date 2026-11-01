@@ -46,6 +46,16 @@ html, body {
 
 body { overflow: hidden; touch-action: manipulation; }
 
+/* Everything lives on a "stage". Normally it fills the window; the local edition's
+   Studio can shrink it to a 9:16 or 1:1 frame for filming. Fixed-position layers
+   inside are positioned against the stage (container layout containment). */
+#stage {
+  position: fixed; inset: 0; overflow: hidden;
+  container: stage / size;
+  contain: layout paint; /* makes the stage the box that fixed-position layers sit in */
+  background: var(--night);
+}
+
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
@@ -243,7 +253,7 @@ button { cursor: pointer; }
 }
 .hud > * { pointer-events: auto; }
 .hud-title { display: flex; flex-direction: column; min-width: 0; }
-.hud-name { font-family: var(--serif-display); font-weight: 700; font-size: clamp(20px, 3.2vw, 28px); letter-spacing: .02em; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.hud-name { font-family: var(--serif-display); font-weight: 700; font-size: clamp(20px, 3.2cqw, 28px); letter-spacing: .02em; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
 .hud-sub { font-size: 15px; opacity: .78; }
 .hud-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .hud-presence {
@@ -299,12 +309,12 @@ button { cursor: pointer; }
   background:
     radial-gradient(ellipse at 20% 0%, rgba(255,255,255,.5), transparent 60%),
     var(--paper);
-  color: var(--ink); border-radius: 14px; padding: 28px clamp(18px, 4vw, 36px) 26px;
+  color: var(--ink); border-radius: 14px; padding: 28px clamp(18px, 4cqw, 36px) 26px;
   box-shadow: 0 20px 60px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.4);
   animation: rise .35s ease both;
 }
 @keyframes rise { from { transform: translateY(14px); opacity: 0; } }
-.panel h2 { font-family: var(--serif-display); font-weight: 700; font-size: clamp(26px, 4vw, 34px); margin: 0 0 4px; line-height: 1.1; }
+.panel h2 { font-family: var(--serif-display); font-weight: 700; font-size: clamp(26px, 4cqw, 34px); margin: 0 0 4px; line-height: 1.1; }
 .panel .lede { margin: 0 0 18px; color: var(--ink-soft); font-size: 18px; }
 .panel p { font-size: 18px; line-height: 1.5; }
 
@@ -484,11 +494,11 @@ button { cursor: pointer; }
 .open-book.single { width: min(620px, 100%); background: linear-gradient(90deg, #e9dcc2, var(--paper) 4%, var(--paper) 96%, #e9dcc2); }
 .pages {
   position: absolute; inset: 0; overflow: hidden;
-  padding: clamp(28px, 5vh, 56px) 0;
+  padding: clamp(28px, 5cqh, 56px) 0;
 }
 .flow {
   height: 100%;
-  font-size: clamp(18px, 2.1vh, 21px); line-height: 1.62; hyphens: auto; -webkit-hyphens: auto;
+  font-size: clamp(18px, 2.1cqh, 21px); line-height: 1.62; hyphens: auto; -webkit-hyphens: auto;
   column-fill: auto; transition: transform .45s cubic-bezier(.3,.1,.2,1);
   overflow-wrap: break-word;
 }
@@ -531,12 +541,12 @@ button { cursor: pointer; }
 .room-door:hover { transform: translateY(-3px); }
 .room-door .glass {
   width: 58%; aspect-ratio: 3 / 4; border-radius: 6px; background: #4a3a2c; box-shadow: inset 0 0 0 3px #24160f;
-  display: grid; place-items: center; font-family: var(--serif-display); font-weight: 700; font-size: clamp(22px, 4vw, 36px); color: var(--brass);
+  display: grid; place-items: center; font-family: var(--serif-display); font-weight: 700; font-size: clamp(22px, 4cqw, 36px); color: var(--brass);
 }
 .room-door.occupied .glass { background: radial-gradient(circle at 50% 40%, #fbe2ad, #e0b46c); color: #6b4a1f; }
 .room-door .knob { position: absolute; right: 14%; top: 58%; width: 12px; height: 12px; border-radius: 50%; background: var(--brass); }
 .room-door .sign {
-  margin-top: 18%; background: var(--paper); color: var(--ink-soft); font-family: var(--hand); font-size: clamp(16px, 2.4vw, 20px);
+  margin-top: 18%; background: var(--paper); color: var(--ink-soft); font-family: var(--hand); font-size: clamp(16px, 2.4cqw, 20px);
   padding: 3px 8px; border-radius: 3px; transform: rotate(-2deg); line-height: 1.05; max-width: 86%;
 }
 .your-books { margin-top: 22px; border-top: 1px dashed var(--paper-edge); padding-top: 14px; }
@@ -554,7 +564,7 @@ button { cursor: pointer; }
 }
 .room.closing { animation: fade-out .3s ease both; }
 .room-window {
-  position: fixed; right: 4vw; top: 12vh; width: min(18vw, 220px); aspect-ratio: 3 / 4; border-radius: 80px 80px 4px 4px;
+  position: fixed; right: 4cqw; top: 12cqh; width: min(18cqw, 220px); aspect-ratio: 3 / 4; border-radius: 80px 80px 4px 4px;
   background: linear-gradient(var(--sky-top), var(--sky-bottom)); box-shadow: inset 0 0 0 8px #3d261b, 0 0 0 2px #24160f;
   overflow: hidden; opacity: .9;
 }
@@ -567,14 +577,14 @@ button { cursor: pointer; }
 .room-bar .btn { border-color: rgba(246,239,225,.4); background: transparent; color: var(--hud-ink); font-size: 17px; min-height: 40px; }
 .sheet {
   flex: 1; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); border-radius: 4px;
-  padding: clamp(18px, 4vw, 40px); box-shadow: 0 20px 50px rgba(0,0,0,.6);
+  padding: clamp(18px, 4cqw, 40px); box-shadow: 0 20px 50px rgba(0,0,0,.6);
   background-image: repeating-linear-gradient(transparent 0 33px, rgba(91,79,69,.12) 33px 34px);
   background-position: 0 14px;
 }
 .sheet label { font-size: 15px; color: var(--ink-soft); display: block; }
 .title-input {
   width: 100%; border: 0; border-bottom: 1px solid var(--paper-edge); background: transparent; padding: 4px 0 8px;
-  font-family: var(--serif-display); font-weight: 700; font-size: clamp(26px, 4vw, 34px); color: var(--ink);
+  font-family: var(--serif-display); font-weight: 700; font-size: clamp(26px, 4cqw, 34px); color: var(--ink);
 }
 .title-input:focus { outline: none; border-bottom-color: var(--brass); }
 .title-input:disabled { color: var(--ink-soft); font-style: italic; font-weight: 500; }
@@ -584,7 +594,7 @@ button { cursor: pointer; }
 .title-ideas button { border: 1px solid var(--paper-edge); background: #fffaf0; border-radius: 999px; padding: 4px 12px; font-family: var(--serif-display); font-weight: 600; font-size: 17px; }
 .title-ideas button:hover { background: var(--paper-deep); }
 .story-input {
-  flex: 1; width: 100%; min-height: 40vh; resize: none; border: 0; background: transparent; margin-top: 16px;
+  flex: 1; width: 100%; min-height: 40cqh; resize: none; border: 0; background: transparent; margin-top: 16px;
   font-family: var(--serif-text); font-size: 20px; line-height: 34px; color: var(--ink);
 }
 .story-input:focus { outline: none; }
@@ -604,7 +614,7 @@ button { cursor: pointer; }
 
 /* ------------------------------------------------------------------------ */
 
-@media (max-width: 640px) {
+@container stage (max-width: 640px) {
   .book-card { grid-template-columns: 1fr; text-align: center; }
   .book-card .cover { width: 150px; margin: 0 auto; }
   .book-card .row { justify-content: center; }

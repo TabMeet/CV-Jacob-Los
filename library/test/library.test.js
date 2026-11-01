@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { openLibraryDb } from '../server/db.js';
 import { createPresence } from '../server/presence.js';
 import { createApp } from '../server/app.js';
-import { guessGenre, guessTitles, basicModeration, soundsLikeCrisis, genreFromRequest } from '../server/fallback.js';
+import { guessGenre, guessTitles, basicModeration, soundsLikeCrisis, genreFromRequest } from '../shared/fallback.js';
 import { seed, STARTER_BOOKS } from '../server/seed.js';
 
 const STORY = `The first winter after I moved to the city, I didn't know a single person.

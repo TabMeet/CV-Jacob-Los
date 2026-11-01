@@ -2,15 +2,14 @@ import express from 'express';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { GENRES, isGenre, genreName } from './genres.js';
-import { LIBRARIAN, CAT, LIBRARY } from './characters.js';
+import { GENRES, isGenre, genreName } from '../shared/genres.js';
+import { LIBRARIAN, CAT, LIBRARY } from '../shared/characters.js';
 import * as realAi from './ai.js';
+import { cleanText, cleanTitle, wordCount, timeOfDay, MIN_WORDS, MAX_CHARS } from '../shared/text.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(here, '..', 'public');
 
-const MIN_WORDS = 12;
-const MAX_CHARS = 60_000;
 const TOKEN = /^[a-z0-9-]{8,64}$/i;
 
 /** A small in-memory sliding-window limiter. Keys are never stored on disk. */
@@ -36,32 +35,6 @@ function limiter(max, windowMs) {
     hits.set(key, times);
     next();
   };
-}
-
-function timeOfDay(hour) {
-  const h = Number.isInteger(hour) && hour >= 0 && hour < 24 ? hour : new Date().getHours();
-  if (h < 5) return 'the middle of the night';
-  if (h < 12) return 'morning';
-  if (h < 17) return 'afternoon';
-  if (h < 21) return 'evening';
-  return 'late evening';
-}
-
-function wordCount(text) {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
-
-function cleanText(text) {
-  // Normalise line endings and strip control characters, keep everything else as written.
-  return String(text ?? '')
-    .replace(/\r\n?/g, '\n')
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
-    .replace(/\n{4,}/g, '\n\n\n')
-    .trim();
-}
-
-function cleanTitle(text) {
-  return String(text ?? '').replace(/\s+/g, ' ').trim().slice(0, 90);
 }
 
 export function createApp({ db, presence, ai = realAi, limits = {} }) {
