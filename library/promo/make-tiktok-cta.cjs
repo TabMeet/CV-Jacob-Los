@@ -239,7 +239,7 @@ function pageSetup() {
       { at: 6.2, run: () => caption(null) },
       { at: 6.9, run: () => caption('no name. no profile.<br>just your words.', { pill: true, low: true }) },
       { at: 8.0, run: () => click('.sheet-foot .btn') },
-      { at: 12.9, run: () => caption(null) },
+      { at: 9.2, run: () => caption(null) }, // let the librarian's card speak for itself
     ],
     dust: (g) => tween(g, 0, 2, 0.35, 0.6),
   }));
