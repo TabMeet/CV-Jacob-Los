@@ -8,14 +8,15 @@
 //   every follower gets their name in my library.  a bookcase up close, books dropping in
 //   a whole room for my followers.                  the arch
 //   the more of you, the fuller it gets.            the shelves filling up, glowing
-//   your name on the spine, your own number.        one spine lifts off the shelf
+//   this spine is waiting for your name.            one spine lifts off the shelf
 //   and above the fire, a little reminder.          "you are not alone"
 //   this shelf is saved for you. follow, and        the empty bookcase, then a book lands
 //   I'll add your name.                             on it (and the loop starts again)
 //
-// The names are placeholders unless you pass a text file of real ones (one per
-// line, ideally 100 or more; placeholders fill any gap). The 4th name is the one
-// whose spine lifts off the shelf.
+// The books are plain: no names or numbers on the spines, because the followers
+// in it aren't real people. With a text file of real followers' names (one per line),
+// their names and numbers go on their spines (any other book stays plain), and the
+// 4th name is the one whose spine lifts off the shelf.
 // Cut to the "friends" lo-fi preset (88 BPM: one beat = 0.682 s).
 //
 //   npm run build:local
@@ -39,7 +40,8 @@ const b = (beats) => beats * BEAT;
 const LENGTH = b(21); // 14.32 s
 
 // -- the names ---------------------------------------------------------------------
-// Made-up handles. They're placeholders: with real followers, pass a names file.
+// Made-up handles, never shown: they only give the books their different widths.
+// With real followers, pass a names file and their names go on the spines.
 const FIRST = ['moonlit', 'cozy', 'quiet', 'rainy', 'paper', 'velvet', 'amber', 'willow', 'maple', 'sleepy', 'lantern', 'fern', 'honey', 'misty', 'chai', 'autumn', 'teacup', 'starry', 'linen', 'ember'];
 const SECOND = ['pages', 'reader', 'bookworm', 'chapters', 'notes', 'shelf', 'tales', 'letters', 'poems', 'stories', 'nook', 'margins', 'ink', 'library', 'verses'];
 const SEP = ['.', '_', ''];
@@ -54,13 +56,15 @@ function placeholders(n) {
 const TOTAL = 101; // 100 by the end of the "filling" shot, and one more for the ending
 const FEATURED = 3; // index of the name whose spine lifts off the shelf (book no. 4, top row of Friends · I)
 let NAMES = placeholders(TOTAL + 20);
-NAMES.splice(FEATURED, 0, '@your.name.here');
+let REAL = [];
 if (namesFile) {
-  const real = fs.readFileSync(namesFile, 'utf8').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
-  if (real.length < TOTAL) console.warn(`! ${real.length} names in ${namesFile}; placeholders fill the other ${TOTAL - real.length}.`);
-  NAMES = [...real, ...NAMES.filter((n) => !real.includes(n))];
+  REAL = fs.readFileSync(namesFile, 'utf8').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  if (REAL.length < TOTAL) console.warn(`! ${REAL.length} names in ${namesFile}; plain books fill the other ${TOTAL - REAL.length}.`);
+  NAMES = [...REAL, ...NAMES.filter((n) => !REAL.includes(n))];
 }
 NAMES = NAMES.slice(0, TOTAL);
+// Only real followers' names are ever shown; every other book has a plain spine.
+const PLAIN_NAMES = NAMES.filter((n) => !REAL.includes(n));
 
 // Books take 0.36 s to drop onto a shelf up close, ~0.45 s to glow in the hall:
 // they're added that long before the note that marks them landing.
@@ -73,6 +77,7 @@ const easeOut = (t) => 1 - (1 - t) ** 3;
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 const tween = (g, t0, t1, a, c, fn = ease) => a + (c - a) * fn(clamp((g - t0) / (t1 - t0)));
 
+const PLAIN = !REAL[FEATURED]; // the lifted spine is plain unless it's a real follower's
 const SCENE_CSS = `
   .studio-toggle, .frame-label, .hint, .toasts, .cat-bubble, .reader-bar, .reader-foot { display: none !important; }
   .friends-panel .close { display: none !important; }
@@ -81,10 +86,21 @@ const SCENE_CSS = `
   .tt-bare .friends-panel { background: transparent; box-shadow: none; }
   .tt-bare .friends-panel .case { min-height: 440px; } /* tall enough for two rows, so nothing jumps as it fills */
   .tt-spine .overlay { padding-top: 300px; } /* a full bookcase: its top row below the captions */
+  /* plain spines: no name and no number */
+  .spine.tt-plain .spine-title, .spine.tt-plain .spine-reads { visibility: hidden; }
 `;
 
-function pageSetup() {
+function pageSetup(plainNames) {
   const lib = window.__lib;
+  // Any spine that isn't a real follower's stays plain, however often the bookcase is redrawn.
+  const plain = new Set(plainNames);
+  const mark = (root) => {
+    for (const spine of [...(root.matches?.('.spine') ? [root] : []), ...(root.querySelectorAll?.('.spine') ?? [])]) {
+      if (plain.has(spine.querySelector('.spine-title')?.textContent)) spine.classList.add('tt-plain');
+    }
+  };
+  new MutationObserver((records) => records.forEach((r) => r.addedNodes.forEach((node) => node.nodeType === 1 && mark(node))))
+    .observe(document.body, { childList: true, subtree: true });
   window.__setPresence = lib.hall.setPresence;
   lib.hall.setPresence = () => {};
   Element.prototype.scrollIntoView = function () {}; // keep the bookcase still while filming
@@ -122,7 +138,7 @@ function pageSetup() {
     storage: { 'ql.local.friends': { version: 1, friends: [{ no: 1, name: NAMES[0], added: Date.parse('2026-11-01') }] } },
   });
   await page.addStyleTag({ content: KIN_CSS + SCENE_CSS });
-  await page.evaluate(pageSetup);
+  await page.evaluate(pageSetup, PLAIN_NAMES);
 
   const dir = path.join(WORK, 'frames');
   fs.mkdirSync(dir);
@@ -225,7 +241,7 @@ function pageSetup() {
     },
     camera: (g) => ({ el: { sel: '.overlay', scale: tween(g, b(9), b(13), 1.45, 1.6), origin: spineOrigin } }),
     events: [
-      { at: b(9), run: () => say('your name on the spine,|*your own number.*', { step: 0.05 }) },
+      { at: b(9), run: () => say(PLAIN ? 'this spine is|*waiting for your name.*' : 'your name on the spine,|*your own number.*', { step: 0.05 }) },
       { at: b(9) + 0.05, run: () => js((i) => document.querySelectorAll('.friends-panel .spine')[i].classList.add('highlight'), FEATURED) },
     ],
   });

@@ -228,20 +228,22 @@ A 14.3-second showcase of the new room, with the hook in the first two seconds.
 
 **TikTok first.** The website is on hold for now. The library lives on TikTok: followers send in their stories, and you put them on the shelves. So this video never suggests viewers can visit, search or click anything. It has no search box, no buttons, no panels and no "opening soon". Up close, the bookcase stands in the room instead of in a website window.
 
-**The hook, from frame 0:** a bookcase up close, with followers' books dropping onto it one after another (13 in two seconds), names on the spines. Each lands on a note, and the notes climb the scale. The words ***every follower gets their name in my library.*** are fully on screen on the very first frame. The book dropping in on that frame is "@your.name.here". The beat starts on frame 0 too: no fade-in, no lead-in shot.
+**The hook, from frame 0:** a bookcase up close, with books dropping onto it one after another (13 in two seconds). Each lands on a note, and the notes climb the scale. The words ***every follower gets their name in my library.*** are fully on screen on the very first frame. The beat starts on frame 0 too: no fade-in, no lead-in shot.
+
+**Plain spines.** The books carry no names and no numbers, because the followers in it aren't real people yet.
 
 | Time | Shot | On-screen text |
 | --- | --- | --- |
-| 0–2.0 s | A bookcase up close, books dropping in with followers' names | *every follower gets their name* **in my library.** |
+| 0–2.0 s | A bookcase up close, books dropping in | *every follower gets their name* **in my library.** |
 | 2.0–4.1 s | The arch, "Friends of the Library" | *a whole room* **for my followers.** |
 | 4.1–6.1 s | Past a full bookcase to the next, glowing as books arrive | *the more of you,* **the fuller it gets.** |
-| 6.1–8.9 s | Close on the spines; "@your.name.here, No. 4" lifts off the shelf with a glow and a chime | *your name on the spine,* **your own number.** |
+| 6.1–8.9 s | Close on the spines; one plain book lifts off the shelf with a glow and a chime | *this spine is* **waiting for your name.** |
 | 8.9–10.9 s | Above the fire: "you are not alone" | *and above the fire,* **a little reminder.** |
 | 10.9–14.3 s | The empty bookcase, "saved for you". Then a book lands on it. | *this shelf is* **saved for you.** · ***follow,*** *and I'll add* ***your name.*** |
 
 It ends on a book landing, and the hook starts with books landing, so the loop runs straight on. (An earlier cut of this video showed visitors searching for their own name. It's in the git history.)
 
-**The names are placeholders.** They're made-up handles, and the featured book is literally "@your.name.here". To film it with real followers who've asked to be added, put their names in a text file (one per line, 100 or more; placeholders fill any gap). The 4th name is the one whose spine lifts off the shelf:
+**With real followers.** Once real followers have asked to be added, put their names in a text file (one per line, 100 or more). Their names and numbers then go on the spines, and the 4th name is the one whose spine lifts off the shelf. That shot's caption becomes *your name on the spine, your own number.* Any gap is filled with plain books:
 
 ```bash
 node promo/make-tiktok-friends.cjs promo/lofi-friends.wav promo/quiet-library-friends.mp4 my-followers.txt
@@ -254,7 +256,7 @@ node promo/make-tiktok-friends.cjs promo/lofi-friends.wav promo/quiet-library-fr
 - crackles by the fire
 - a last note as the book lands on the empty shelf
 
-It's about 8 MB, at −14.9 LUFS. **`cover-friends.jpg`** is the hook: the bookcase with two rows of names under "every follower gets their name in my library."
+It's about 8 MB, at −14.9 LUFS. **`cover-friends.jpg`** is the hook: the bookcase with two rows of books under "every follower gets their name in my library."
 
 Suggested caption, with the new plan in it (stories come to you, and you put them in):
 
