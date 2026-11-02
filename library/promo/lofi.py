@@ -9,7 +9,8 @@ round bass, a sparse melody, vinyl crackle, rain and gentle tape wobble.
 Presets: "cozy" (the first video: Fmaj9-Em7-Dm9-Cmaj9, 11 bars) and
 "shelves" (Ebmaj9-Dm7-Cm9-Bbmaj13, 12 bars, builds up as the shelves fill) and
 "letter" (Am9-Dm9-G13-Cmaj9, 10 bars, drops to piano for the question, lifts for the call to action) and
-"rules" (88 BPM, Fmaj9-G13-Em9-Am9, 11 bars, whooshes, a riser, a tape-stop and a drop for a fast edit).
+"rules" (88 BPM, Fmaj9-G13-Em9-Am9, 11 bars, whooshes, a riser, a tape-stop and a drop for a fast edit) and
+"making" (88 BPM, Dmaj9-Bm9-Gmaj9-A13sus, 11 bars, the same sound design plus pencil scribbles and typing).
 """
 import sys
 import wave
@@ -18,7 +19,7 @@ import numpy as np
 
 SR = 44100
 PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
-BPM = 88 if PRESET == 'rules' else 72
+BPM = 88 if PRESET in ('rules', 'making') else 72
 BEAT = 60 / BPM
 BAR = 4 * BEAT
 DURATION = float(sys.argv[2]) if len(sys.argv) > 2 else 38.0
@@ -150,6 +151,32 @@ if PRESET == 'shelves':
             restrum=bar in (8, 9, 10),
             pad=bar >= 7,
             shaker=bar in (9, 10),
+        )
+elif PRESET == 'making':
+    # 88 BPM, Dmaj9 - Bm9 - Gmaj9 - A13sus: bright and hopeful, for a making-of montage.
+    # Piano alone on the blank page, the band for the build, a tape-stop before the reveal.
+    CHORDS = [
+        (38, [54, 57, 61, 64]),
+        (35, [50, 54, 57, 61]),
+        (43, [59, 62, 66, 69]),
+        (45, [55, 59, 62, 66]),
+    ]
+    BARS = 11
+    MELODY = [
+        (2, 0.5, 78), (2, 1.5, 81), (2, 2.5, 83), (3, 0.5, 81), (3, 2.0, 78),
+        (4, 0.5, 74), (4, 1.5, 76), (4, 2.5, 78), (5, 0.5, 81), (5, 2.0, 76),
+        (6, 0.5, 83), (6, 1.5, 86), (6, 2.5, 83), (6, 3.25, 81),
+        (8, 0.0, 86), (8, 1.0, 83), (8, 2.0, 81), (8, 3.0, 78),
+        (9, 0.5, 81), (9, 1.5, 83), (9, 2.5, 78), (10, 0.0, 74),
+    ]
+
+    def parts(bar):
+        return dict(
+            bass=1 <= bar <= 6 or bar >= 8,
+            drums='sparse' if bar == 1 else 'full' if 2 <= bar <= 6 or bar in (8, 9) else 'hats' if bar == 7 else None,
+            restrum=bar in (4, 6, 8, 9),
+            pad=bar in (5, 6, 8, 9, 10),
+            shaker=bar in (6, 8, 9),
         )
 elif PRESET == 'rules':
     # 88 BPM, Fmaj9 - G13 - Em9 - Am9: brighter and bouncier for a fast, beat-cut edit.
@@ -332,7 +359,7 @@ rain_level = np.interp(t, [0, 3.0, 3.6, DURATION - 3, DURATION], [0.20, 0.20, 0.
 left = music_l * 0.55 + crackle + hiss + rain_channel() * rain_level
 right = music_r * 0.55 + crackle + hiss + rain_channel() * rain_level
 
-if PRESET == 'rules':
+if PRESET in ('rules', 'making'):
     # Sound design for a fast edit: whooshes on cuts and chapter cards, a riser into the
     # reveal, a tape-stop and a silent beat before the punchline, and an impact on the drop.
     def one_pole(x, cutoff):
@@ -381,7 +408,35 @@ if PRESET == 'rules':
         ch[i0:i1] = np.interp(pos, np.arange(len(seg)), seg) * (1 - u ** 3)
         ch[i1:i2] = 0
     # whooshes: the payoff flash, the hook cut, each chapter card, and the end card
-    for at in (0.0, BEAT, BAR, 3 * BAR, 5 * BAR, 9 * BAR):
+    whooshes = (0.0, BEAT, BAR, 3 * BAR, 5 * BAR, 9 * BAR)
+    if PRESET == 'making':
+        whooshes = (0.0, BEAT) + tuple(b * BAR for b in (1, 2, 3, 4, 5, 6, 7, 9, 10))
+
+        def click(level):
+            n = int(0.012 * SR)
+            c = rng.standard_normal(n) * np.exp(-np.arange(n) / SR * 600)
+            return np.diff(np.concatenate([[0], c])) * level  # thin, clicky
+
+        def scribble(dur):
+            n = int(dur * SR)
+            u = np.linspace(0, 1, n)
+            nz = one_pole(rng.standard_normal(n), 2600) - one_pole(rng.standard_normal(n), 900)
+            wiggle = 0.55 + 0.45 * np.abs(np.sin(2 * np.pi * (9 + 5 * rng.random()) * u * dur))
+            return nz / (np.abs(nz).max() + 1e-9) * wiggle * np.sin(np.pi * u) * 0.09
+
+        # pencil on paper while the ideas are written down (bar 1)
+        for k in range(6):
+            sc = scribble(0.32)
+            place(left, sc, BAR + 0.25 + k * 0.36)
+            place(right, sc * 0.8, BAR + 0.25 + k * 0.36)
+        # keyboard while the code is typed (bar 5) and the terminal (bar 7)
+        for start, end in ((5 * BAR + 0.15, 6 * BAR - 0.2), (7 * BAR + 0.1, 7 * BAR + 0.9)):
+            t_k = start
+            while t_k < end:
+                place(left, click(0.09 * rng.uniform(0.6, 1)), t_k)
+                place(right, click(0.08 * rng.uniform(0.6, 1)), t_k + 0.002)
+                t_k += rng.uniform(0.055, 0.12) + (0.18 if rng.random() < 0.08 else 0)
+    for at in whooshes:
         l_w, r_w = whoosh()
         place(left, l_w, max(0, at - 0.22))
         place(right, r_w, max(0, at - 0.22))

@@ -114,4 +114,37 @@ function assemble({ shots, transitions, audio, out, length }) {
   if (res.status !== 0) throw new Error(`ffmpeg failed (${res.status})`);
 }
 
-module.exports = { FPS, openLibrary, createFilm, assemble };
+// Kinetic captions in the late-2026 TikTok style: words pop in one by one, *keywords*
+// in gold, each line on a dark rounded box so it reads over anything.
+const escHTML = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+function kin(text, { kicker = '', size = '', pos = '', step = 0.075 } = {}) {
+  let i = 0;
+  let key = false;
+  const lines = text.split('|').map((line) => line.split(' ').map((raw) => {
+    let w = raw;
+    if (w.startsWith('*')) { key = true; w = w.slice(1); }
+    const k = key;
+    if (w.endsWith('*')) { key = false; w = w.slice(0, -1); }
+    return `<span class="w${k ? ' k' : ''}" style="animation-delay:${(i++ * step).toFixed(3)}s">${escHTML(w)}</span>`;
+  }).join(' '));
+  const kk = kicker ? `<div class="kk"><span class="bx">${escHTML(kicker)}</span></div>` : '';
+  return `<div class="tt-kin ${size} ${pos}">${kk}${lines.map((l) => `<div class="ln"><span class="bx">${l}</span></div>`).join('')}</div>`;
+}
+const KIN_CSS = `
+  .tt-kin { position: fixed; left: 4%; right: 4%; top: 80px; z-index: 999; text-align: center; pointer-events: none; }
+  .tt-kin.mid { top: 46%; }
+  .tt-kin.out { animation: kin-out .16s ease-in both; }
+  .tt-kin .kk { font: 700 30px/1 'Caveat', cursive; color: #f2c46d; margin-bottom: 6px; }
+  .tt-kin .ln { margin-top: 4px; font: 700 46px/1.06 'Cormorant Garamond', serif; font-variant-numeric: lining-nums; font-feature-settings: 'lnum' 1;
+    color: #fff6e2; letter-spacing: .005em; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+  .tt-kin.xl .ln { font-size: 60px; }
+  .tt-kin .bx { display: inline-block; padding: 2px 16px 8px; border-radius: 16px; background: rgba(22,14,9,.8);
+    box-shadow: 0 6px 20px rgba(0,0,0,.35); animation: kin-pop .35s cubic-bezier(.2,1.5,.35,1) both; }
+  .tt-kin .kk .bx { padding: 4px 14px 6px; border-radius: 12px; }
+  .tt-kin .w { display: inline-block; animation: kin-pop .42s cubic-bezier(.2,1.6,.35,1) both; }
+  .tt-kin .k { color: #f6c25b; text-shadow: 0 0 24px rgba(246,194,91,.45), 0 2px 8px rgba(0,0,0,.6); }
+  @keyframes kin-pop { 0% { opacity: 0; transform: translateY(14px) scale(1.45); filter: blur(5px); } 55% { opacity: 1; transform: scale(.95); filter: blur(0); } 100% { transform: none; } }
+  @keyframes kin-out { to { opacity: 0; transform: translateY(-10px); } }
+`;
+
+module.exports = { FPS, openLibrary, createFilm, assemble, kin, KIN_CSS };
