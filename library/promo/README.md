@@ -266,6 +266,39 @@ Suggested caption, with the new plan in it (stories come to you, and you put the
 
 "No names attached" keeps the library's first promise: the stories stay anonymous. The followers' names only go in the friends' room.
 
+## 8 · The first 28 followers get their books printed (`quiet-library-printed.mp4`)
+
+A 15-second video of the real first 28 followers getting their books printed and put in the library, in the order they followed.
+
+**The hook, from frame 0:** a stamp is already coming down on a blank book. It hits at 0.22 s with a gold flash and sparks, and the book reads **@6liel.pa · follower no. 1** in gold foil. The words ***I printed a book for every one of my 28 followers.*** are on screen from the very first frame, and the stamp is the loudest sound in the track.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.0 s | Book no. 1 is stamped: @6liel.pa | *I printed a book for every one of* **my 28 followers.** |
+| 2.0–4.8 s | Books 2–7, one a beat, then two a beat | *in the order* **you followed me.** |
+| 4.8–8.2 s | Books 8–28, like a machine | *every* **single one.** |
+| 8.2–12.3 s | All 28 drop onto a bookcase in Friends of the Library, names and numbers on the spines. The camera pans down the rows, then pulls back over the whole bookcase. | *and onto* **the shelves.** · *thank you,* **my first 28.** |
+| 12.3–15 s | A blank deep-blue book, "your name here · follower no. 29", the stamp hovering over it | *the quiet library* · ***follow,*** *and book* ***no. 29*** *is yours.* |
+
+The stamp at the end hovers where it starts on frame 0, so the loop runs straight back into the first stamp.
+
+**The followers** are in `followers.txt`, one handle per line, oldest first. They were read from the follower-list screenshots, which TikTok shows newest first, so the list is reversed: @6liel.pa is no. 1 and @konyali299 is no. 28. Only their public handles are used: no display names, no profile pictures. Check the spelling of each handle against TikTok before posting. To add new followers, or leave someone out, edit the file and render it again. The numbers in the captions ("my 28 followers", "book no. 29") follow the list.
+
+**The music** is `lofi.py`'s "printed" preset: the same chords as video 7.
+- **Stamps:** a wooden "kachunk" for every book, with a lever click before the slow ones, and a sparkle after the first.
+- **Shelf:** a run of notes as the 28 books land.
+- **Ending:** a riser under the hovering stamp.
+
+It's about 8 MB, at −14 LUFS. **`cover-printed.jpg`** is the first book, freshly stamped: "@6liel.pa, follower no. 1" under the hook.
+
+Suggested caption:
+
+> I printed a book for every one of my first 28 followers and put them on the shelves of my library 📚✨ in the order you followed me. find yours! follow, and book no. 29 is yours 🕯️
+>
+> #booktok #cozy #library #followers #thankyou #smallcreator #cozyaesthetic #lofi
+
+**Tagging them** (in the caption or a pinned comment) lets each of the 28 know their book is in the video. That's a nice moment, and they're likely to share it. It's your call: tags notify people.
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -297,6 +330,10 @@ node promo/make-tiktok-making.cjs promo/lofi-making.wav promo/quiet-library-maki
 # video 6: the writing rooms (12-second loop)
 python3 promo/lofi.py promo/lofi-rooms.wav 11.6 rooms
 node promo/make-tiktok-rooms.cjs promo/lofi-rooms.wav promo/quiet-library-rooms.mp4
+
+# video 8: the first followers get their books printed (the list is promo/followers.txt)
+python3 promo/lofi.py promo/lofi-printed.wav 15.05 printed
+node promo/make-tiktok-printed.cjs promo/lofi-printed.wav promo/quiet-library-printed.mp4
 
 # video 7: every follower gets their name in the library (add a names file as a third argument for real followers)
 python3 promo/lofi.py promo/lofi-friends.wav 14.4 friends

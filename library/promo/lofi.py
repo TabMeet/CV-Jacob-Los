@@ -14,7 +14,9 @@ Presets: "cozy" (the first video: Fmaj9-Em7-Dm9-Cmaj9, 11 bars) and
 "rooms" (88 BPM, Bbmaj9-Gm9-Ebmaj9-F13sus, ~4 bars for a 12-second loop: two knocks on frame 0, the beat drops
 on the first cut, typing in the room, and an ending that runs straight back into the knocks) and
 "friends" (88 BPM, Fmaj9-Dm9-Bbmaj9-C13sus, ~5 bars for a 14-second video: the beat starts on frame 0 and
-every book that lands on a shelf plays a note, climbing the scale).
+every book that lands on a shelf plays a note, climbing the scale) and
+"printed" (88 BPM, the same chords, 15 s: a press stamping 28 books, slow then fast like a machine,
+the books landing on a shelf as a run of notes, and a riser that loops back into the first stamp).
 """
 import sys
 import wave
@@ -23,7 +25,7 @@ import numpy as np
 
 SR = 44100
 PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
-BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends') else 72
+BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed') else 72
 BEAT = 60 / BPM
 BAR = 4 * BEAT
 DURATION = float(sys.argv[2]) if len(sys.argv) > 2 else 38.0
@@ -236,6 +238,25 @@ elif PRESET == 'letter':
             pad=bar >= 6,
             shaker=bar in (7, 8),
         )
+elif PRESET == 'printed':
+    # The friends' chords again. Full beat from the first frame; it thins out for the
+    # last book (no. 29), which is left unprinted.
+    CHORDS = [
+        (41, [57, 60, 64, 67]),
+        (38, [53, 57, 60, 64]),
+        (34, [57, 60, 62, 65]),
+        (36, [58, 62, 65, 69]),
+    ]
+    BARS = 6
+    MELODY = [(1, 1.5, 77), (1, 2.5, 76), (2, 1.5, 74), (2, 2.5, 72), (3, 1.5, 72), (3, 2.5, 74), (4, 1.5, 77), (4, 2.5, 79)]
+    def parts(bar):
+        return dict(
+            bass=bar <= 4,
+            drums='full' if bar <= 4 else 'sparse',
+            restrum=bar in (1, 3),
+            pad=bar in (4, 5),
+            shaker=bar in (2, 3),
+        )
 elif PRESET == 'friends':
     # Fmaj9 - Dm9 - Bbmaj9 - C13sus: bright and warm. The beat is there from the first
     # frame (the hook), and drops back for the call to action in bar 4.
@@ -411,7 +432,7 @@ def rain_channel():
 
 if PRESET == 'rooms':  # loud for the knock, under the beat, back up for the loop
     rain_level = np.interp(t, [0, 2 * BEAT, 2 * BEAT + 0.4, DURATION - 2.2, DURATION], [0.22, 0.22, 0.10, 0.10, 0.20])
-elif PRESET == 'friends':
+elif PRESET in ('friends', 'printed'):
     rain_level = np.full_like(t, 0.09)
 else:
     rain_level = np.interp(t, [0, 3.0, 3.6, DURATION - 3, DURATION], [0.20, 0.20, 0.10, 0.10, 0.16])
@@ -575,8 +596,64 @@ if PRESET == 'friends':
     place2(pop(84, 0.2), 20 * BEAT)
     place2(pluck(hz(89), 0.12, 1.6), 20 * BEAT + 0.08)
 
+if PRESET == 'printed':
+    # The printing schedule, the same as in make-tiktok-printed.cjs: book 1 is stamped
+    # at 0.26 s (the hook), books 2-3 a beat apart, 4-7 half a beat, 8-28 like a machine.
+    def print_schedule():
+        out = [0.22]
+        for i in range(2, 29):
+            if i <= 3:
+                start, dur = (i + 1) * BEAT, BEAT
+            elif i <= 7:
+                start, dur = 5 * BEAT + (i - 4) * 0.5 * BEAT, 0.5 * BEAT
+            else:
+                start, dur = 7 * BEAT + (i - 8) * (5 * BEAT / 21), 5 * BEAT / 21
+            out.append(start + 0.4 * dur)
+        return out
+    def stamp(level, bright=1.0):
+        n = int(0.35 * SR)
+        tt = np.arange(n) / SR
+        thud = np.sin(2 * np.pi * np.cumsum(70 + 90 * np.exp(-tt * 35)) / SR) * np.exp(-tt * 22)
+        clank = sum(np.sin(2 * np.pi * f * bright * tt + rng.uniform(0, 6)) * np.exp(-tt * d) for f, d in ((880, 38), (1730, 52), (3050, 70))) * 0.3
+        tap = one_pole(rng.standard_normal(n), 3500) * np.exp(-tt * 120) * 0.7
+        return np.tanh(1.6 * (thud + clank + tap)) * level
+    def pop2(note, level):
+        n = int(0.5 * SR)
+        tt = np.arange(n) / SR
+        body = pluck(hz(note), 1.0, 0.5)[:n]
+        thud = np.sin(2 * np.pi * np.cumsum(220 * np.exp(-tt * 40) + 90) / SR) * np.exp(-tt * 45) * 0.25
+        return (body + thud) * level
+    def both(sig, at, pan=0.0):
+        place(left, sig * (1 - pan), at)
+        place(right, sig * (1 + pan), at + 0.002)
+    for k, at in enumerate(print_schedule()):
+        level = 0.38 if k == 0 else 0.26 if k < 7 else 0.16
+        both(stamp(level, 1 + 0.012 * k), at, pan=0.15 * ((k % 3) - 1))
+        if k < 7:  # the lever, just before a slow stamp
+            both(click(0.07), at - 0.11)
+    # the gold catching the light after the first stamp
+    for k, note in enumerate((84, 88, 91)):
+        both(pluck(hz(note), 0.13, 1.2), 0.38 + k * 0.06)
+    # the plate coming down on frame 0
+    l_w, r_w = whoosh(dur=0.35, level=0.22)
+    place(left, l_w, 0.0)
+    place(right, r_w, 0.0)
+    # the 28 books landing on the shelf: a run up the F major pentatonic
+    SCALE = [72, 74, 77, 79, 81, 84, 86, 89, 91]
+    for k in range(28):
+        both(pop2(SCALE[k % len(SCALE)] + 12 * ((k // len(SCALE)) % 2), 0.1), 12 * BEAT + 0.05 + k * 0.07 + 0.36, pan=0.25 * ((k % 3) - 1))
+    for at in (12 * BEAT, 18 * BEAT):
+        l_w, r_w = whoosh(level=0.3)
+        place(left, l_w, max(0, at - 0.22))
+        place(right, r_w, max(0, at - 0.22))
+    # no. 29: a slow riser under the hovering plate, straight back into the first stamp
+    rise = riser(DURATION - 20 * BEAT, level=0.12)
+    place(left, rise, 20 * BEAT)
+    place(right, rise, 20 * BEAT)
+    print('stamps at', ', '.join(f'{x:.3f}' for x in print_schedule()[:4]), '...', f'{print_schedule()[-1]:.3f}')
+
 # Fade in the first moment, ring out at the end.
-if PRESET in ('rooms', 'friends'):
+if PRESET in ('rooms', 'friends', 'printed'):
     fade = np.interp(t, [0, 0.003, DURATION - 0.06, DURATION], [0, 1, 1, 0])
 else:
     fade = np.interp(t, [0, 0.01 if PRESET == 'rules' else 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])
