@@ -1,19 +1,21 @@
 // TikTok #7: Friends of the Library, in 14.3 seconds. The hook, on frame 0:
 // followers' books dropping onto a shelf one after another, names on the spines,
-// each landing on a note, under "every follower gets a book on these shelves."
+// each landing on a note, under "every follower gets their name in my library."
 //
-//   every follower gets a book on these shelves.   a bookcase up close, books dropping in
+// For TikTok first: the library is something the creator fills, not a website
+// the viewer visits, so there's no searching, no buttons and no "opening soon".
+//
+//   every follower gets their name in my library.  a bookcase up close, books dropping in
 //   a whole room for my followers.                  the arch
 //   the more of you, the fuller it gets.            the shelves filling up, glowing
-//   look for your name.                             typing a name into the search box
-//   your own book, your own number.                 the book, taken off the shelf
+//   your name on the spine, your own number.        one spine lifts off the shelf
 //   and above the fire, a little reminder.          "you are not alone"
 //   this shelf is saved for you. follow, and        the empty bookcase, then a book lands
-//   you're next.                                    on it (and the loop starts again)
+//   I'll add your name.                             on it (and the loop starts again)
 //
 // The names are placeholders unless you pass a text file of real ones (one per
-// line, ideally 100 or more; placeholders fill any gap). The 51st name is the
-// one that gets searched for and taken off the shelf.
+// line, ideally 100 or more; placeholders fill any gap). The 4th name is the one
+// whose spine lifts off the shelf.
 // Cut to the "friends" lo-fi preset (88 BPM: one beat = 0.682 s).
 //
 //   npm run build:local
@@ -50,16 +52,15 @@ function placeholders(n) {
   return out;
 }
 const TOTAL = 101; // 100 by the end of the "filling" shot, and one more for the ending
-const SEARCHED = 50; // index of the name that's looked for (book no. 51, first on Friends · II)
+const FEATURED = 3; // index of the name whose spine lifts off the shelf (book no. 4, top row of Friends · I)
 let NAMES = placeholders(TOTAL + 20);
-NAMES.splice(SEARCHED, 0, '@your.name.here');
+NAMES.splice(FEATURED, 0, '@your.name.here');
 if (namesFile) {
   const real = fs.readFileSync(namesFile, 'utf8').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
   if (real.length < TOTAL) console.warn(`! ${real.length} names in ${namesFile}; placeholders fill the other ${TOTAL - real.length}.`);
   NAMES = [...real, ...NAMES.filter((n) => !real.includes(n))];
 }
 NAMES = NAMES.slice(0, TOTAL);
-const SEARCH_FOR = NAMES[SEARCHED].replace(/^@/, '').slice(0, 4);
 
 // Books take 0.36 s to drop onto a shelf up close, ~0.45 s to glow in the hall:
 // they're added that long before the note that marks them landing.
@@ -75,12 +76,11 @@ const tween = (g, t0, t1, a, c, fn = ease) => a + (c - a) * fn(clamp((g - t0) / 
 const SCENE_CSS = `
   .studio-toggle, .frame-label, .hint, .toasts, .cat-bubble, .reader-bar, .reader-foot { display: none !important; }
   .friends-panel .close { display: none !important; }
-  /* the hook: just the bookcase, already tall enough for two rows so nothing jumps as it fills */
+  /* up close, just the bookcase standing in the room: no panel, heading, search or buttons */
   .tt-bare .friends-panel .shelf-head, .tt-bare .friends-panel .find-note, .tt-bare .friends-panel .shelf-more { display: none !important; }
-  .tt-bare .friends-panel .case { min-height: 440px; }
-  /* the search: the box and the bookcase, without the heading the captions would cover */
-  .tt-search .friends-panel .shelf-head > div:first-child, .tt-search .friends-panel .shelf-more { display: none !important; }
-  .tt-search .overlay { padding-top: 236px; } /* a full bookcase: start it below the captions */
+  .tt-bare .friends-panel { background: transparent; box-shadow: none; }
+  .tt-bare .friends-panel .case { min-height: 440px; } /* tall enough for two rows, so nothing jumps as it fills */
+  .tt-spine .overlay { padding-top: 300px; } /* a full bookcase: its top row below the captions */
 `;
 
 function pageSetup() {
@@ -166,11 +166,12 @@ function pageSetup() {
   // 1 · the hook: books dropping onto the shelf, a note each, from the very first frame
   await cut(b(3), {
     setup: async () => {
+      await js((x) => window.__lib.hall.teleport(x), case1); // the friends' room, blurred behind
       await js(() => document.body.classList.add('tt-bare'));
       await js(() => window.__lib.openFriendsCase(0));
       await quietly(900);
       await settle();
-      await say('every follower|gets a book|*on these shelves.*', { step: 0 });
+      await say('every follower|gets their name|*in my library.*', { step: 0 });
       await settle(); // the words are all there on frame 0
       // the books due to land in the first moments start falling before frame 0
       let t = -DROP - 0.01;
@@ -191,7 +192,6 @@ function pageSetup() {
   await cut(b(6), {
     setup: async () => {
       await page.keyboard.press('Escape');
-      await js(() => document.body.classList.remove('tt-bare'));
       await quietly(600);
     },
     camera: (g) => ({ hall: { x: archX, zoom: tween(g, b(3), b(6), 1.04, 1.16), focusY: 225 } }),
@@ -211,37 +211,30 @@ function pageSetup() {
     ],
   });
 
-  // 4 · look for your name
-  await cut(b(11), {
-    setup: async () => {
-      await js(() => document.body.classList.add('tt-search'));
-      await js(() => window.__lib.openFriendsCase(1));
-      await quietly(900);
-      await js(() => document.querySelector('.friends-panel .find input').focus());
-    },
-    camera: (g) => ({ el: { sel: '.overlay', scale: tween(g, b(9), b(11), 1.1, 1.16), origin: '30% 25%' } }),
-    events: [
-      { at: b(9), run: () => say('look for|*your name.*', { step: 0.05 }) },
-      ...[...SEARCH_FOR].map((ch, k) => ({ at: b(9) + 0.12 + k * 2 / FPS, run: () => page.keyboard.type(ch) })),
-      { at: b(9) + 0.55, run: () => page.keyboard.press('Enter') },
-    ],
-  });
-
-  // 5 · your own book, your own number
+  // 4 · one spine lifts off the shelf: a name, and its number
+  let spineOrigin = '47% 46%';
   await cut(b(13), {
     setup: async () => {
-      await js(() => document.querySelector('.friends-panel .spine.highlight').click());
-      await quietly(300);
+      await js(() => document.body.classList.add('tt-spine'));
+      await js(() => window.__lib.openFriendsCase(0));
+      await quietly(900);
+      spineOrigin = await js((i) => {
+        const r = document.querySelectorAll('.friends-panel .spine')[i].getBoundingClientRect();
+        return `${((r.x + r.width / 2) / innerWidth * 100).toFixed(1)}% ${((r.y + r.height / 2) / innerHeight * 100).toFixed(1)}%`;
+      }, FEATURED);
     },
-    camera: (g) => ({ el: { sel: '.overlay', scale: tween(g, b(11), b(13), 1.04, 1.1), origin: '50% 45%' } }),
-    events: [{ at: b(11), run: () => say('your own book,|*your own number.*', { step: 0.05 }) }],
+    camera: (g) => ({ el: { sel: '.overlay', scale: tween(g, b(9), b(13), 1.45, 1.6), origin: spineOrigin } }),
+    events: [
+      { at: b(9), run: () => say('your name on the spine,|*your own number.*', { step: 0.05 }) },
+      { at: b(9) + 0.05, run: () => js((i) => document.querySelectorAll('.friends-panel .spine')[i].classList.add('highlight'), FEATURED) },
+    ],
   });
 
   // 6 · above the fire
   await cut(b(16), {
     setup: async () => {
       await page.keyboard.press('Escape');
-      await js(() => document.body.classList.remove('tt-search'));
+      await js(() => document.body.classList.remove('tt-bare', 'tt-spine'));
       await quietly(600);
     },
     camera: (g) => ({ hall: { x: fireX, zoom: tween(g, b(13), b(16), 1.9, 2.15), focusY: 160 } }),
@@ -253,7 +246,7 @@ function pageSetup() {
     camera: (g) => ({ hall: { x: case3 - 30, zoom: tween(g, b(16), LENGTH, 1.5, 1.66), focusY: 230 } }),
     events: [
       { at: b(16), run: () => say('this shelf is|*saved for you.*', { step: 0.05 }) },
-      { at: b(18.5), run: () => say('*follow,*|and you’re next.', { kicker: 'the quiet library · opening soon', step: 0.06 }) },
+      { at: b(18.5), run: () => say('*follow,* and|I’ll add *your name.*', { kicker: 'the quiet library', step: 0.06 }) },
       { at: b(20) - 0.45, run: () => addNext() },
     ],
   });

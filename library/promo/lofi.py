@@ -558,15 +558,13 @@ if PRESET == 'friends':
     for k in range(7):
         place2(pop(SCALE[(k * 2) % len(SCALE)], 0.11), 6 * BEAT + 0.12 + k * 0.25, pan=-0.2)
     # whooshes on the cuts
-    for at in (3 * BEAT, 6 * BEAT, 9 * BEAT, 11 * BEAT, 13 * BEAT, 16 * BEAT):
+    for at in (3 * BEAT, 6 * BEAT, 9 * BEAT, 13 * BEAT, 16 * BEAT):
         l_w, r_w = whoosh(level=0.3)
         place(left, l_w, max(0, at - 0.22))
         place(right, r_w, max(0, at - 0.22))
-    # typing a name into the search box, then a chime as the book lights up
-    for k in range(4):
-        place2(click(0.09), 9 * BEAT + 0.12 + k * 2 / 30)
+    # a chime as one spine lifts off the shelf ("your name on the spine")
     for k, note in enumerate((77, 81, 84)):
-        place2(pluck(hz(note), 0.2, 1.4), 9 * BEAT + 0.62 + k * 0.07)
+        place2(pluck(hz(note), 0.2, 1.4), 9 * BEAT + 0.72 + k * 0.07)
     # the fire: a few crackles
     for at in np.cumsum(rng.uniform(0.05, 0.22, 16)) + 13 * BEAT + 0.05:
         if at < 16 * BEAT - 0.1:
