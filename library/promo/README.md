@@ -222,6 +222,49 @@ Suggested caption, ending on the same question so people answer it in the commen
 
 Reply to the best comments with a video. It's an easy second post, and it keeps the question going.
 
+## 7 · Friends of the Library: every follower gets a book (`quiet-library-friends.mp4`)
+
+A 14.3-second showcase of the new room. The hook is in the first two seconds.
+
+**The hook, from frame 0:** a bookcase up close, with followers' books dropping onto it one after another (13 in two seconds), names on the spines. Each lands on a note, and the notes climb the scale. The words ***every follower gets a book on these shelves.*** are already on screen on the very first frame. The beat starts on frame 0 too. There's no fade-in and no lead-in shot.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.0 s | A bookcase up close, books dropping in with followers' names | *every follower gets a book* **on these shelves.** |
+| 2.0–4.1 s | The arch, "Friends of the Library" | *a whole room* **for my followers.** |
+| 4.1–6.1 s | Past a full bookcase to the next, glowing as books arrive | *the more of you,* **the fuller it gets.** |
+| 6.1–7.5 s | Typing a name into the search box; the book lights up | *look for* **your name.** |
+| 7.5–8.9 s | The book taken off the shelf: "@your.name.here, book no. 51" | *your own book,* **your own number.** |
+| 8.9–10.9 s | Above the fire: "you are not alone" | *and above the fire,* **a little reminder.** |
+| 10.9–14.3 s | The empty bookcase, "saved for you". Then a book lands on it. | *this shelf is* **saved for you.** · ***follow,*** *and you're next.* |
+
+It ends on a book landing, and the hook starts with books landing, so the loop runs straight on.
+
+**The names are placeholders.** They're made-up handles, and the searched-for book is literally "@your.name.here". To film it with real followers who've asked for a book, put their names in a text file (one per line, 100 or more; placeholders fill any gap). The 51st name is the one searched for:
+
+```bash
+node promo/make-tiktok-friends.cjs promo/lofi-friends.wav promo/quiet-library-friends.mp4 my-followers.txt
+```
+
+If you post the placeholder version, it's a preview of the room rather than real followers. The ending ("follow, and you're next") says that already.
+
+**The music** is `lofi.py`'s "friends" preset: 88 BPM, Fmaj9, Dm9, Bbmaj9 and C13sus. On top of the beat:
+- a note for every book that lands, climbing the F major pentatonic
+- whooshes on the cuts
+- typing and a chime for the search
+- crackles by the fire
+- a last note as the book lands on the empty shelf
+
+It's about 8 MB, at −14.9 LUFS. **`cover-friends.jpg`** is the hook: the bookcase with two rows of names under "every follower gets a book on these shelves."
+
+Suggested caption:
+
+> every follower gets a book in my library 📚 your name on the spine, your own number. comment "add me" and I'll put yours on the shelf 🕯️
+>
+> #booktok #cozy #library #followers #writingcommunity #youarenotalone #cozyaesthetic #lofi
+
+The comment line makes it opt-in, and gives you the list of names for the Studio.
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -253,6 +296,10 @@ node promo/make-tiktok-making.cjs promo/lofi-making.wav promo/quiet-library-maki
 # video 6: the writing rooms (12-second loop)
 python3 promo/lofi.py promo/lofi-rooms.wav 11.6 rooms
 node promo/make-tiktok-rooms.cjs promo/lofi-rooms.wav promo/quiet-library-rooms.mp4
+
+# video 7: Friends of the Library (add a names file as a third argument for real followers)
+python3 promo/lofi.py promo/lofi-friends.wav 14.4 friends
+node promo/make-tiktok-friends.cjs promo/lofi-friends.wav promo/quiet-library-friends.mp4
 ```
 
 Each takes 5–10 minutes. Every frame is rendered on a paused clock, so walks, blinks and page turns are perfectly smooth, and the result is the same on every run.

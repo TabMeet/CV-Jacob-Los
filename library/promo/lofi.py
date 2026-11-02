@@ -12,7 +12,9 @@ Presets: "cozy" (the first video: Fmaj9-Em7-Dm9-Cmaj9, 11 bars) and
 "rules" (88 BPM, Fmaj9-G13-Em9-Am9, 11 bars, whooshes, a riser, a tape-stop and a drop for a fast edit) and
 "making" (88 BPM, Dmaj9-Bm9-Gmaj9-A13sus, 11 bars, the same sound design plus pencil scribbles and typing) and
 "rooms" (88 BPM, Bbmaj9-Gm9-Ebmaj9-F13sus, ~4 bars for a 12-second loop: two knocks on frame 0, the beat drops
-on the first cut, typing in the room, and an ending that runs straight back into the knocks).
+on the first cut, typing in the room, and an ending that runs straight back into the knocks) and
+"friends" (88 BPM, Fmaj9-Dm9-Bbmaj9-C13sus, ~5 bars for a 14-second video: the beat starts on frame 0 and
+every book that lands on a shelf plays a note, climbing the scale).
 """
 import sys
 import wave
@@ -21,7 +23,7 @@ import numpy as np
 
 SR = 44100
 PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
-BPM = 88 if PRESET in ('rules', 'making', 'rooms') else 72
+BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends') else 72
 BEAT = 60 / BPM
 BAR = 4 * BEAT
 DURATION = float(sys.argv[2]) if len(sys.argv) > 2 else 38.0
@@ -234,6 +236,29 @@ elif PRESET == 'letter':
             pad=bar >= 6,
             shaker=bar in (7, 8),
         )
+elif PRESET == 'friends':
+    # Fmaj9 - Dm9 - Bbmaj9 - C13sus: bright and warm. The beat is there from the first
+    # frame (the hook), and drops back for the call to action in bar 4.
+    CHORDS = [
+        (41, [57, 60, 64, 67]),
+        (38, [53, 57, 60, 64]),
+        (34, [57, 60, 62, 65]),
+        (36, [58, 62, 65, 69]),
+    ]
+    BARS = 6
+    MELODY = [
+        (1, 1.5, 77), (1, 2.5, 76), (1, 3.25, 72),
+        (2, 1.5, 74), (2, 2.5, 72), (2, 3.25, 69),
+        (3, 1.5, 72), (3, 2.5, 74), (3, 3.25, 77),
+    ]
+    def parts(bar):
+        return dict(
+            bass=bar <= 4,
+            drums='full' if bar <= 3 else 'sparse' if bar == 4 else None,
+            restrum=bar in (1, 3),
+            pad=bar in (3, 4),
+            shaker=bar == 3,
+        )
 elif PRESET == 'rooms':
     # Bbmaj9 - Gm9 - Ebmaj9 - F13sus, then Bbmaj9 again on the last beat, which is also
     # where the loop starts. Bar 0 is the knock (chord and rain only) until the beat
@@ -386,6 +411,8 @@ def rain_channel():
 
 if PRESET == 'rooms':  # loud for the knock, under the beat, back up for the loop
     rain_level = np.interp(t, [0, 2 * BEAT, 2 * BEAT + 0.4, DURATION - 2.2, DURATION], [0.22, 0.22, 0.10, 0.10, 0.20])
+elif PRESET == 'friends':
+    rain_level = np.full_like(t, 0.09)
 else:
     rain_level = np.interp(t, [0, 3.0, 3.6, DURATION - 3, DURATION], [0.20, 0.20, 0.10, 0.10, 0.16])
 left = music_l * 0.55 + crackle + hiss + rain_channel() * rain_level
@@ -511,8 +538,47 @@ if PRESET == 'rooms':
     for k, note in enumerate((79, 82, 86)):
         place(left, pluck(hz(note), 0.2, 1.6), 2.5 * BAR + 0.25 + k * 0.11)
         place(right, pluck(hz(note), 0.2, 1.6), 2.5 * BAR + 0.26 + k * 0.11)
+if PRESET == 'friends':
+    # Every book that lands on a shelf is a note: up the F major pentatonic, so a row of
+    # books arriving plays a little run. The film script adds the books at the same times.
+    SCALE = [72, 74, 77, 79, 81, 84, 86, 89, 91]
+    def pop(note, level):
+        n = int(0.5 * SR)
+        tt = np.arange(n) / SR
+        body = pluck(hz(note), 1.0, 0.5)[:n]
+        thud = np.sin(2 * np.pi * np.cumsum(220 * np.exp(-tt * 40) + 90) / SR) * np.exp(-tt * 45) * 0.25
+        return (body + thud) * level
+    def place2(sig, at, pan=0.0):
+        place(left, sig * (1 - pan), at)
+        place(right, sig * (1 + pan), at + 0.002)
+    # the hook: 13 books, one every 0.15 s from the first frame
+    for k in range(13):
+        place2(pop(SCALE[k % len(SCALE)] + (12 if k >= len(SCALE) else 0), 0.16), 0.02 + k * 0.15, pan=0.3 * ((k % 3) - 1))
+    # the shelves filling in the hall: a batch every 0.25 s, softer
+    for k in range(7):
+        place2(pop(SCALE[(k * 2) % len(SCALE)], 0.11), 6 * BEAT + 0.12 + k * 0.25, pan=-0.2)
+    # whooshes on the cuts
+    for at in (3 * BEAT, 6 * BEAT, 9 * BEAT, 11 * BEAT, 13 * BEAT, 16 * BEAT):
+        l_w, r_w = whoosh(level=0.3)
+        place(left, l_w, max(0, at - 0.22))
+        place(right, r_w, max(0, at - 0.22))
+    # typing a name into the search box, then a chime as the book lights up
+    for k in range(4):
+        place2(click(0.09), 9 * BEAT + 0.12 + k * 2 / 30)
+    for k, note in enumerate((77, 81, 84)):
+        place2(pluck(hz(note), 0.2, 1.4), 9 * BEAT + 0.62 + k * 0.07)
+    # the fire: a few crackles
+    for at in np.cumsum(rng.uniform(0.05, 0.22, 16)) + 13 * BEAT + 0.05:
+        if at < 16 * BEAT - 0.1:
+            n = int(rng.uniform(0.004, 0.012) * SR)
+            c = one_pole(rng.standard_normal(n), 1800) * np.exp(-np.arange(n) / n * 5) * rng.uniform(0.25, 0.6)
+            place2(c, at, pan=rng.uniform(-0.3, 0.3))
+    # the last book lands on the shelf that was saved for you
+    place2(pop(84, 0.2), 20 * BEAT)
+    place2(pluck(hz(89), 0.12, 1.6), 20 * BEAT + 0.08)
+
 # Fade in the first moment, ring out at the end.
-if PRESET == 'rooms':
+if PRESET in ('rooms', 'friends'):
     fade = np.interp(t, [0, 0.003, DURATION - 0.06, DURATION], [0, 1, 1, 0])
 else:
     fade = np.interp(t, [0, 0.01 if PRESET == 'rules' else 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])

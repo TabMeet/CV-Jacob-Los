@@ -8,6 +8,7 @@ import { local } from './api.js';
 import './main.js';
 
 addEventListener('library:ready', (e) => {
+  e.detail.backend = backend; // for the filming scripts in promo/
   createStudio({ backend, lib: e.detail });
   if (!local.get('ql.local.welcomed', false)) {
     local.set('ql.local.welcomed', true);

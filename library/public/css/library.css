@@ -449,6 +449,13 @@ button { cursor: pointer; }
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
 }
 .spine.highlight { animation: glow-book 1.6s ease-in-out 3; }
+/* a follower's book dropping onto the shelf (Friends of the Library, up close) */
+.spine.arrived { animation: spine-arrive 1.2s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes spine-arrive {
+  0% { opacity: 0; translate: 0 -40px; }
+  30% { opacity: 1; translate: 0 0; box-shadow: 0 0 0 3px var(--glow), 0 0 26px var(--glow); }
+  100% { translate: 0 0; box-shadow: 1px 0 0 rgba(0,0,0,.35); }
+}
 @keyframes glow-book { 50% { transform: translateY(-12px); box-shadow: 0 0 0 3px var(--glow), 0 0 26px var(--glow); } }
 
 .empty-shelf { color: #d6c6a3; font-family: var(--hand); font-size: 26px; padding: 40px 20px; text-align: center; width: 100%; }

@@ -131,6 +131,7 @@ async function boot() {
     friends: (list) => {
       friends = list;
       hall.updateFriends(list); // new books glow as they arrive
+      friendsPanel?.update(list); // and drop onto the shelf if it's open up close
     },
   });
 
@@ -175,9 +176,17 @@ async function boot() {
 
   // -- Friends of the Library -------------------------------------------------
 
+  let friendsPanel = null;
   function friendsCase(index, highlight = null) {
     setZone('friends');
-    openFriendsCase({ index, cases: hall.friendCases, friends, highlight, onClose: () => setZone(null) });
+    const panel = openFriendsCase({
+      index, cases: hall.friendCases, friends, highlight,
+      onClose: () => {
+        if (friendsPanel === panel) friendsPanel = null;
+        setZone(null);
+      },
+    });
+    friendsPanel = panel;
   }
 
   function friendsSign() {

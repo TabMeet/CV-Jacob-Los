@@ -18,13 +18,16 @@ function sinceLabel(added) {
 /**
  * `friends` is the whole room ({ id, no, name, added }), `cases` how many
  * bookcases it has; `index` the bookcase to open; `highlight` a friend's book id.
+ * Returns { close, root, update(friends) }: while it's open, new books drop onto the shelf.
  */
 export function openFriendsCase({ index, cases, friends, highlight = null, onClose }) {
-  const sorted = [...friends].sort((a, b) => a.no - b.no);
+  let sorted = [...friends].sort((a, b) => a.no - b.no);
   let current = index;
   let lit = highlight;
+  let arriving = new Set();
+  let rerender = () => {};
 
-  return openLayer({
+  const layer = openLayer({
     label: `${FRIENDS_ROOM}: ${caseName(index)}`,
     onClose,
     build: (close) => {
@@ -51,6 +54,7 @@ export function openFriendsCase({ index, cases, friends, highlight = null, onClo
         el('button', { class: 'btn secondary', type: 'submit' }, 'Find'));
 
       function render() {
+        const typing = search.contains(document.activeElement); // keep the search box focused through a redraw
         const books = friendsOnCase(sorted, current, cases);
         const caseEl = el('div', { class: 'case' });
         if (!books.length) {
@@ -60,7 +64,9 @@ export function openFriendsCase({ index, cases, friends, highlight = null, onClo
           for (let i = 0; i < books.length; i += n) {
             const row = el('div', { class: 'case-row' });
             for (const f of books.slice(i, i + n)) {
-              row.append(spineButton(asBook(f), { highlight: lit, foot: `No. ${f.no}`, onclick: () => showFriend(f) }));
+              const spine = spineButton(asBook(f), { highlight: lit, foot: `No. ${f.no}`, onclick: () => showFriend(f) });
+              if (arriving.has(f.id)) spine.classList.add('arrived');
+              row.append(spine);
             }
             caseEl.append(row);
           }
@@ -81,6 +87,7 @@ export function openFriendsCase({ index, cases, friends, highlight = null, onClo
           nav,
         );
         if (lit) caseEl.querySelector('.highlight')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        if (typing) search.querySelector('input').focus();
       }
 
       function showFriend(f) {
@@ -106,7 +113,18 @@ export function openFriendsCase({ index, cases, friends, highlight = null, onClo
       render();
       // Rows are measured against the panel, which is only on screen after this returns.
       requestAnimationFrame(() => panel.isConnected && render());
+      rerender = () => panel.querySelector('.case') && render(); // not while a book is off the shelf
       return panel;
     },
   });
+
+  function update(list) {
+    const before = new Set(sorted.map((f) => f.id));
+    sorted = [...list].sort((a, b) => a.no - b.no);
+    arriving = new Set(sorted.filter((f) => !before.has(f.id)).map((f) => f.id));
+    rerender();
+    arriving = new Set();
+  }
+
+  return { ...layer, update };
 }
