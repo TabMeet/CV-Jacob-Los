@@ -9,6 +9,8 @@ import { openDesk } from './librarian.js';
 import { openShelf } from './shelf.js';
 import { openReader } from './reader.js';
 import { openCorridor, showShelved } from './writing.js';
+import { openFriendsCase } from './friends.js';
+import { FRIENDS_ROOM, caseCount, caseOf } from '../../shared/friends.js';
 import { setSound, soundOn } from './sound.js';
 
 const root = document.documentElement;
@@ -30,8 +32,15 @@ document.body.insertAdjacentHTML('afterbegin', art.defsSVG());
 async function boot() {
   let config;
   let shelfData;
+  let friends = []; // Friends of the Library: a book for every follower
   try {
-    [config, shelfData] = await Promise.all([api('/api/config'), api('/api/shelves')]);
+    let friendData;
+    [config, shelfData, friendData] = await Promise.all([
+      api('/api/config'),
+      api('/api/shelves'),
+      api('/api/friends').catch(() => ({ friends: [] })),
+    ]);
+    friends = friendData.friends ?? [];
   } catch (err) {
     document.getElementById('hint').textContent = `The library couldn't open its doors: ${err.message}`;
     return;
@@ -58,6 +67,7 @@ async function boot() {
     genres,
     librarianName: config.librarian,
     catName: config.cat,
+    friendCases: caseCount(friends.length),
     onInteract: interact,
     onZone: (zone) => {
       if (zone === 'window' && Date.now() - lastGreet > 30_000) {
@@ -68,6 +78,7 @@ async function boot() {
     },
   });
   hall.updateShelves(shelfData.shelves);
+  hall.updateFriends(friends, { quiet: true });
 
   const cat = createCat({ hall, catName: config.cat, genres, isMine });
   const myZone = () => zoneOverride ?? hall.zone ?? 'hall';
@@ -117,6 +128,10 @@ async function boot() {
       cat.onEvent(ev);
       if (ev.type === 'shelved' || ev.type === 'opened') refreshShelvesSoon();
     },
+    friends: (list) => {
+      friends = list;
+      hall.updateFriends(list); // new books glow as they arrive
+    },
   });
 
   // -- the shelves in the hall ----------------------------------------------
@@ -153,6 +168,31 @@ async function boot() {
     else if (spot.id.startsWith('shelf:')) shelf(spot.genre);
     else if (spot.id.startsWith('chair:')) chairMoment();
     else if (spot.id === 'writing') writing();
+    else if (spot.id.startsWith('friends:')) friendsCase(spot.index);
+    else if (spot.id === 'friends-sign') friendsSign();
+    else if (spot.id === 'fireplace') toast('The fire crackles and pops. Above the mantel, in careful cross-stitch: you are not alone.', { ms: 6500 });
+  }
+
+  // -- Friends of the Library -------------------------------------------------
+
+  function friendsCase(index, highlight = null) {
+    setZone('friends');
+    openFriendsCase({ index, cases: hall.friendCases, friends, highlight, onClose: () => setZone(null) });
+  }
+
+  function friendsSign() {
+    const n = friends.length;
+    toast(`${FRIENDS_ROOM}: every follower of the library gets a book in the room through the arch. ${n ? `${plural(n, 'book')} on the shelves so far. Is yours here?` : 'The shelves are still empty, saved for whoever comes first.'}`, { ms: 7500 });
+  }
+
+  /** Walk (or, from far away, hurry) to a friend's book and take it off the shelf. */
+  function showFriend(id) {
+    const at = [...friends].sort((a, b) => a.no - b.no).findIndex((f) => f.id === id);
+    if (at < 0) return;
+    const index = caseOf(at, hall.friendCases);
+    const s = hall.spot(`friends:${index}`);
+    const far = Math.abs(s.cx - hall.x) > 1200;
+    hall.walkTo(s.cx, () => friendsCase(index, id), { mult: far ? 4.5 : 1.6 });
   }
 
   function doorMoment() {
@@ -266,6 +306,7 @@ async function boot() {
           el('ul', { class: 'directory-list' },
             item('An armchair', 'sit and read', 'chair:0'),
             item('The writing rooms', 'write your own', 'writing'),
+            item(FRIENDS_ROOM, friends.length ? `${plural(friends.length, 'book')}, one for every follower` : 'a book for every follower', 'friends:0'),
           ),
         );
       },
@@ -299,6 +340,9 @@ async function boot() {
         reportPresence();
         refreshShelvesSoon(30);
       },
+      friends: () => friends,
+      showFriend,
+      openFriendsCase: friendsCase,
     },
   }));
 }

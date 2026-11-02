@@ -4,6 +4,7 @@
 
 import { el, toast, closeAllLayers } from '../ui.js';
 import { local, resetReader } from '../api.js';
+import { FRIENDS_ROOM, caseOf, parseFriendNames } from '../../../shared/friends.js';
 
 const FRAMES = [
   ['fill', 'Whole window', null],
@@ -241,6 +242,7 @@ export function createStudio({ backend, lib }) {
 
   let wrenDraft = '';
   let inkDraft = '';
+  let friendsDraft = '';
 
   function render() {
     toggle.classList.toggle('is-recording', Boolean(recorder));
@@ -311,6 +313,25 @@ export function createStudio({ backend, lib }) {
         ),
         el('p', { class: 'note' }, '“Next visitor” is for handing the laptop to someone else: they count as a new reader and get their own drafts. Export saves the books as a file you can later put on the hosted library (npm run seed -- --from file.json).'),
       ),
+      section(FRIENDS_ROOM,
+        el('p', { class: 'note' }, friendsNote()),
+        el('textarea', { rows: 4, placeholder: '@one_follower\n@another_follower\n(one name per line)', oninput: (e) => { friendsDraft = e.target.value; } }, friendsDraft),
+        el('div', { class: 'row' },
+          el('button', { type: 'button', onclick: addFriendsFromDraft }, 'Put them on the shelves'),
+          el('button', { type: 'button', onclick: goToFriends }, 'Go to the room'),
+        ),
+        el('div', { class: 'row' },
+          el('button', { type: 'button', onclick: showNewestFriend, disabled: !backend.friends().length }, 'Show the newest book'),
+          el('button', { type: 'button', onclick: removeFriend, disabled: !backend.friends().length }, 'Take one off'),
+          el('button', { type: 'button', onclick: emptyFriends, disabled: !backend.friends().length }, 'Empty the room'),
+        ),
+        el('div', { class: 'row' },
+          el('button', { type: 'button', onclick: exportFriends, disabled: !backend.friends().length }, 'Download friends.json'),
+          el('label', { class: 'file' }, 'Add from a file', el('input', { type: 'file', accept: '.json,.txt,.csv,application/json,text/plain', onchange: importFriends })),
+        ),
+        el('p', { class: 'note' }, 'Stand in the room first and the new books glow onto the shelves as you add them, ready to film. Books go on in order: the first name gets book no. 1. Names already there are skipped. A list from a file works too: one name per line, or a friends.json.'),
+        el('p', { class: 'note' }, 'Followers’ names are public, but it’s kind to ask first: “comment if you’d like a book in the library” works well, and gives you the list.'),
+      ),
       el('p', { class: 'note keys' }, 'Keys: S studio · H clean shot · T tour · R record'),
     );
     panel.scrollTop = scrollTop;
@@ -331,6 +352,90 @@ export function createStudio({ backend, lib }) {
       const added = backend.importBooks(JSON.parse(await file.text()));
       toast(`Added ${added} book${added === 1 ? '' : 's'} to the shelves.`);
       lib.refresh();
+      render();
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+
+  // -- Friends of the Library ------------------------------------------------
+
+  function friendsNote() {
+    const n = backend.friends().length;
+    return n
+      ? `${n} follower${n === 1 ? ' has a book' : 's have books'} in the room through the arch, past the writing rooms. Saved in this browser.`
+      : 'A room through the arch, past the writing rooms, with empty bookcases. Paste your followers’ names and each one gets a book with their name on the spine.';
+  }
+
+  function addFriendsFromDraft() {
+    const names = parseFriendNames(friendsDraft);
+    if (!names.length) {
+      toast('Paste or type some names first, one per line.');
+      return;
+    }
+    // Stand in front of the bookcase the first new book goes on, so it glows in shot.
+    const landing = hall.spot(`friends:${caseOf(backend.friends().length, hall.friendCases)}`);
+    if (Math.abs(hall.x - landing.cx) > 200) {
+      closeAllLayers();
+      stopTour();
+      hall.teleport(landing.cx);
+      setTimeout(() => putOnShelves(names), 450);
+    } else {
+      putOnShelves(names);
+    }
+  }
+
+  function putOnShelves(names) {
+    const added = backend.addFriends(names);
+    const skipped = names.length - added.length;
+    toast(added.length
+      ? `${added.length === 1 ? `${added[0].name} has` : `${added.length} friends have`} a book now${added.length === 1 ? ` (no. ${added[0].no})` : ''}.${skipped ? ` ${skipped} already had one.` : ''}`
+      : 'Everyone on that list already has a book.');
+    if (added.length) friendsDraft = '';
+    render();
+  }
+
+  function goToFriends() {
+    closeAllLayers();
+    stopTour();
+    hall.teleport(hall.spot('friends:0').cx - 200);
+  }
+
+  function showNewestFriend() {
+    const list = backend.friends();
+    if (!list.length) return;
+    closeAllLayers();
+    stopTour();
+    lib.showFriend(list.reduce((a, b) => (b.no > a.no ? b : a)).id);
+  }
+
+  function removeFriend() {
+    const name = prompt('Which name should come off the shelf?');
+    if (!name) return;
+    toast(backend.removeFriend(name) ? `${name.trim()}’s book is off the shelf.` : `There’s no book for ${name.trim()}.`);
+    render();
+  }
+
+  function emptyFriends() {
+    if (!confirm(`Take every book out of ${FRIENDS_ROOM}?`)) return;
+    backend.emptyFriends();
+    render();
+  }
+
+  function exportFriends() {
+    const blob = new Blob([JSON.stringify(backend.exportFriends(), null, 2)], { type: 'application/json' });
+    const a = el('a', { href: URL.createObjectURL(blob), download: 'friends.json' });
+    document.body.append(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  }
+
+  async function importFriends(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const added = backend.importFriends(await file.text());
+      toast(added ? `${added} new book${added === 1 ? '' : 's'} in ${FRIENDS_ROOM}.` : 'Everyone in that file already has a book.');
       render();
     } catch (err) {
       toast(err.message);

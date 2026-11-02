@@ -6,9 +6,11 @@ import { GENRES, isGenre, genreName } from '../shared/genres.js';
 import { LIBRARIAN, CAT, LIBRARY } from '../shared/characters.js';
 import * as realAi from './ai.js';
 import { cleanText, cleanTitle, wordCount, timeOfDay, MIN_WORDS, MAX_CHARS } from '../shared/text.js';
+import { FRIENDS_ROOM, publicFriend } from '../shared/friends.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(here, '..', 'public');
+const SHARED_DIR = join(here, '..', 'shared');
 
 const TOKEN = /^[a-z0-9-]{8,64}$/i;
 
@@ -37,7 +39,7 @@ function limiter(max, windowMs) {
   };
 }
 
-export function createApp({ db, presence, ai = realAi, limits = {} }) {
+export function createApp({ db, presence, ai = realAi, limits = {}, friends = { list: () => [] } }) {
   const app = express();
   app.disable('x-powered-by');
   if (process.env.TRUST_PROXY) app.set('trust proxy', process.env.TRUST_PROXY);
@@ -55,6 +57,8 @@ export function createApp({ db, presence, ai = realAi, limits = {} }) {
   });
   app.use(express.json({ limit: '256kb' }));
   app.use(express.static(PUBLIC_DIR, { extensions: ['html'], maxAge: '1h' }));
+  // The one shared module the browser imports directly (the hall draws Friends of the Library with it).
+  app.get('/shared/friends.js', (req, res) => res.sendFile(join(SHARED_DIR, 'friends.js'), { maxAge: '1h', headers: { 'Content-Type': 'text/javascript; charset=utf-8' } }));
 
   const writeLimit = limiter(limits.write ?? 6, 60 * 60 * 1000);
   const titleLimit = limiter(limits.titles ?? 20, 60 * 60 * 1000);
@@ -233,6 +237,11 @@ export function createApp({ db, presence, ai = realAi, limits = {} }) {
   });
 
   app.get('/api/events', (req, res) => presence.subscribe(req, res));
+
+  // Friends of the Library: the followers' books in the room at the back.
+  app.get('/api/friends', (req, res) => {
+    res.json({ room: FRIENDS_ROOM, friends: friends.list().map(publicFriend) });
+  });
 
   app.get('/healthz', (req, res) => res.json({ ok: true }));
 

@@ -308,8 +308,11 @@ function plaque(name) {
   </g>`;
 }
 
-/** A bookcase as seen from the hall. `books` are the most-read books on that shelf. */
-export function bookcaseSVG(genre, books) {
+/**
+ * A bookcase as seen from the hall. `books` are the most-read books on that shelf
+ * ({ id, title, reads }); `empty` is the card shown while it has none.
+ */
+export function bookcaseSVG(genre, books, { empty: emptyText = 'waiting for a first story' } = {}) {
   const r = rng(`case:${genre.id}`);
   const decor = ['plant', 'candle', 'globe', 'hourglass', 'frame', 'bookend'];
   let content = '';
@@ -343,7 +346,7 @@ export function bookcaseSVG(genre, books) {
   const empty = books.length === 0
     ? `<g transform="translate(${CASE_W / 2} ${TOP + ROW_H * 3 - 26}) rotate(-3)">
         <rect x="-62" y="-14" width="124" height="30" rx="2" fill="#f6efe1"/>
-        <text x="0" y="6" text-anchor="middle" font-family="Caveat, cursive" font-size="15" fill="#5b4a3e">waiting for a first story</text>
+        <text x="0" y="6" text-anchor="middle" font-family="Caveat, cursive" font-size="15" fill="#5b4a3e">${esc(emptyText)}</text>
       </g>`
     : '';
 
@@ -467,4 +470,94 @@ export function librarianPortraitSVG() {
 
 export function catPortraitSVG() {
   return catSVG().replace('viewBox="0 0 120 116"', 'viewBox="20 0 80 70"');
+}
+
+// ---------------------------------------------------------------------------
+// Friends of the Library: the room at the back where every follower gets a book
+
+/** The archway into the room, with its brass sign. 300 x 450. */
+export function friendsArchSVG(name = 'Friends of the Library') {
+  const [first, ...rest] = name.split(' ');
+  return `<svg viewBox="0 0 300 450" class="art" aria-hidden="true">
+    <defs>
+      <linearGradient id="g-arch" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a2419"/><stop offset=".5" stop-color="#5c3b29"/><stop offset="1" stop-color="#3a2419"/></linearGradient>
+    </defs>
+    <path d="M0 450V170a150 150 0 0 1 300 0v280h-38V170a112 112 0 0 0-224 0v280z" fill="url(#g-arch)"/>
+    <path d="M38 450V170a112 112 0 0 1 224 0v280" fill="none" stroke="#24160f" stroke-width="5"/>
+    <path d="M4 170a146 146 0 0 1 292 0" fill="none" stroke="#7a5236" stroke-width="3" opacity=".7"/>
+    <path d="M136 20h28l-4 34h-20z" fill="url(#g-brass)"/>
+    <g fill="#24160f" opacity=".55"><rect x="0" y="236" width="38" height="8"/><rect x="262" y="236" width="38" height="8"/><rect x="0" y="420" width="38" height="30"/><rect x="262" y="420" width="38" height="30"/></g>
+    <g transform="translate(150 66)">
+      <path d="M-46-12V0M46-12V0" stroke="#9a7638" stroke-width="2"/>
+      <rect x="-88" y="0" width="176" height="56" rx="5" fill="url(#g-brass)"/>
+      <rect x="-83" y="5" width="166" height="46" rx="3" fill="none" stroke="#9a7638" stroke-width="1"/>
+      <text y="26" text-anchor="middle" font-family="Cormorant Garamond, serif" font-weight="700" font-size="21" letter-spacing="4" fill="#3a2716">${esc(first.toUpperCase())}</text>
+      <text y="43" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-weight="600" font-size="13" fill="#3a2716">${esc(rest.join(' '))}</text>
+    </g>
+  </svg>`;
+}
+
+/** The chalkboard by the arch. 130 x 190. */
+export function friendsBoardSVG() {
+  return `<svg viewBox="0 0 130 190" class="art" aria-hidden="true">
+    <path d="M30 120L14 190M100 120l16 70M65 120v66" stroke="#4b2f21" stroke-width="6" stroke-linecap="round"/>
+    <rect x="4" y="4" width="122" height="124" rx="4" fill="#6b4a32"/>
+    <rect x="11" y="11" width="108" height="110" rx="2" fill="#26302b"/>
+    <g fill="#f3efe4" font-family="Caveat, cursive" text-anchor="middle">
+      <text x="65" y="38" font-size="19" font-weight="700">every follower</text>
+      <text x="65" y="62" font-size="19" font-weight="700">gets a book.</text>
+      <text x="65" y="90" font-size="16" opacity=".85">is yours here?</text>
+    </g>
+    <path d="M65 112c-5-6-12-3-9 3 2 4 9 8 9 8s7-4 9-8c3-6-4-9-9-3z" fill="#e8a0a0" opacity=".9"/>
+    <rect x="22" y="121" width="22" height="4" rx="2" fill="#e9e4d6"/>
+  </svg>`;
+}
+
+/** A fireplace, with "you are not alone" stitched and framed above it. 320 x 430. */
+export function fireplaceSVG() {
+  return `<svg viewBox="0 0 320 430" class="art" aria-hidden="true">
+    <defs>
+      <radialGradient id="g-fire" cx="50%" cy="85%" r="70%"><stop offset="0" stop-color="#ffcf6b" stop-opacity=".95"/><stop offset=".45" stop-color="#e8742c" stop-opacity=".55"/><stop offset="1" stop-color="#140c08" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect x="34" y="0" width="252" height="200" fill="#1a2433"/>
+    <rect x="44" y="10" width="232" height="180" fill="none" stroke="#2c3a50" stroke-width="3"/>
+    <g transform="translate(160 98)">
+      <rect x="-66" y="-56" width="132" height="104" rx="2" fill="url(#g-brass)"/>
+      <rect x="-58" y="-48" width="116" height="88" fill="#efe6d2"/>
+      <rect x="-52" y="-42" width="104" height="76" fill="none" stroke="#c9a45c" stroke-width="1" stroke-dasharray="3 3"/>
+      <g font-family="Caveat, cursive" font-weight="700" text-anchor="middle" fill="#7b2e2a">
+        <text y="-10" font-size="25">you are</text><text y="18" font-size="25">not alone</text>
+      </g>
+      <path d="M-36 26h-8M44 26h-8M-40 -30h8M32 -30h8" stroke="#3f6b5a" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M0 30c-3-4-8-2-6 2 1 3 6 5 6 5s5-2 6-5c2-4-3-6-6-2z" fill="#a5443a"/>
+    </g>
+    <rect x="4" y="198" width="312" height="18" rx="2" fill="#5a3a28"/><rect x="4" y="214" width="312" height="5" fill="#000" opacity=".3"/>
+    <g transform="translate(44 168)"><rect x="0" y="8" width="9" height="22" fill="#efe4cc"/><path d="M4.5 0q3 4 0 8-3-4 0-8z" fill="#ffcf6b" class="candle-flame"/></g>
+    <g transform="translate(62 176)"><rect x="0" y="6" width="9" height="16" fill="#efe4cc"/><path d="M4.5 -2q3 4 0 8-3-4 0-8z" fill="#ffcf6b" class="candle-flame"/></g>
+    <g transform="translate(236 172)"><rect x="0" y="16" width="44" height="10" fill="#7b2e2a"/><rect x="4" y="8" width="38" height="8" fill="#2f4b62"/><rect x="2" y="0" width="40" height="8" fill="#b8934f"/></g>
+    <rect x="30" y="219" width="260" height="201" fill="#cbbfa8"/>
+    <rect x="30" y="219" width="260" height="201" fill="none" stroke="#a89a80" stroke-width="4"/>
+    <path d="M84 420V306a76 76 0 0 1 152 0v114z" fill="#140c08"/>
+    <path d="M84 420V306a76 76 0 0 1 152 0v114z" fill="url(#g-fire)" class="fire-light"/>
+    <g transform="translate(160 404)">
+      <rect x="-50" y="-6" width="100" height="14" rx="7" fill="#5a3422" transform="rotate(-8)"/>
+      <rect x="-48" y="-4" width="96" height="13" rx="6.5" fill="#6e4129" transform="rotate(9)"/>
+      <g class="flames">
+        <path class="flame f1" d="M-34 0q-8-30 6-52 4 18 14 22-2-24 14-46 6 30 18 40 4-16-2-26 22 22 14 62z" fill="#e8742c"/>
+        <path class="flame f2" d="M-22 0q-4-22 8-36 2 12 10 16 0-16 10-30 6 22 14 30 2-8 0-14 12 16 4 34z" fill="#f6a640"/>
+        <path class="flame f3" d="M-10 0q-2-14 6-22 2 8 6 10 2-10 8-16 4 14 6 18 4 6-2 10z" fill="#ffe08a"/>
+      </g>
+    </g>
+    <rect x="12" y="418" width="296" height="12" fill="#3d261b"/>
+  </svg>`;
+}
+
+/** A round rug for in front of the fire. 340 x 70. */
+export function rugSVG() {
+  return `<svg viewBox="0 0 340 70" class="art" aria-hidden="true">
+    <ellipse cx="170" cy="35" rx="168" ry="33" fill="#5e2522"/>
+    <ellipse cx="170" cy="35" rx="156" ry="27" fill="none" stroke="#c9a45c" stroke-width="3" stroke-dasharray="10 6" opacity=".8"/>
+    <ellipse cx="170" cy="35" rx="120" ry="18" fill="#6d2f2a"/>
+    <ellipse cx="170" cy="35" rx="60" ry="8" fill="none" stroke="#c9a45c" stroke-width="2" opacity=".6"/>
+  </svg>`;
 }

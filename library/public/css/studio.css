@@ -46,6 +46,7 @@ body.recording:not(.framed) .studio-toggle { opacity: 0; pointer-events: none; }
   border-radius: 8px; padding: 7px 10px; cursor: pointer; text-align: left;
 }
 .studio button:hover, .studio .file:hover { background: rgba(246,239,225,.12); }
+.studio button:disabled { opacity: .4; cursor: default; background: transparent; }
 .studio button[aria-pressed="true"] { background: #c9a45c; color: #1b1512; border-color: #c9a45c; font-weight: 600; }
 .studio .stack { display: flex; flex-direction: column; gap: 4px; }
 .studio .seg { display: flex; flex-wrap: wrap; gap: 4px; }

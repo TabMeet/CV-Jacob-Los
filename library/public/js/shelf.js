@@ -22,6 +22,35 @@ export function coverEl(book) {
   );
 }
 
+/**
+ * One book on a shelf, up close: its spine, its title, and at its foot how often
+ * it's been read (or `foot`, e.g. a friend's number).
+ */
+export function spineButton(b, { highlight = null, foot, onclick } = {}) {
+  const s = spineStyle(b);
+  return el(
+    'button',
+    {
+      type: 'button',
+      class: `spine${b.reads >= 25 ? ' worn' : ''}${b.reads === 0 && foot === undefined ? ' fresh' : ''}${b.id === highlight ? ' highlight' : ''}`,
+      '--spine': s.color,
+      '--spine-ink': s.ink,
+      style: { width: `${Math.round(34 + s.width * 18)}px`, height: `${Math.round(118 + s.height * 56)}px` },
+      'aria-label': `${b.title}. ${foot ?? readsLabel(b.reads)}.`,
+      onclick,
+    },
+    s.bands ? el('span', { class: 'spine-bands', 'aria-hidden': 'true' }) : null,
+    el('span', { class: 'spine-title' }, b.title),
+    el('span', { class: 'spine-reads', 'aria-hidden': 'true' }, foot ?? (b.reads ? `${b.reads}×` : 'new')),
+  );
+}
+
+/** How many spines fit in a row of a panel (they're up to 52 px wide, 3 px apart). */
+export function spinesPerRow(panel) {
+  const w = panel.clientWidth || innerWidth;
+  return Math.max(5, Math.floor((w - 110) / 55));
+}
+
 export function openShelf({ genreId, genres, highlight = null, onRead, onWrite, onClose }) {
   const genre = genres.find((g) => g.id === genreId);
   let sort = highlight ? 'new' : 'popular';
@@ -46,11 +75,6 @@ export function openShelf({ genreId, genres, highlight = null, onRead, onWrite, 
         );
       }
 
-      function perRow() {
-        const w = panel.clientWidth || innerWidth;
-        return Math.max(5, Math.floor((w - 60) / 52));
-      }
-
       function renderCase() {
         caseEl.replaceChildren();
         if (!books.length) {
@@ -61,28 +85,10 @@ export function openShelf({ genreId, genres, highlight = null, onRead, onWrite, 
           );
           return;
         }
-        const n = perRow();
+        const n = spinesPerRow(panel);
         for (let i = 0; i < books.length; i += n) {
           const row = el('div', { class: 'case-row' });
-          for (const b of books.slice(i, i + n)) {
-            const s = spineStyle(b);
-            const spine = el(
-              'button',
-              {
-                type: 'button',
-                class: `spine${b.reads >= 25 ? ' worn' : ''}${b.reads === 0 ? ' fresh' : ''}${b.id === highlight ? ' highlight' : ''}`,
-                '--spine': s.color,
-                '--spine-ink': s.ink,
-                style: { width: `${Math.round(34 + s.width * 18)}px`, height: `${Math.round(118 + s.height * 56)}px` },
-                'aria-label': `${b.title}. ${readsLabel(b.reads)}.`,
-                onclick: () => showBook(b),
-              },
-              s.bands ? el('span', { class: 'spine-bands', 'aria-hidden': 'true' }) : null,
-              el('span', { class: 'spine-title' }, b.title),
-              el('span', { class: 'spine-reads', 'aria-hidden': 'true' }, b.reads ? `${b.reads}×` : 'new'),
-            );
-            row.append(spine);
-          }
+          for (const b of books.slice(i, i + n)) row.append(spineButton(b, { highlight, onclick: () => showBook(b) }));
           caseEl.append(row);
         }
         if (highlight) caseEl.querySelector('.highlight')?.scrollIntoView({ block: 'center', behavior: 'smooth' });

@@ -12,6 +12,7 @@ Everything is anonymous. A book has a title and a shelf, and the only other thin
 - **The shelves.** There are twelve genres, like a real bookshop. Every spine shows its title and read count. You can sort by *most read*, *newest*, or *waiting for readers*.
 - **The armchairs.** Picking a book walks you to the nearest armchair and opens it as a book with pages to turn. On the last page you see how many people have read it ("You are one of 23 people who have sat with these pages").
 - **The writing rooms.** Four rooms at the back. Drafts are saved on your own device as you type. Name the book yourself, ask for title ideas, or let the library name it. The library reads the story and decides which shelf it goes on.
+- **Friends of the Library.** Through an arch past the writing rooms is a room with midnight-blue wallpaper, a fire, and bookcases that start out empty ("saved for you"). Every follower gets a book there, with their name on the spine and their number at its foot. A chalkboard by the arch says *every follower gets a book. is yours here?*, and above the fire, stitched and framed, it says *you are not alone*. Up close you can look for a name, and take a book off the shelf to see its number and when it arrived. The room grows a bookcase whenever the last one fills up.
 - **Other visitors** appear as soft, faceless silhouettes standing at the shelves or sitting in the armchairs. A writing room's door glows when someone is writing inside. The counter at the top says how many people are in the library right now.
 - **Small touches.** The window shows your own time of day (sun, dusk, or moon and stars), the clock on the wall shows your time too, and the rain button plays gentle rain made with Web Audio.
 
@@ -43,6 +44,7 @@ A panel for making videos and screenshots. It sits outside the picture, so it ne
 | **Mrs. Wren's next answer** | Type a line, then ask her anything at the desk. She says your line and still offers real books. |
 | **Make Ink notice something** | Shows your text in the cat's speech bubble, or as a note in the corner. |
 | **Record the frame** (R) | Chrome and Edge: choose "This tab" and it records just the frame, with the rain sound, then saves an `.mp4` to Downloads. You can also use your own screen recorder (Mac ⇧⌘5, Windows Win+Shift+R). |
+| **Friends of the Library** | Paste your followers' names, one per line, and press **Put them on the shelves**. Each gets a book in order (the first name is no. 1); names already there are skipped. The camera jumps to the bookcase where the books land, so they glow onto the shelf in shot. Also: **Go to the room**, **Show the newest book**, **Take one off**, **Empty the room**, **Download friends.json** and **Add from a file** (a `friends.json`, or a text file with one name per line). |
 | **Library** | Export or import books as a file, "Next visitor" (hand the laptop to someone else: they count as a new reader), reset to the starter stories, or empty the shelves. |
 
 Tips for sharper video:
@@ -51,6 +53,8 @@ Tips for sharper video:
 - **Back up what you write.** It lives only in that browser, so use **Export books** now and then.
 
 **Moving to the hosted library later:** export your books from the Studio, then run `npm run seed -- --from quiet-library-books-….json`. Imported books start at 0 reads, because reads on your laptop weren't real readers.
+
+**Friends of the Library on the hosted library:** in the Studio, use **Download friends.json** and put the file in the `data/` folder next to the database (`data/friends.json`). A plain `data/friends.txt` with one name per line works too. The server re-reads it whenever it changes, so you can keep adding names without restarting.
 
 **Rebuilding it** after changing the code: `npm run build:local`. The fonts are embedded when you build online.
 
@@ -102,12 +106,14 @@ Notes:
 - **What gets turned away.** The library accepts writing about anything, including painful subjects. Claude only turns away spam, gibberish, sexual content involving minors, pornographic detail, hate, content that exposes a real private person, and instructions for serious harm. The writer gets a gentle reason and keeps their draft.
 - **Support for writers in distress.** If a story sounds like the writer is in danger right now, the book is still shelved, and Mrs. Wren adds a note pointing to free helplines ([findahelpline.com](https://findahelpline.com)). She does the same at the desk if a visitor says they're struggling.
 - **Reports.** Readers can report a book. After 3 different readers report it (set with `REPORT_THRESHOLD`), it comes off the shelves. Hidden books stay in the database with `hidden = 1`, so you can review them.
+- **Friends of the Library** is the one place with names in it: the names you put there yourself, usually public TikTok handles. A friend's book shows only that name, its number and the date it was shelved. It's kind to ask first, for example "comment if you'd like a book in the library", and to take a name off when someone asks.
 - **Basic protections.** Every route has a simple rate limit. Pages use a strict Content Security Policy, and user text is never inserted as HTML.
 
 ## Making it yours
 
 - **Names.** Rename Mrs. Wren, Ink or the library in `shared/characters.js`.
 - **Shelves.** Add, remove or reorder them in `shared/genres.js`. The hall rebuilds itself to match.
+- **Friends of the Library.** The room's name, the plaque text and how many books fit on a bookcase are at the top of `shared/friends.js`. Its chalkboard, arch and fireplace are in `public/js/art.js`.
 - **Starter stories.** These are in `shared/starter-books.js`. They were written as placeholders, so before opening to the public you may want to start with empty shelves: delete `data/library.db` and skip `npm run seed`.
 
 ## Project layout
@@ -119,6 +125,7 @@ shared/           used by both the server and the local edition
   fallback.js     offline helpers, including the librarian without AI
   starter-books.js
   text.js
+  friends.js      Friends of the Library: names, numbers, which bookcase a book stands in
 server/
   index.js        starts the server
   app.js          the HTTP API
@@ -126,12 +133,14 @@ server/
   ai.js           Claude: cataloguing, titles, the librarian
   presence.js     who's here, and what the cat sees (live, via server-sent events)
   seed.js         starter stories, and importing books from the local edition
+  friends.js      reads data/friends.json (or friends.txt) for Friends of the Library
 public/
   index.html, css/library.css
   js/main.js      wires everything together
   js/hall.js      the walkable hall, camera, other visitors
   js/art.js       all the SVG illustrations
   js/cat.js, librarian.js, shelf.js, reader.js, writing.js, sound.js, ui.js, api.js
+  js/friends.js   Friends of the Library up close: a bookcase of followers' books
   js/local-main.js, js/local/   the local edition: in-browser backend and the Studio
   css/studio.css
 scripts/build-local.mjs         builds dist/quiet-library-local.html

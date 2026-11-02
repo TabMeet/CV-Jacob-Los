@@ -3,16 +3,20 @@ import { dirname, join } from 'node:path';
 import { openLibraryDb } from './db.js';
 import { createPresence } from './presence.js';
 import { createApp } from './app.js';
+import { createFriendsFile } from './friends.js';
 import { aiEnabled } from './ai.js';
 import { LIBRARY } from '../shared/characters.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const DB_FILE = process.env.LIBRARY_DB || join(here, '..', 'data', 'library.db');
 const PORT = Number(process.env.PORT) || 3000;
+const DATA_DIR = dirname(DB_FILE);
 
 const db = openLibraryDb(DB_FILE, { reportThreshold: Number(process.env.REPORT_THRESHOLD) || 3 });
 const presence = createPresence();
-const app = createApp({ db, presence });
+// Friends of the Library: your followers' books (see README)
+const friends = createFriendsFile([join(DATA_DIR, 'friends.json'), join(DATA_DIR, 'friends.txt')]);
+const app = createApp({ db, presence, friends });
 
 const server = app.listen(PORT, () => {
   const { books } = db.totals();

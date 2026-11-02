@@ -8,8 +8,10 @@ import { LIBRARIAN, CAT, LIBRARY } from '../../../shared/characters.js';
 import * as offline from '../../../shared/fallback.js';
 import { STARTER_BOOKS } from '../../../shared/starter-books.js';
 import { cleanText, cleanTitle, wordCount, MIN_WORDS, MAX_CHARS } from '../../../shared/text.js';
+import { FRIENDS_ROOM, addFriends, cleanFriendName, friendKey, friendsFile, publicFriend, readFriendsFile } from '../../../shared/friends.js';
 
 const KEY = 'ql.local.library';
+const FRIENDS_KEY = 'ql.local.friends'; // Friends of the Library: your followers' books
 const PUBLIC = ({ id, title, genre, reads }) => ({ id, title, genre, reads });
 
 function newId() {
@@ -53,6 +55,18 @@ export function createLocalBackend({ latency = true } = {}) {
     local.set(KEY, data);
   }
   const save = () => local.set(KEY, data);
+
+  let friends = [];
+  try {
+    friends = readFriendsFile(local.get(FRIENDS_KEY, { friends: [] }));
+  } catch {
+    friends = [];
+  }
+  const publicFriends = () => friends.map(publicFriend);
+  const saveFriends = () => {
+    local.set(FRIENDS_KEY, { version: 1, friends });
+    broadcast('friends', publicFriends());
+  };
   const visible = () => data.books.filter((b) => !b.hidden);
   const find = (id) => visible().find((b) => b.id === id) ?? null;
 
@@ -233,6 +247,7 @@ export function createLocalBackend({ latency = true } = {}) {
       return snapshot();
     }],
     ['POST', /^\/api\/presence\/leave$/, () => ({})],
+    ['GET', /^\/api\/friends$/, () => ({ room: FRIENDS_ROOM, friends: publicFriends() })],
   ];
 
   return {
@@ -270,6 +285,42 @@ export function createLocalBackend({ latency = true } = {}) {
     notice(text) {
       emit({ type: 'custom', text });
     },
+    // -- Friends of the Library (Studio only: the hosted library reads data/friends.json)
+
+    friends: publicFriends,
+    /** Adds names in order and returns the books that were new. */
+    addFriends(names) {
+      const result = addFriends(friends, names);
+      if (!result.added.length) return [];
+      friends = result.list;
+      saveFriends();
+      return result.added.map(publicFriend);
+    },
+    removeFriend(name) {
+      const key = friendKey(cleanFriendName(name) ?? '');
+      const before = friends.length;
+      friends = friends.filter((f) => friendKey(f.name) !== key);
+      if (friends.length === before) return false;
+      saveFriends();
+      return true;
+    },
+    emptyFriends() {
+      friends = [];
+      saveFriends();
+    },
+    exportFriends() {
+      return friendsFile(friends);
+    },
+    /** Adds the names from a friends file (or a list of names) after the ones already here. */
+    importFriends(content) {
+      const result = addFriends(friends, readFriendsFile(content).map((f) => f.name));
+      if (result.added.length) {
+        friends = result.list;
+        saveFriends();
+      }
+      return result.added.length;
+    },
+
     exportBooks() {
       return {
         format: 'quiet-library-export',

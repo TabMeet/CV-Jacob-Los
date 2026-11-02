@@ -255,6 +255,33 @@ button { cursor: pointer; }
   padding: 6px 8px; border-radius: 3px; box-shadow: 0 4px 10px rgba(0,0,0,.4); pointer-events: none;
 }
 
+/* Friends of the Library: midnight-blue wallpaper with little brass stars */
+.friends-wall {
+  background:
+    linear-gradient(#3d261b, #3d261b) 0 64px / 100% 6px no-repeat,
+    radial-gradient(circle at 18px 22px, rgba(232,201,131,.38) 1.4px, transparent 2.1px) 0 0 / 56px 64px,
+    radial-gradient(circle at 46px 54px, rgba(232,201,131,.22) 1px, transparent 1.7px) 0 0 / 56px 64px,
+    repeating-linear-gradient(90deg, #1d2a3c 0 28px, #213046 28px 56px);
+  box-shadow: inset 0 30px 60px rgba(0,0,0,.45), inset 0 -14px 24px rgba(0,0,0,.3);
+}
+.fireplace .flame { transform-box: fill-box; transform-origin: 50% 100%; animation: flicker 1.1s ease-in-out infinite alternate; }
+.fireplace .flame.f2 { animation-duration: .8s; animation-delay: -.3s; }
+.fireplace .flame.f3 { animation-duration: .6s; animation-delay: -.5s; }
+.fireplace .fire-light { animation: fire-light 1.6s ease-in-out infinite alternate; }
+.fireplace .candle-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: flicker 1.4s ease-in-out infinite alternate; }
+@keyframes flicker {
+  0% { transform: scale(1, 1) skewX(0deg); opacity: .95; }
+  35% { transform: scale(.94, 1.08) skewX(-3deg); opacity: 1; }
+  70% { transform: scale(1.04, .92) skewX(2deg); opacity: .9; }
+  100% { transform: scale(.97, 1.05) skewX(-1deg); opacity: 1; }
+}
+@keyframes fire-light { from { opacity: .75; } to { opacity: 1; } }
+.fire-glow {
+  position: absolute; top: 380px; width: 560px; height: 240px; margin-left: -280px; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 55%, rgba(255,170,90,.28), rgba(255,170,90,0) 62%);
+  animation: fire-light 1.6s ease-in-out infinite alternate;
+}
+
 /* ------------------------------------------------------------------------
    HUD */
 
@@ -365,6 +392,17 @@ button { cursor: pointer; }
 
 .shelf-panel { width: min(1040px, 100%); padding-bottom: 20px; }
 .shelf-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; padding-right: 36px; }
+/* Friends of the Library, up close */
+.friends-panel .kicker { margin: 0; font-family: var(--hand); font-size: 22px; color: var(--ink-soft); }
+.friends-panel .shelf-head h2 { margin-top: 0; }
+.friends-panel .shelf-head .lede { margin-bottom: 0; }
+.friends-panel .find { display: flex; gap: 6px; }
+.friends-panel .find input {
+  width: 200px; border: 1px solid var(--paper-edge); border-radius: 999px; padding: 8px 14px; background: #fffaf0;
+  font-family: var(--serif-text); font-size: 17px; color: var(--ink);
+}
+.friends-panel .find input:focus { outline: none; border-color: var(--brass); }
+.friends-panel .find-note { min-height: 1.3em; margin: -6px 0 10px; color: var(--ink-soft); font-size: 16px; }
 .sort { display: flex; gap: 6px; flex-wrap: wrap; }
 .sort button {
   border: 1px solid var(--paper-edge); background: transparent; border-radius: 999px; padding: 5px 12px; font-size: 16px;

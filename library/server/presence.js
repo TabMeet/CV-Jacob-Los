@@ -2,7 +2,7 @@
 // Lives in memory only: nothing here is written to disk, and nobody is identified.
 // Visitors are a random session id their browser picked, and the place they're standing.
 
-const ZONE = /^(entrance|window|desk|hall|reading|writing|shelf:[a-z]{2,12}|writing:[1-4])$/;
+const ZONE = /^(entrance|window|desk|hall|reading|writing|friends|shelf:[a-z]{2,12}|writing:[1-4])$/;
 const SID = /^[a-z0-9-]{8,40}$/i;
 
 export function createPresence({ now = () => Date.now(), staleAfterMs = 45_000, keepEvents = 40 } = {}) {

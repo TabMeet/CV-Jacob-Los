@@ -1,9 +1,10 @@
 // The hall: a long room you walk through, from the street door at the front,
 // past the cat in the window and the front desk, along the shelves, to the
-// writing rooms at the back.
+// writing rooms at the back, and through an arch into Friends of the Library.
 
 import * as art from './art.js';
 import { el, overlayOpen, prefersReducedMotion } from './ui.js';
+import { FRIENDS_ROOM, FRIENDS_SHORT, MIN_CASES, friendsOnCase, roman } from '../../shared/friends.js';
 
 const WORLD_H = 600;
 const SPEED = 330; // world units per second
@@ -11,10 +12,11 @@ const RUN = 2.2;
 const TRAVEL = 4.5; // when using the directory
 const VISITOR_BASE = 580;
 
-export function createHall({ world, viewport, genres, librarianName, catName, onInteract, onZone }) {
+export function createHall({ world, viewport, genres, librarianName, catName, friendCases = MIN_CASES, onInteract, onZone }) {
   const spots = [];
   const ghosts = new Map();
   const shelfEls = new Map();
+  const caseInfo = new Map(); // bookcase id -> what its plaque says and its empty card
   let width = 0;
 
   // -- layout -----------------------------------------------------------------
@@ -76,6 +78,7 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
     if (i > 0 && i % 3 === 0) addNook();
     const node = add('bookcase', { x, y: 120, w: 250, h: 370, html: art.bookcaseSVG(g, []) });
     shelfEls.set(g.id, node);
+    caseInfo.set(g.id, { genre: g });
     addSpot({ id: `shelf:${g.id}`, zone: `shelf:${g.id}`, genre: g.id, cx: x + 125, x0: x, x1: x + 250, top: 120, bottom: 490, promptY: 110, verb: `Browse ${g.name}` });
     x += 290;
   });
@@ -86,9 +89,39 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
   const doorSign = el('div', { class: 'door-sign', style: { left: `${x + 150}px`, top: '292px' } }, 'Quiet, please.', el('br'), 'Stories in progress.');
   world.append(doorSign);
   addSpot({ id: 'writing', zone: 'writing', cx: x + 150, x0: x, x1: x + 300, top: 90, bottom: 500, promptY: 80, verb: 'Go into the writing rooms' });
-  x += 360;
+  x += 330;
+
+  // Friends of the Library: through an arch past the writing rooms, a room of
+  // bookcases where every follower gets a book, with a fire in the middle.
+  add('friends-board', { x, y: 300, w: 130, h: 190, html: art.friendsBoardSVG(), z: 2 });
+  addSpot({ id: 'friends-sign', zone: 'friends', cx: x + 65, x0: x, x1: x + 130, top: 300, bottom: 500, promptY: 290, verb: 'Read the chalkboard' });
+  x += 160;
+  const archX = x;
+  add('friends-arch', { x, y: 40, w: 300, h: 450, html: art.friendsArchSVG(FRIENDS_ROOM), z: 2 });
+  x += 340;
+  const friendCaseCount = Math.max(MIN_CASES, friendCases);
+  let fireX = null;
+  for (let i = 0; i < friendCaseCount; i++) {
+    if (i === 3) {
+      fireX = x + 160;
+      add('rug', { x: fireX - 170, y: 505, w: 340, h: 70, z: 1 });
+      add('fireplace', { x, y: 60, w: 320, h: 430, html: art.fireplaceSVG(), z: 2 });
+      world.append(el('div', { class: 'fire-glow', style: { left: `${fireX}px` } }));
+      addSpot({ id: 'fireplace', zone: 'friends', cx: fireX, x0: x + 30, x1: x + 290, top: 220, bottom: 500, promptY: 200, verb: 'Warm your hands by the fire' });
+      x += 360;
+    }
+    const id = `friends-${i}`;
+    const genre = { id, name: `${FRIENDS_SHORT} · ${roman(i + 1)}` };
+    const node = add('bookcase friends-case', { x, y: 120, w: 250, h: 370, html: art.bookcaseSVG(genre, [], { empty: 'saved for you' }) });
+    shelfEls.set(id, node);
+    caseInfo.set(id, { genre, opts: { empty: 'saved for you' } });
+    addSpot({ id: `friends:${i}`, zone: 'friends', index: i, cx: x + 125, x0: x, x1: x + 250, top: 120, bottom: 490, promptY: 110, verb: `Browse ${genre.name}` });
+    x += 290;
+  }
+  x += 60;
   width = x;
   world.style.width = `${width}px`;
+  add('friends-wall', { x: archX + 30, y: 28, w: width - archX - 30, h: 372, z: 0 });
 
   for (let lx = 700; lx < width - 100; lx += 560) {
     add('pendant', { x: lx - 40, y: 0, w: 80, h: 120, html: art.pendantSVG(), z: 1 });
@@ -373,11 +406,11 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
     const now = performance.now();
     for (const s of shelves) {
       const node = shelfEls.get(s.id);
-      const genre = genres.find((g) => g.id === s.id);
-      if (!node || !genre) continue;
+      const info = caseInfo.get(s.id);
+      if (!node || !info) continue;
       const before = shown.get(s.id);
       if (before && !quiet) for (const b of s.books) if (!before.has(b.id)) arrivedAt.set(b.id, now);
-      node.innerHTML = art.bookcaseSVG(genre, s.books);
+      node.innerHTML = art.bookcaseSVG(info.genre, s.books, info.opts);
       for (const g of node.querySelectorAll('.book')) {
         const t0 = arrivedAt.get(g.dataset.book);
         if (t0 === undefined) continue;
@@ -390,6 +423,15 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
       }
       shown.set(s.id, new Set(s.books.map((b) => b.id)));
     }
+  }
+
+  /** Friends of the Library: put the followers' books on the room's bookcases, in order. */
+  function updateFriends(friends, opts) {
+    const shelves = [];
+    for (let i = 0; i < friendCaseCount; i++) {
+      shelves.push({ id: `friends-${i}`, books: friendsOnCase(friends, i, friendCaseCount).map((f) => ({ id: f.id, title: f.name, reads: 0 })) });
+    }
+    updateShelves(shelves, opts);
   }
 
   function spot(id) {
@@ -422,6 +464,9 @@ export function createHall({ world, viewport, genres, librarianName, catName, on
     spots,
     setPresence,
     updateShelves,
+    updateFriends,
+    friendCases: friendCaseCount,
+    fireX,
     get zone() {
       return state.zone;
     },
