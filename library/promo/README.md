@@ -183,6 +183,45 @@ Suggested caption:
 >
 > #buildinpublic #booktok #cozy #gamedev #indiedev #webdev #writingcommunity #youarenotalone
 
+## 6 · The writing rooms, a 12-second loop (`quiet-library-rooms.mp4`)
+
+Made after TikTok's feedback on the first five: **too long, and the first second needs a better hook.**
+
+| Feedback | What this video does |
+| --- | --- |
+| Too long (the others run 28–43 s) | **11.6 s**, six shots, a hard cut on every second beat |
+| The first second needs a better hook | Frame 0 already has the hook text fully on screen, the camera already pushing in, and **two knocks** on the soundtrack, the loudest moment of the track. No fade from black and no payoff flash before the hook. |
+| A reason to keep watching | A question in the hook (who's in there?), then a story being typed live that the viewer wants to read |
+| Rewatches | It ends on the same door, at the same framing, as frame 0, and the music runs straight back into the knocks. TikTok loops it seamlessly, and a second viewing starts on the hook. |
+| Comments | It ends on a question: *what would **you** write in there?* |
+
+**The cut:**
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–1.4 s | The glowing writing-room door, a writer's silhouette behind the glass, the sign "Someone is writing. Quiet, please." Two knocks. | *shh, don't knock.* **someone's writing in there.** |
+| 1.4–2.7 s | The corridor: four doors, room 2 taken. The beat drops. | *4 little rooms* **at the back of a library.** |
+| 2.7–6.8 s | Room 4, "Let the library name it" ticked, a story typed live: *"I never told anyone this, but after my grandpa died, I kept calling his number."* | *write the thing* **you never said out loud.** · *no name. no profile.* **nobody will ever know.** |
+| 6.8–8.9 s | The library names it *I Never Told Anyone*, binds it in cloth and shelves it under Life Stories | *then it goes on a shelf,* **for a stranger to find.** |
+| 8.9–11.6 s | Back to the door (the loop) | *the quiet library · opening soon* · *what would* **you write** *in there?* |
+
+**What's real and what's staged:**
+- **Real:** every screen is the local edition working normally. The title and the shelf come from the library's own offline librarian.
+- **Staged:** the story and the writer in room 2.
+- **Changed for a phone screen:** the story is set in bigger type, the writing page starts below the captions, and the corridor's heading is hidden (the captions say the same thing).
+
+**The music** is `lofi.py`'s "rooms" preset: 88 BPM, Bbmaj9, Gm9, Ebmaj9 and F13sus. It has wooden knocks on frame 0, the beat dropping with a soft impact on the cut to the corridor, typing in the room, three plucks as the book is bound, and no fade at either end.
+
+It's about 7 MB, at −13.9 LUFS. **`cover-rooms.jpg`** is frame 0, the hook.
+
+Suggested caption, ending on the same question so people answer it in the comments:
+
+> there's a room at the back of this library where you can write anything. no name. nobody will ever know it was you. what would you write in there? 🕯️
+>
+> #booktok #writingcommunity #cozy #lofi #anonymous #youarenotalone #writersoftiktok #cozyaesthetic
+
+Reply to the best comments with a video. It's an easy second post, and it keeps the question going.
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -210,6 +249,10 @@ node promo/make-tiktok-rules.cjs promo/lofi-rules.wav promo/quiet-library-rules.
 # video 5: the making of
 python3 promo/lofi.py promo/lofi-making.wav 31.5 making
 node promo/make-tiktok-making.cjs promo/lofi-making.wav promo/quiet-library-making.mp4
+
+# video 6: the writing rooms (12-second loop)
+python3 promo/lofi.py promo/lofi-rooms.wav 11.6 rooms
+node promo/make-tiktok-rooms.cjs promo/lofi-rooms.wav promo/quiet-library-rooms.mp4
 ```
 
 Each takes 5–10 minutes. Every frame is rendered on a paused clock, so walks, blinks and page turns are perfectly smooth, and the result is the same on every run.

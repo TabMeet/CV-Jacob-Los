@@ -84,7 +84,9 @@ function createFilm(page, onFrame) {
  * grade, and add the music, normalised for TikTok (-14 LUFS, peaks limited).
  * transitions: [{ kind: 'fade' | 'fadeblack' | ..., at: seconds (the cut), duration }]
  */
-function assemble({ shots, transitions, audio, out, length }) {
+// fadeIn/fadeOut/audioFadeOut are in seconds; 0 leaves that end hard (for a video
+// that should hook on its first frame, or loop seamlessly).
+function assemble({ shots, transitions, audio, out, length, fadeIn = 0.25, fadeOut = 1.1, audioFadeOut = 1.4 }) {
   const { spawnSync } = require('node:child_process');
   const path = require('node:path');
   const inputs = shots.flatMap((dir) => ['-framerate', String(FPS), '-i', path.join(dir, '%05d.jpg')]);
@@ -100,10 +102,10 @@ function assemble({ shots, transitions, audio, out, length }) {
     'colorbalance=rs=0.04:gs=0.01:bs=-0.05:rm=0.05:bm=-0.04:rh=0.03:bh=-0.03',
     'split[a][b];[b]gblur=sigma=18[g];[a][g]blend=all_mode=screen:all_opacity=0.15',
     'vignette=angle=PI/4.4', 'noise=alls=5:allf=t+u',
-    'fade=t=in:st=0:d=0.25', `fade=t=out:st=${length - 1.1}:d=1.1`, 'format=yuv420p',
+    ...(fadeIn ? [`fade=t=in:st=0:d=${fadeIn}`] : []), ...(fadeOut ? [`fade=t=out:st=${length - fadeOut}:d=${fadeOut}`] : []), 'format=yuv420p',
   ].join(',');
   graph += `${last}${grade}[v];[${shots.length}:a]loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,` +
-    `alimiter=limit=0.72:attack=1:release=80:level=disabled,afade=t=out:st=${length - 1.4}:d=1.4[a]`;
+    `alimiter=limit=0.72:attack=1:release=80:level=disabled${audioFadeOut ? `,afade=t=out:st=${length - audioFadeOut}:d=${audioFadeOut}` : ''}[a]`;
   const res = spawnSync('ffmpeg', [
     '-y', '-hide_banner', '-loglevel', 'error', ...inputs, '-i', audio,
     '-filter_complex', graph, '-map', '[v]', '-map', '[a]',

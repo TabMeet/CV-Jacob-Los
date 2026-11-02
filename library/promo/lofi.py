@@ -10,7 +10,9 @@ Presets: "cozy" (the first video: Fmaj9-Em7-Dm9-Cmaj9, 11 bars) and
 "shelves" (Ebmaj9-Dm7-Cm9-Bbmaj13, 12 bars, builds up as the shelves fill) and
 "letter" (Am9-Dm9-G13-Cmaj9, 10 bars, drops to piano for the question, lifts for the call to action) and
 "rules" (88 BPM, Fmaj9-G13-Em9-Am9, 11 bars, whooshes, a riser, a tape-stop and a drop for a fast edit) and
-"making" (88 BPM, Dmaj9-Bm9-Gmaj9-A13sus, 11 bars, the same sound design plus pencil scribbles and typing).
+"making" (88 BPM, Dmaj9-Bm9-Gmaj9-A13sus, 11 bars, the same sound design plus pencil scribbles and typing) and
+"rooms" (88 BPM, Bbmaj9-Gm9-Ebmaj9-F13sus, ~4 bars for a 12-second loop: two knocks on frame 0, the beat drops
+on the first cut, typing in the room, and an ending that runs straight back into the knocks).
 """
 import sys
 import wave
@@ -19,7 +21,7 @@ import numpy as np
 
 SR = 44100
 PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
-BPM = 88 if PRESET in ('rules', 'making') else 72
+BPM = 88 if PRESET in ('rules', 'making', 'rooms') else 72
 BEAT = 60 / BPM
 BAR = 4 * BEAT
 DURATION = float(sys.argv[2]) if len(sys.argv) > 2 else 38.0
@@ -232,6 +234,31 @@ elif PRESET == 'letter':
             pad=bar >= 6,
             shaker=bar in (7, 8),
         )
+elif PRESET == 'rooms':
+    # Bbmaj9 - Gm9 - Ebmaj9 - F13sus, then Bbmaj9 again on the last beat, which is also
+    # where the loop starts. Bar 0 is the knock (chord and rain only) until the beat
+    # drops on beat 3, the cut into the corridor.
+    CHORDS = [
+        (34, [57, 60, 62, 65]),
+        (43, [53, 57, 58, 62]),
+        (39, [55, 58, 62, 65]),
+        (41, [55, 58, 62, 63]),
+    ]
+    BARS = 5
+    MELODY = [
+        (1, 0.5, 74), (1, 1.5, 77), (1, 2.5, 79), (1, 3.25, 77),
+        (2, 0.5, 74), (2, 1.5, 72), (2, 2.5, 70),
+        (3, 0.5, 77), (3, 1.5, 79), (3, 2.5, 82), (3, 3.25, 79),
+    ]
+    def parts(bar):
+        return dict(
+            bass='half' if bar == 0 else 1 <= bar <= 3,
+            drums='full' if bar <= 3 else None,
+            from_step=8 if bar == 0 else 0,
+            restrum=bar in (1, 3),
+            pad=bar in (2, 3),
+            shaker=bar == 3,
+        )
 else:
     # Fmaj9 - Em7 - Dm9 - Cmaj9 : a slow, warm descent.
     CHORDS = [
@@ -293,7 +320,9 @@ for bar in range(BARS):
             place(keys_r, sig2, start + 2.5 * BEAT + jitter + 0.011)
     if p['pad']:
         place(pads, pad([hz(n) for n in voicing], BAR * (1.8 if last else 1.0) + 0.9, 0.5), start - 0.3)
-    if p['bass'] and not last:
+    if p['bass'] == 'half':
+        place(low, bass(hz(root), BEAT * 2 + 0.3, 0.30), start + 2 * BEAT)
+    elif p['bass'] and not last:
         place(low, bass(hz(root), BEAT * 2.5 + swing + 0.3, 0.30), start)
         place(low, bass(hz(root + (7 if bar % 2 else 12)), BEAT * 1.5 + 0.3, 0.22), start + 2.5 * BEAT + swing)
     if p['bass'] and last:
@@ -301,7 +330,7 @@ for bar in range(BARS):
     if p['drums']:
         sparse = p['drums'] == 'sparse'
         hats_only = p['drums'] == 'hats'
-        for step in range(16):
+        for step in range(p.get('from_step', 0), 16):
             t = start + step * BEAT / 4 + (swing if step % 2 else 0)
             if hats_only:
                 place(hats, hat(), t, 0.06 + 0.10 * step / 15)
@@ -355,45 +384,56 @@ def rain_channel():
     swell = 0.8 + 0.2 * np.sin(2 * np.pi * 0.07 * t + rng.uniform(0, 6))
     return r / np.abs(r).max() * swell
 
-rain_level = np.interp(t, [0, 3.0, 3.6, DURATION - 3, DURATION], [0.20, 0.20, 0.10, 0.10, 0.16])
+if PRESET == 'rooms':  # loud for the knock, under the beat, back up for the loop
+    rain_level = np.interp(t, [0, 2 * BEAT, 2 * BEAT + 0.4, DURATION - 2.2, DURATION], [0.22, 0.22, 0.10, 0.10, 0.20])
+else:
+    rain_level = np.interp(t, [0, 3.0, 3.6, DURATION - 3, DURATION], [0.20, 0.20, 0.10, 0.10, 0.16])
 left = music_l * 0.55 + crackle + hiss + rain_channel() * rain_level
 right = music_r * 0.55 + crackle + hiss + rain_channel() * rain_level
+
+# Sound design helpers for the fast edits.
+def one_pole(x, cutoff):
+    # time-varying one-pole lowpass; cutoff is an array (Hz) the same length as x
+    a = np.broadcast_to(np.exp(-2 * np.pi * np.asarray(cutoff, dtype=float) / SR), x.shape)
+    y = np.empty_like(x)
+    acc = 0.0
+    for i in range(len(x)):
+        acc = (1 - a[i]) * x[i] + a[i] * acc
+        y[i] = acc
+    return y
+
+def whoosh(dur=0.5, level=0.42):
+    n = int(dur * SR)
+    u = np.linspace(0, 1, n)
+    w = one_pole(rng.standard_normal(n), 300 + 5200 * np.sin(np.pi * u) ** 2)
+    w = w / (np.abs(w).max() + 1e-9) * np.sin(np.pi * u) ** 2 * level
+    return w * (1 - u), w * u  # sweeps left to right
+
+def riser(dur, level=0.22):
+    n = int(dur * SR)
+    u = np.linspace(0, 1, n)
+    noise = one_pole(rng.standard_normal(n), 250 + 6500 * u ** 2)
+    noise /= np.abs(noise).max() + 1e-9
+    tone = np.sin(2 * np.pi * np.cumsum(220 + 700 * u ** 2) / SR) * 0.35
+    return (noise + tone) * u ** 2.2 * level
+
+def impact(level=0.42):
+    n = int(1.0 * SR)
+    tt = np.arange(n) / SR
+    boom = np.sin(2 * np.pi * np.cumsum(38 + 60 * np.exp(-tt * 18)) / SR) * np.exp(-tt * 4.5)
+    crack = one_pole(rng.standard_normal(n), 3000 * np.exp(-tt * 30) + 200) * np.exp(-tt * 25)
+    return np.tanh(1.5 * (boom + crack * 0.6)) * level
+
+
+def click(level):
+    n = int(0.012 * SR)
+    c = rng.standard_normal(n) * np.exp(-np.arange(n) / SR * 600)
+    return np.diff(np.concatenate([[0], c])) * level  # thin, clicky
+
 
 if PRESET in ('rules', 'making'):
     # Sound design for a fast edit: whooshes on cuts and chapter cards, a riser into the
     # reveal, a tape-stop and a silent beat before the punchline, and an impact on the drop.
-    def one_pole(x, cutoff):
-        # time-varying one-pole lowpass; cutoff is an array (Hz) the same length as x
-        a = np.broadcast_to(np.exp(-2 * np.pi * np.asarray(cutoff, dtype=float) / SR), x.shape)
-        y = np.empty_like(x)
-        acc = 0.0
-        for i in range(len(x)):
-            acc = (1 - a[i]) * x[i] + a[i] * acc
-            y[i] = acc
-        return y
-
-    def whoosh(dur=0.5, level=0.42):
-        n = int(dur * SR)
-        u = np.linspace(0, 1, n)
-        w = one_pole(rng.standard_normal(n), 300 + 5200 * np.sin(np.pi * u) ** 2)
-        w = w / (np.abs(w).max() + 1e-9) * np.sin(np.pi * u) ** 2 * level
-        return w * (1 - u), w * u  # sweeps left to right
-
-    def riser(dur, level=0.22):
-        n = int(dur * SR)
-        u = np.linspace(0, 1, n)
-        noise = one_pole(rng.standard_normal(n), 250 + 6500 * u ** 2)
-        noise /= np.abs(noise).max() + 1e-9
-        tone = np.sin(2 * np.pi * np.cumsum(220 + 700 * u ** 2) / SR) * 0.35
-        return (noise + tone) * u ** 2.2 * level
-
-    def impact(level=0.42):
-        n = int(1.0 * SR)
-        tt = np.arange(n) / SR
-        boom = np.sin(2 * np.pi * np.cumsum(38 + 60 * np.exp(-tt * 18)) / SR) * np.exp(-tt * 4.5)
-        crack = one_pole(rng.standard_normal(n), 3000 * np.exp(-tt * 30) + 200) * np.exp(-tt * 25)
-        return np.tanh(1.5 * (boom + crack * 0.6)) * level
-
     b8 = 8 * BAR
     stop_at = b8 - 0.26
     # riser through bar 7, up to the stop
@@ -412,10 +452,6 @@ if PRESET in ('rules', 'making'):
     if PRESET == 'making':
         whooshes = (0.0, BEAT) + tuple(b * BAR for b in (1, 2, 3, 4, 5, 6, 7, 9, 10))
 
-        def click(level):
-            n = int(0.012 * SR)
-            c = rng.standard_normal(n) * np.exp(-np.arange(n) / SR * 600)
-            return np.diff(np.concatenate([[0], c])) * level  # thin, clicky
 
         def scribble(dur):
             n = int(dur * SR)
@@ -444,8 +480,42 @@ if PRESET in ('rules', 'making'):
     place(left, hit, b8)
     place(right, hit, b8)
 
+if PRESET == 'rooms':
+    # Two knocks on the very first frame (the hook), a whoosh on every cut, typing in
+    # the room, a soft chime as the book is bound. No fade at either end: the last beat
+    # runs straight back into the knocks when TikTok loops the video.
+    def knock(level=0.9):
+        n = int(0.22 * SR)
+        tt = np.arange(n) / SR
+        body = sum(a * np.sin(2 * np.pi * f * tt) * np.exp(-tt * d) for f, a, d in ((165, 1.0, 38), (330, 0.55, 55), (610, 0.35, 80), (1150, 0.18, 120)))
+        tap = one_pole(rng.standard_normal(n), 2500) * np.exp(-tt * 260) * 2.2
+        return np.tanh(1.8 * (body + tap)) * level
+    for k, at in enumerate((0.0, 0.19)):
+        kn = knock(0.5 if k == 0 else 0.44)
+        place(left, kn, at)
+        place(right, kn * 0.92, at + 0.003)
+    hit = impact(level=0.26)  # the drop, on the cut into the corridor
+    place(left, hit, 2 * BEAT)
+    place(right, hit, 2 * BEAT)
+    for at in (2 * BEAT, BAR, 2.5 * BAR, 3.25 * BAR):
+        l_w, r_w = whoosh(level=0.36)
+        place(left, l_w, max(0, at - 0.22))
+        place(right, r_w, max(0, at - 0.22))
+    # keys while the story is typed (from just after the cut into the room)
+    t_k, end = BAR + 0.1, 2.5 * BAR - 0.15
+    while t_k < end:
+        place(left, click(0.085 * rng.uniform(0.6, 1)), t_k)
+        place(right, click(0.075 * rng.uniform(0.6, 1)), t_k + 0.002)
+        t_k += rng.uniform(0.045, 0.085) + (0.16 if rng.random() < 0.07 else 0)
+    # the book is bound: three soft plucks up the Ebmaj9
+    for k, note in enumerate((79, 82, 86)):
+        place(left, pluck(hz(note), 0.2, 1.6), 2.5 * BAR + 0.25 + k * 0.11)
+        place(right, pluck(hz(note), 0.2, 1.6), 2.5 * BAR + 0.26 + k * 0.11)
 # Fade in the first moment, ring out at the end.
-fade = np.interp(t, [0, 0.01 if PRESET == 'rules' else 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])
+if PRESET == 'rooms':
+    fade = np.interp(t, [0, 0.003, DURATION - 0.06, DURATION], [0, 1, 1, 0])
+else:
+    fade = np.interp(t, [0, 0.01 if PRESET == 'rules' else 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])
 stereo = np.stack([left * fade, right * fade], axis=1)
 stereo /= np.abs(stereo).max() / 0.89
 
