@@ -146,6 +146,43 @@ Suggested caption:
 
 Research sources: [Vortex Xcel: TikTok editing trends 2026](https://vortexxcel.com/tiktok-editing-trends-2026/) · [HookClone: trending formats 2026](https://www.hookclone.com/blog/trending-tiktok-formats-2026) · [OpusClip: length and retention](https://www.opus.pro/blog/tiktok-length-format-retention-data) · [Sprout Social: TikTok algorithm 2026](https://sproutsocial.com/insights/tiktok-algorithm/) · [SocialPilot: November 2026 trends](https://www.socialpilot.co/blog/tiktok-trends) · [NewEngen: October 2026 trends](https://newengen.com/insights/tiktok-trends/) · [INFLOW: TikTok's autumn feed](https://inflownetwork.com/tiktok-trends-october-2026/) · [Lit Love Box: BookTok 2026](https://litlovebox.com/blogs/lit-love-bookish-blog/the-most-popular-booktok-books-right-now-2026-edition). Most of these are marketing blogs rather than TikTok itself, so treat the numbers as rough.
 
+## 5 · The making of (`quiet-library-making.mp4`)
+
+A 31-second "how I built this" video in the same fast, beat-cut style as video 4: numbered chapters, word-by-word captions, whooshes on the cuts, and a tape-stop into a silent beat before the reveal. It moves from a blank page through layout, characters, the world, code, bugs and tests, then shows the library come alive.
+
+**Everything it shows is real, just dressed for the camera.** The ideas on the notepad are the six from the original brief. The blueprint uses the hall's real measurements (`hall.js`): 12 shelves, 4 armchairs, the writing rooms at 6,040, all 6,400 units long. The artboards hold the real Ink and Mrs. Wren SVGs. The world is built from the hall's own layers. The code on screen is the real `cat.js` that makes Ink's eyes follow you, typed out beside a live preview. The three bugs really happened:
+
+- the clock hung right behind Mrs. Wren's head;
+- Cormorant's old-style "1" read as an "I";
+- an early profile picture had the tail growing out of the whiskers (`making/ink-avatar-early.png`).
+
+The terminal output is the real test run and build (29 tests, 781 KB). What's styled is the windows around all this: the notebook, the design-app and scene-editor chrome, and the terminal frame. Two other things are staged: the extra Letters titles (the same ones as video 4) and the writer in the writing room. The video doesn't claim the library was hand-made or made without AI. If you want to say how it was made, add that in your caption. Whether to mention AI is up to you; TikTok's AI-content label is aimed mainly at realistic AI-generated footage.
+
+| Time | Chapter | On-screen text |
+| --- | --- | --- |
+| 0–0.7 s | Payoff flash: Ink in the window | none |
+| 0.7–2.7 s | A blank notebook page, "the quiet library" handwritten | *building a cozy library* **from a blank page.** |
+| 2.7–5.5 s | **01** The six ideas, handwritten, plus a doodle of Ink | **the idea.** |
+| 5.5–8.2 s | **02** A blueprint of the hall, drawn line by line | *one long hall.* **12 shelves.** |
+| 8.2–10.9 s | **03** Ink and Mrs. Wren on artboards, outline to colour, plus the palette | *a librarian and* **a cat.** |
+| 10.9–13.6 s | **04** A scene editor: wall, wainscot, floor, window, Ink, front desk and lamps drop in, ticked off one by one | *built* **layer by layer.** |
+| 13.6–16.4 s | **05** The real `cat.js` lines typing out above a live preview of Ink's eyes moving | **ink's eyes** *follow you.* |
+| 16.4–19.1 s | **06** Three bugs, each circled in red | *mrs. wren wore* **the clock as a hat.** · *every 1* **looked like an I.** · *the tail grew* **out of the whiskers.** |
+| 19.1–21.8 s | **07** `npm test` (29 passing), `npm run build:local`, then a tape-stop into a frozen, silent frame | **testing.** · **29 tests.** *all green.* |
+| 21.8–24.5 s | **The drop:** the finished hall, Ink in the window | *and then…* **it came alive.** |
+| 24.5–27.3 s | A new book glows onto the Letters shelf, then the writing-room door lights up | *a place* **to read.** · *a place* **to write.** |
+| 27.3–31 s | End card | *made for anyone who feels alone.* · **The Quiet Library** · *opening soon · follow to see the doors open* |
+
+**The music** is `lofi.py`'s "making" preset: 88 BPM, Dmaj9, Bm9, Gmaj9 and A13sus. On top of the beat are pencil scribbles under the notebook, key clicks under the code and the terminal, whooshes on the chapter cuts, a riser, the tape stop and an impact on the drop.
+
+It's about 15 MB, at −14.1 LUFS. **`cover-making.jpg`** (the blueprint, "one long hall. 12 shelves.") works as a cover.
+
+Suggested caption:
+
+> how i built a cozy little library where strangers leave stories for each other 📚🐈‍⬛ which part should i show next?
+>
+> #buildinpublic #booktok #cozy #gamedev #indiedev #webdev #writingcommunity #youarenotalone
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -169,6 +206,10 @@ node promo/make-tiktok-cta.cjs promo/lofi-letter.wav promo/quiet-library-cta.mp4
 # video 4: this library has 3 rules
 python3 promo/lofi.py promo/lofi-rules.wav 29.5 rules
 node promo/make-tiktok-rules.cjs promo/lofi-rules.wav promo/quiet-library-rules.mp4
+
+# video 5: the making of
+python3 promo/lofi.py promo/lofi-making.wav 31.5 making
+node promo/make-tiktok-making.cjs promo/lofi-making.wav promo/quiet-library-making.mp4
 ```
 
 Each takes 5–10 minutes. Every frame is rendered on a paused clock, so walks, blinks and page turns are perfectly smooth, and the result is the same on every run.
