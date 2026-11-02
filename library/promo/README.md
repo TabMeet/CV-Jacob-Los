@@ -299,6 +299,51 @@ Suggested caption:
 
 **Tagging them** (in the caption or a pinned comment) lets each of the 28 know their book is in the video. That's a nice moment, and they're likely to share it. It's your call: tags notify people.
 
+## 9 · "Day 1": filling an empty library with your stories (`quiet-library-day1.mp4`)
+
+14.3 seconds. The first post of a daily series, and the first call for stories: followers send them in, and you put them on the shelves, anonymously. A "day N" series gives people a reason to follow: they want to see the shelves fill up.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.0 s (hook, on frame 0) | An empty bookcase, its card saying "waiting for a first story" | *day 1* · *filling an empty library* **with your stories.** |
+| 2.0–4.1 s | Past the empty bookcases | *12 shelves.* **0 stories.** |
+| 4.1–6.1 s | Mrs. Wren at the front desk | *she's ready* **to bind them.** |
+| 6.1–8.2 s | Ink in the window (his ear twitches) | *he's ready* **to guard them.** |
+| 8.2–10.9 s | Close on an empty shelf: a book glows onto it and the "waiting" card disappears | *the first one* **could be yours.** |
+| 10.9–14.3 s | Pulling back: one book, the rest still empty | *day 1 · the quiet library* · *send me a story.* **no names. ever.** |
+
+The story shelves really are empty: the video is filmed with no books in the library. The one book that glows in is a preview, which the words say ("could be yours"). Music: the "day1" preset (88 BPM, Cmaj9, G9, Am9, Fmaj9), with a sparkle on frame 0 and a chime as the book lands. About 7 MB, −14.3 LUFS. Cover: `cover-day1.jpg`.
+
+Suggested caption:
+
+> day 1 of filling an empty library with your stories 📚 send me something you've never told anyone: a memory, a letter, a poem, anything. no names, ever. I'll bind it and put it on a shelf 🕯️ (send it in my DMs)
+>
+> #booktok #anonymousstories #writingcommunity #youarenotalone #storytime #cozy #library #day1
+
+DMs keep the sender's name private; a comment wouldn't. In TikTok's privacy settings, check who's allowed to send you direct messages.
+
+## 10 · "The library cat has 3 jobs" (`quiet-library-ink.mp4`)
+
+13 seconds of Ink. Cat videos and numbered lists both do well, and it ends on the easiest comment there is.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.0 s (hook, on frame 0) | Ink, close up, looking right at you; an ear twitch | *the library cat* **has 3 jobs.** |
+| 2.0–4.8 s | The big window, rain and the moon, Ink in the sill (the rain gets louder) | *1. watch* **the rain.** |
+| 4.8–7.5 s | His eyes and head following someone walking past, with a double take | *2. guard* **every story.** |
+| 7.5–10.2 s | Half-closed eyes, unimpressed. Then a slow blink, a cat's way of saying "I love you". | *3. judge you.* · **(lovingly)** |
+| 10.2–13 s | Ink, tail swishing | *the quiet library* · *say hi to Ink* **in the comments.** |
+
+Music: the "ink" preset (88 BPM, Fmaj9, Em7, Dm9, Cmaj9), with one, two and three "dings" for jobs 1, 2 and 3, ticks as his eyes dart, and a falling chime for the slow blink. About 6 MB, −14.4 LUFS. Cover: `cover-ink.jpg`.
+
+Suggested caption:
+
+> the library cat has 3 jobs 🐈‍⬛ he takes all of them very seriously. say hi to Ink 👋
+>
+> #catsoftiktok #booktok #cozy #library #blackandwhitecat #catlife #cozyaesthetic #lofi
+
+**Posting them.** Put "Day 1" up earlier in the day and Ink in the evening. Replying to the first "hi Ink" comments keeps the thread going. TikTok's analytics (Followers → follower activity) show the hours your followers are most active. When the first stories come in, "day 2" can show them going onto the shelves.
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -330,6 +375,14 @@ node promo/make-tiktok-making.cjs promo/lofi-making.wav promo/quiet-library-maki
 # video 6: the writing rooms (12-second loop)
 python3 promo/lofi.py promo/lofi-rooms.wav 11.6 rooms
 node promo/make-tiktok-rooms.cjs promo/lofi-rooms.wav promo/quiet-library-rooms.mp4
+
+# video 9: day 1 of filling an empty library with your stories
+python3 promo/lofi.py promo/lofi-day1.wav 14.4 day1
+node promo/make-tiktok-day1.cjs promo/lofi-day1.wav promo/quiet-library-day1.mp4
+
+# video 10: the library cat has 3 jobs
+python3 promo/lofi.py promo/lofi-ink.wav 13.0 ink
+node promo/make-tiktok-ink.cjs promo/lofi-ink.wav promo/quiet-library-ink.mp4
 
 # video 8: the first followers get their books printed (the list is promo/followers.txt)
 python3 promo/lofi.py promo/lofi-printed.wav 15.05 printed

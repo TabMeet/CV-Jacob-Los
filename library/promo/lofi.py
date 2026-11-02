@@ -16,7 +16,9 @@ on the first cut, typing in the room, and an ending that runs straight back into
 "friends" (88 BPM, Fmaj9-Dm9-Bbmaj9-C13sus, ~5 bars for a 14-second video: the beat starts on frame 0 and
 every book that lands on a shelf plays a note, climbing the scale) and
 "printed" (88 BPM, the same chords, 15 s: a press stamping 28 books, slow then fast like a machine,
-the books landing on a shelf as a run of notes, and a riser that loops back into the first stamp).
+the books landing on a shelf as a run of notes, and a riser that loops back into the first stamp) and
+"day1" (88 BPM, Cmaj9-G9-Am9-Fmaj9, 14 s: hopeful, a sparkle on frame 0 and a chime as the first book lands) and
+"ink" (88 BPM, Fmaj9-Em7-Dm9-Cmaj9, 13 s: playful, a "ding" per job on Ink's list, eye-dart ticks and a slow-blink chime).
 """
 import sys
 import wave
@@ -25,7 +27,7 @@ import numpy as np
 
 SR = 44100
 PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
-BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed') else 72
+BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed', 'day1', 'ink') else 72
 BEAT = 60 / BPM
 BAR = 4 * BEAT
 DURATION = float(sys.argv[2]) if len(sys.argv) > 2 else 38.0
@@ -238,6 +240,33 @@ elif PRESET == 'letter':
             pad=bar >= 6,
             shaker=bar in (7, 8),
         )
+elif PRESET == 'day1':
+    # Cmaj9 - G9 - Am9 - Fmaj9: a beginning. The beat is there from frame 0 and steps
+    # back for the call to action.
+    CHORDS = [
+        (36, [52, 55, 59, 62]),
+        (43, [53, 57, 59, 62]),
+        (45, [55, 59, 60, 64]),
+        (41, [57, 60, 64, 67]),
+    ]
+    BARS = 6
+    MELODY = [(0, 2.5, 76), (0, 3.25, 79), (1, 1.5, 81), (1, 2.5, 79), (2, 1.5, 76), (2, 2.5, 74), (3, 1.5, 72), (3, 2.5, 76), (4, 0.5, 79), (4, 2.0, 84)]
+    def parts(bar):
+        return dict(bass=bar <= 4, drums='full' if bar <= 3 else 'sparse' if bar == 4 else None,
+                    restrum=bar in (1, 3), pad=bar >= 3, shaker=bar in (2, 3))
+elif PRESET == 'ink':
+    # Fmaj9 - Em7 - Dm9 - Cmaj9, bouncier than the first video: a cat's list.
+    CHORDS = [
+        (41, [57, 60, 64, 67]),
+        (40, [55, 59, 62, 67]),
+        (38, [53, 57, 60, 64]),
+        (36, [52, 55, 59, 62]),
+    ]
+    BARS = 5
+    MELODY = [(0, 1.5, 81), (0, 2.5, 79), (1, 1.5, 76), (1, 3.0, 74), (2, 0.5, 72), (2, 1.5, 74), (3, 2.5, 76), (3, 3.25, 79), (4, 0.5, 77)]
+    def parts(bar):
+        return dict(bass=bar <= 3, drums='full' if bar <= 3 else 'sparse',
+                    restrum=bar in (1, 3), pad=bar >= 3, shaker=bar in (1, 2))
 elif PRESET == 'printed':
     # The friends' chords again. Full beat from the first frame; it thins out for the
     # last book (no. 29), which is left unprinted.
@@ -432,8 +461,10 @@ def rain_channel():
 
 if PRESET == 'rooms':  # loud for the knock, under the beat, back up for the loop
     rain_level = np.interp(t, [0, 2 * BEAT, 2 * BEAT + 0.4, DURATION - 2.2, DURATION], [0.22, 0.22, 0.10, 0.10, 0.20])
-elif PRESET in ('friends', 'printed'):
+elif PRESET in ('friends', 'printed', 'day1'):
     rain_level = np.full_like(t, 0.09)
+elif PRESET == 'ink':  # the rain is part of the story here: louder while Ink watches it
+    rain_level = np.interp(t, [0, 3 * BEAT - 0.2, 3 * BEAT, 7 * BEAT, 7 * BEAT + 0.4, DURATION], [0.10, 0.10, 0.26, 0.26, 0.10, 0.10])
 else:
     rain_level = np.interp(t, [0, 3.0, 3.6, DURATION - 3, DURATION], [0.20, 0.20, 0.10, 0.10, 0.16])
 left = music_l * 0.55 + crackle + hiss + rain_channel() * rain_level
@@ -652,8 +683,45 @@ if PRESET == 'printed':
     place(right, rise, 20 * BEAT)
     print('stamps at', ', '.join(f'{x:.3f}' for x in print_schedule()[:4]), '...', f'{print_schedule()[-1]:.3f}')
 
+if PRESET in ('day1', 'ink'):
+    def both2(sig, at, pan=0.0):
+        place(left, sig * (1 - pan), at)
+        place(right, sig * (1 + pan), at + 0.002)
+    def swoosh(at, level=0.28):
+        l_w, r_w = whoosh(level=level)
+        place(left, l_w, max(0, at - 0.22))
+        place(right, r_w, max(0, at - 0.22))
+if PRESET == 'day1':
+    # frame 0: a sparkle up the Cmaj9, so the first second isn't quiet
+    for k, note in enumerate((72, 76, 79, 83, 86)):
+        both2(pluck(hz(note), 0.16, 1.4), 0.0 + k * 0.07, pan=0.3 * ((k % 3) - 1))
+    for at in (3 * BEAT, 6 * BEAT, 9 * BEAT, 12 * BEAT):
+        swoosh(at)
+    # the first book glows onto the empty shelf (it's added at 12 beats + 0.5 s; brightest 0.5 s later)
+    for k, note in enumerate((79, 84, 88, 91)):
+        both2(pluck(hz(note), 0.2, 1.8), 12 * BEAT + 0.95 + k * 0.08)
+    # the call to action: one bell
+    both2(pluck(hz(84), 0.22, 2.4), 16 * BEAT)
+    both2(pluck(hz(96), 0.06, 2.4), 16 * BEAT + 0.01)
+if PRESET == 'ink':
+    # frame 0: a little "boop" with the stare
+    both2(pluck(hz(84), 0.2, 1.0), 0.0)
+    both2(pluck(hz(91), 0.1, 0.8), 0.09)
+    # job 1, 2, 3: one, two, three dings
+    for job, at in enumerate((3 * BEAT, 7 * BEAT, 11 * BEAT), start=1):
+        swoosh(at, 0.24)
+        for k in range(job):
+            both2(pluck(hz((79, 83, 86)[k]), 0.18, 1.0), at + 0.05 + k * 0.11, pan=0.25 * (k - 1))
+    # job 2: a tick each time his eyes dart
+    for at in (7 * BEAT + 0.6, 7 * BEAT + 1.15, 7 * BEAT + 1.7, 7 * BEAT + 2.25):
+        both2(click(0.07), at)
+    # job 3, "(lovingly)": the slow blink, a soft falling chime
+    for k, note in enumerate((88, 84, 81, 77)):
+        both2(pluck(hz(note), 0.13, 1.6), 13 * BEAT + 0.15 + k * 0.12)
+    swoosh(15 * BEAT, 0.24)
+
 # Fade in the first moment, ring out at the end.
-if PRESET in ('rooms', 'friends', 'printed'):
+if PRESET in ('rooms', 'friends', 'printed', 'day1', 'ink'):
     fade = np.interp(t, [0, 0.003, DURATION - 0.06, DURATION], [0, 1, 1, 0])
 else:
     fade = np.interp(t, [0, 0.01 if PRESET == 'rules' else 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])
