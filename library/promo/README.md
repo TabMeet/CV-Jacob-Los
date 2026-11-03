@@ -344,6 +344,43 @@ Suggested caption:
 
 **Posting them.** Put "Day 1" up earlier in the day and Ink in the evening. Replying to the first "hi Ink" comments keeps the thread going. TikTok's analytics (Followers → follower activity) show the hours your followers are most active. When the first stories come in, "day 2" can show them going onto the shelves.
 
+## 11 · Seven new followers, seven new books (`quiet-library-welcome.mp4`)
+
+14.3 seconds. The next batch of followers get their books printed, in the order they followed, and the newest is printed last. No follower numbers appear anywhere, since the count is no longer exact: the covers say *a new friend of the library*, and the numbers on the spines are hidden.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.0 s (hook, on frame 0) | The stamp slams onto the first book: @peter.carl91 | *7 new followers.* **7 new books.** |
+| 2.0–5.5 s | @bonnieblue499, @emelibackhouse, @legitlightyagami, @kuzifix and @maxx.ingoutmycreditcardd, one a beat | *printing them* **one by one.** |
+| 5.5–7.5 s | The stamp holds its breath (a riser), then slams onto the newest: @dido72932 | *and the newest…* |
+| 7.5–10.9 s | The seven drop onto a fresh row of a bookcase; the books already there are plain | *welcome to* **the library.** |
+| 10.9–14.3 s | A blank book, "your name here", under the hovering stamp (it loops into the first stamp) | *the quiet library* · ***follow,*** *and the next* **book is yours.** |
+
+**Light covers.** A book on pale gold or cream cloth gets dark-brown foil instead of gold, as the library does on its light spines, so every name reads.
+
+**For the next batch** this works as a template. Put the new handles in `new-followers.txt`, one per line, **oldest first** (TikTok lists the newest at the top, so reverse it). Three to nine names works. Then make the music for that many followers and render:
+
+```bash
+python3 promo/lofi.py promo/lofi-welcome.wav 14.4 welcome 7     # 7 = how many new followers; the length is (count + 14) beats
+node promo/make-tiktok-welcome.cjs promo/lofi-welcome.wav promo/quiet-library-welcome.mp4
+```
+
+For 7 followers it's 14.3 s; each extra follower adds 0.68 s. The music is the "welcome" preset, with:
+- a stamp per book
+- a riser before the newest
+- notes as the books land
+- a riser back into the loop
+
+About 7 MB, −14.3 LUFS. **`cover-welcome.jpg`** is the hook.
+
+Suggested caption:
+
+> 7 new followers, 7 new books 📚 welcome to the library, @peter.carl91 @bonnieblue499 @emelibackhouse @legitlightyagami @kuzifix @maxx.ingoutmycreditcardd @dido72932 🕯️ follow, and the next book is yours
+>
+> #booktok #cozy #library #newfollowers #thankyou #smallcreator #cozyaesthetic #lofi
+
+Tagging notifies each of them, which is the point of a welcome post, but leave the tags out if you'd rather not.
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -375,6 +412,10 @@ node promo/make-tiktok-making.cjs promo/lofi-making.wav promo/quiet-library-maki
 # video 6: the writing rooms (12-second loop)
 python3 promo/lofi.py promo/lofi-rooms.wav 11.6 rooms
 node promo/make-tiktok-rooms.cjs promo/lofi-rooms.wav promo/quiet-library-rooms.mp4
+
+# video 11: printing books for new followers, newest last (the list is promo/new-followers.txt)
+python3 promo/lofi.py promo/lofi-welcome.wav 14.4 welcome 7
+node promo/make-tiktok-welcome.cjs promo/lofi-welcome.wav promo/quiet-library-welcome.mp4
 
 # video 9: day 1 of filling an empty library with your stories
 python3 promo/lofi.py promo/lofi-day1.wav 14.4 day1

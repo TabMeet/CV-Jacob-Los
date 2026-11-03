@@ -18,7 +18,11 @@ every book that lands on a shelf plays a note, climbing the scale) and
 "printed" (88 BPM, the same chords, 15 s: a press stamping 28 books, slow then fast like a machine,
 the books landing on a shelf as a run of notes, and a riser that loops back into the first stamp) and
 "day1" (88 BPM, Cmaj9-G9-Am9-Fmaj9, 14 s: hopeful, a sparkle on frame 0 and a chime as the first book lands) and
-"ink" (88 BPM, Fmaj9-Em7-Dm9-Cmaj9, 13 s: playful, a "ding" per job on Ink's list, eye-dart ticks and a slow-blink chime).
+"ink" (88 BPM, Fmaj9-Em7-Dm9-Cmaj9, 13 s: playful, a "ding" per job on Ink's list, eye-dart ticks and a slow-blink chime) and
+"welcome" (88 BPM, the friends' chords: a few new followers' books printed, the newest one last after a held breath,
+then dropped onto a shelf; pass the number of followers as a 4th argument, default 7).
+
+    python3 lofi.py out.wav 14.4 welcome 7
 """
 import sys
 import wave
@@ -27,7 +31,8 @@ import numpy as np
 
 SR = 44100
 PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
-BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed', 'day1', 'ink') else 72
+BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed', 'day1', 'ink', 'welcome') else 72
+COUNT = int(sys.argv[4]) if len(sys.argv) > 4 else 7  # 'welcome': how many new followers
 BEAT = 60 / BPM
 BAR = 4 * BEAT
 DURATION = float(sys.argv[2]) if len(sys.argv) > 2 else 38.0
@@ -267,6 +272,20 @@ elif PRESET == 'ink':
     def parts(bar):
         return dict(bass=bar <= 3, drums='full' if bar <= 3 else 'sparse',
                     restrum=bar in (1, 3), pad=bar >= 3, shaker=bar in (1, 2))
+elif PRESET == 'welcome':
+    # The friends' chords. The beat runs until the call to action, then steps back.
+    CHORDS = [
+        (41, [57, 60, 64, 67]),
+        (38, [53, 57, 60, 64]),
+        (34, [57, 60, 62, 65]),
+        (36, [58, 62, 65, 69]),
+    ]
+    BARS = -(-(COUNT + 14) // 4)
+    CTA_BAR = (COUNT + 9) // 4
+    MELODY = [(1, 1.5, 77), (1, 2.5, 76), (2, 1.5, 74), (2, 2.5, 72), (3, 2.5, 77), (3, 3.25, 79)]
+    def parts(bar):
+        return dict(bass=bar <= CTA_BAR, drums='full' if bar < CTA_BAR else 'sparse',
+                    restrum=bar in (1, 3), pad=bar >= 2, shaker=bar in (1, 2))
 elif PRESET == 'printed':
     # The friends' chords again. Full beat from the first frame; it thins out for the
     # last book (no. 29), which is left unprinted.
@@ -461,7 +480,7 @@ def rain_channel():
 
 if PRESET == 'rooms':  # loud for the knock, under the beat, back up for the loop
     rain_level = np.interp(t, [0, 2 * BEAT, 2 * BEAT + 0.4, DURATION - 2.2, DURATION], [0.22, 0.22, 0.10, 0.10, 0.20])
-elif PRESET in ('friends', 'printed', 'day1'):
+elif PRESET in ('friends', 'printed', 'day1', 'welcome'):
     rain_level = np.full_like(t, 0.09)
 elif PRESET == 'ink':  # the rain is part of the story here: louder while Ink watches it
     rain_level = np.interp(t, [0, 3 * BEAT - 0.2, 3 * BEAT, 7 * BEAT, 7 * BEAT + 0.4, DURATION], [0.10, 0.10, 0.26, 0.26, 0.10, 0.10])
@@ -627,20 +646,7 @@ if PRESET == 'friends':
     place2(pop(84, 0.2), 20 * BEAT)
     place2(pluck(hz(89), 0.12, 1.6), 20 * BEAT + 0.08)
 
-if PRESET == 'printed':
-    # The printing schedule, the same as in make-tiktok-printed.cjs: book 1 is stamped
-    # at 0.26 s (the hook), books 2-3 a beat apart, 4-7 half a beat, 8-28 like a machine.
-    def print_schedule():
-        out = [0.22]
-        for i in range(2, 29):
-            if i <= 3:
-                start, dur = (i + 1) * BEAT, BEAT
-            elif i <= 7:
-                start, dur = 5 * BEAT + (i - 4) * 0.5 * BEAT, 0.5 * BEAT
-            else:
-                start, dur = 7 * BEAT + (i - 8) * (5 * BEAT / 21), 5 * BEAT / 21
-            out.append(start + 0.4 * dur)
-        return out
+if PRESET in ('printed', 'welcome'):
     def stamp(level, bright=1.0):
         n = int(0.35 * SR)
         tt = np.arange(n) / SR
@@ -657,6 +663,20 @@ if PRESET == 'printed':
     def both(sig, at, pan=0.0):
         place(left, sig * (1 - pan), at)
         place(right, sig * (1 + pan), at + 0.002)
+if PRESET == 'printed':
+    # The printing schedule, the same as in make-tiktok-printed.cjs: book 1 is stamped
+    # at 0.26 s (the hook), books 2-3 a beat apart, 4-7 half a beat, 8-28 like a machine.
+    def print_schedule():
+        out = [0.22]
+        for i in range(2, 29):
+            if i <= 3:
+                start, dur = (i + 1) * BEAT, BEAT
+            elif i <= 7:
+                start, dur = 5 * BEAT + (i - 4) * 0.5 * BEAT, 0.5 * BEAT
+            else:
+                start, dur = 7 * BEAT + (i - 8) * (5 * BEAT / 21), 5 * BEAT / 21
+            out.append(start + 0.4 * dur)
+        return out
     for k, at in enumerate(print_schedule()):
         level = 0.38 if k == 0 else 0.26 if k < 7 else 0.16
         both(stamp(level, 1 + 0.012 * k), at, pan=0.15 * ((k % 3) - 1))
@@ -720,8 +740,42 @@ if PRESET == 'ink':
         both2(pluck(hz(note), 0.13, 1.6), 13 * BEAT + 0.15 + k * 0.12)
     swoosh(15 * BEAT, 0.24)
 
+if PRESET == 'welcome':
+    # The schedule, the same as in make-tiktok-welcome.cjs (in beats): book 1 stamped at
+    # 0.22 s (the hook); books 2 to N-1 one beat apart from beat 3; the newest one held
+    # for a breath and stamped 1 s into its turn; the shelf, then the call to action.
+    hero = (COUNT + 1) * BEAT
+    shelf = (COUNT + 4) * BEAT
+    cta = (COUNT + 9) * BEAT
+    stamps = [0.22] + [(3 + i) * BEAT + 0.4 * BEAT for i in range(COUNT - 2)] + [hero + 1.0]
+    for k, at in enumerate(stamps):
+        last = k == len(stamps) - 1
+        both(stamp(0.38 if k == 0 or last else 0.28, 1 + 0.02 * k), at, pan=0 if last else 0.15 * ((k % 3) - 1))
+        both(click(0.07), at - 0.11)
+    for first, at in ((0, 0.38), (1, hero + 1.16)):  # the gold catching the light
+        for k, note in enumerate((84, 88, 91) if first == 0 else (84, 88, 91, 96)):
+            both(pluck(hz(note), 0.13, 1.2), at + k * 0.06)
+    l_w, r_w = whoosh(dur=0.35, level=0.22)  # the stamp coming down on frame 0
+    place(left, l_w, 0.0)
+    place(right, r_w, 0.0)
+    # "and the newest..." a held breath: a riser into the last stamp
+    rise = riser(1.0, level=0.14)
+    place(left, rise, hero)
+    place(right, rise, hero)
+    # the books landing on the shelf
+    SCALE = [72, 74, 77, 79, 81, 84, 86, 89, 91]
+    for k in range(COUNT):
+        both(pop2(SCALE[k % len(SCALE)], 0.14), shelf + 0.25 + k * 0.18 + 0.36, pan=0.25 * ((k % 3) - 1))
+    for at in (shelf, cta):
+        l_w, r_w = whoosh(level=0.3)
+        place(left, l_w, max(0, at - 0.22))
+        place(right, r_w, max(0, at - 0.22))
+    end = riser(DURATION - (cta + 3 * BEAT), level=0.12)  # back into the first stamp
+    place(left, end, cta + 3 * BEAT)
+    place(right, end, cta + 3 * BEAT)
+
 # Fade in the first moment, ring out at the end.
-if PRESET in ('rooms', 'friends', 'printed', 'day1', 'ink'):
+if PRESET in ('rooms', 'friends', 'printed', 'day1', 'ink', 'welcome'):
     fade = np.interp(t, [0, 0.003, DURATION - 0.06, DURATION], [0, 1, 1, 0])
 else:
     fade = np.interp(t, [0, 0.01 if PRESET == 'rules' else 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])
