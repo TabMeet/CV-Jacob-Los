@@ -86,7 +86,10 @@ function createFilm(page, onFrame) {
  */
 // fadeIn/fadeOut/audioFadeOut are in seconds; 0 leaves that end hard (for a video
 // that should hook on its first frame, or loop seamlessly).
-function assemble({ shots, transitions, audio, out, length, fadeIn = 0.25, fadeOut = 1.1, audioFadeOut = 1.4 }) {
+// loop: the video loops, so the music's last second is played before frame 0 while
+// the loudness is measured, then cut off. Without it the measurement starts cold and
+// a loud first beat overshoots; a 20 ms fade-in keeps the encoder from clicking.
+function assemble({ shots, transitions, audio, out, length, fadeIn = 0.25, fadeOut = 1.1, audioFadeOut = 1.4, loop = false }) {
   const { spawnSync } = require('node:child_process');
   const path = require('node:path');
   const inputs = shots.flatMap((dir) => ['-framerate', String(FPS), '-i', path.join(dir, '%05d.jpg')]);
@@ -104,8 +107,13 @@ function assemble({ shots, transitions, audio, out, length, fadeIn = 0.25, fadeO
     'vignette=angle=PI/4.4', 'noise=alls=5:allf=t+u',
     ...(fadeIn ? [`fade=t=in:st=0:d=${fadeIn}`] : []), ...(fadeOut ? [`fade=t=out:st=${length - fadeOut}:d=${fadeOut}`] : []), 'format=yuv420p',
   ].join(',');
-  graph += `${last}${grade}[v];[${shots.length}:a]loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,` +
-    `alimiter=limit=0.72:attack=1:release=80:level=disabled${audioFadeOut ? `,afade=t=out:st=${length - audioFadeOut}:d=${audioFadeOut}` : ''}[a]`;
+  const master = 'loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,alimiter=limit=0.72:attack=1:release=80:level=disabled';
+  const tail = audioFadeOut ? `,afade=t=out:st=${length - audioFadeOut}:d=${audioFadeOut}` : '';
+  const a = shots.length;
+  graph += `${last}${grade}[v];` + (loop
+    ? `[${a}:a]atrim=0:${length},asetpts=PTS-STARTPTS,asplit[la][lb];[la]atrim=start=${length - 1},asetpts=PTS-STARTPTS[lpre];` +
+      `[lpre][lb]concat=n=2:v=0:a=1,${master},atrim=start=1,asetpts=PTS-STARTPTS,afade=t=in:st=0:d=0.02${tail}[a]`
+    : `[${a}:a]${master}${tail}[a]`);
   const res = spawnSync('ffmpeg', [
     '-y', '-hide_banner', '-loglevel', 'error', ...inputs, '-i', audio,
     '-filter_complex', graph, '-map', '[v]', '-map', '[a]',

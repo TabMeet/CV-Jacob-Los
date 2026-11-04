@@ -381,6 +381,61 @@ Suggested caption:
 
 Tagging notifies each of them, which is the point of a welcome post, but leave the tags out if you'd rather not.
 
+## 12 · A new book is coming (`quiet-library-teaser.mp4`)
+
+15 seconds. A teaser: an empty story shelf is dusted, ready for a new book, and someone in a writing room types at a typewriter. They're seen from behind, so their head and shoulders hide the page. The marks that peek out above their head are blurred strokes, not text, so nothing can be read, even paused. The shelf is empty, as in "day 1", and its card still says "waiting for a first story".
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.7 s (hook, on frame 0) | A feather duster sweeping an empty shelf, dust glittering in the lamplight | *making room for a* **new book.** |
+| 2.7–5.5 s | Along the shelves, still dusting | *it isn't finished* **yet.** |
+| 5.5–8.9 s | The writing room: the writer from behind (a rust cardigan, a bun with a pencil in it), rain on the window, Ink asleep on the desk. Keys on the beat, the carriage creeping left, *ding*, the return. | *someone is* **still writing it.** |
+| 8.9–11.6 s | Over their shoulder: the page hidden by their head | *no peeking.* **not yet.** |
+| 11.6–15 s | The dusted shelf, waiting | *the quiet library* · *a new book is* **coming soon.** · ***follow*** *so you don't miss it.* |
+
+The writing room is new artwork (`scenes/typist.cjs`) and can be reused. Music: the "teaser" preset (88 BPM, Am9, Fmaj9, Cmaj9, E7sus4), with:
+- duster swishes on each sweep
+- typewriter keys on a sixteenth-note pattern
+- the bell and the carriage return
+- chimes for "coming soon"
+
+About 9 MB, −13.7 LUFS. Cover: `cover-teaser.jpg`.
+
+Suggested caption:
+
+> something's being written in the back room 🤫📚 a new book is coming to the library soon. follow so you don't miss it 🕯️
+>
+> #booktok #comingsoon #writingcommunity #cozy #library #typewriter #writersoftiktok #cozyaesthetic
+
+## 13 · Ink asks for a like (`quiet-library-ink-support.mp4`)
+
+14.3 seconds. Ink does well, so this one asks for the things that help most: likes, comments, and shares, especially "copy link".
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.0 s (hook, on frame 0) | Ink, close up, staring; an ear twitch | *Ink would like* **a word with you.** |
+| 2.0–4.1 s | Half-closed eyes, unimpressed | *you've been watching* **for a while now…** |
+| 4.1–6.1 s | His eyes slide over to the like button; dun, dun | *and you still* **haven't liked it.** |
+| 6.1–7.5 s | A slow blink (a cat's "I love you") | *it's okay.* **he forgives you.** |
+| 7.5–14.3 s | Ink on the left, looking right at TikTok's buttons. Arrows pop in one by one, each with a pulsing ring: **like** (heart), **comment** (speech bubble), **copy link** (share arrow). He twitches an ear and slow-blinks again. | *the quiet library* · *support a small creator* **(and Ink)** |
+
+**The arrows** aim at where TikTok puts its like, comment and share buttons down the right edge of the screen. That's roughly 53%, 62% and 79% of the way down; the exact spot moves a little between phones. To move them, change `BUTTONS` at the top of `make-tiktok-ink-support.cjs`.
+
+Music: the "ink2" preset (88 BPM, Fmaj9, Em7, Dm9, Cmaj9), with:
+- a "dun, dun" sting where the beat drops out
+- a falling chime for the slow blink
+- a pop as each arrow appears
+
+About 6 MB, −14.2 LUFS. Cover: `cover-ink-support.jpg`.
+
+Suggested caption:
+
+> Ink has a message for you 🐈‍⬛ like, comment, and copy the link to share him with someone who needs a cat today. it really helps a small creator (and Ink) 🕯️
+>
+> #catsoftiktok #smallcreator #booktok #cozy #library #blackandwhitecat #catlife #supportsmallcreators
+
+**Audio on looping videos.** These two use `assemble({ loop: true })`. The music's last second plays before frame 0 while the loudness is measured, then gets cut. Without it the measurement starts cold, and a loud first beat (the hook) can overshoot to 0 dB.
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -412,6 +467,14 @@ node promo/make-tiktok-making.cjs promo/lofi-making.wav promo/quiet-library-maki
 # video 6: the writing rooms (12-second loop)
 python3 promo/lofi.py promo/lofi-rooms.wav 11.6 rooms
 node promo/make-tiktok-rooms.cjs promo/lofi-rooms.wav promo/quiet-library-rooms.mp4
+
+# video 12: a new book is coming (the typewriter teaser)
+python3 promo/lofi.py promo/lofi-teaser.wav 15.05 teaser
+node promo/make-tiktok-teaser.cjs promo/lofi-teaser.wav promo/quiet-library-teaser.mp4
+
+# video 13: Ink asks for a like (like, comment, copy link)
+python3 promo/lofi.py promo/lofi-ink2.wav 14.4 ink2
+node promo/make-tiktok-ink-support.cjs promo/lofi-ink2.wav promo/quiet-library-ink-support.mp4
 
 # video 11: printing books for new followers, newest last (the list is promo/new-followers.txt)
 python3 promo/lofi.py promo/lofi-welcome.wav 14.4 welcome 7

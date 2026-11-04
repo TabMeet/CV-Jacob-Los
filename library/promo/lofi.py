@@ -23,6 +23,11 @@ the books landing on a shelf as a run of notes, and a riser that loops back into
 then dropped onto a shelf; pass the number of followers as a 4th argument, default 7).
 
     python3 lofi.py out.wav 14.4 welcome 7
+
+"teaser" (88 BPM, Am9-Fmaj9-Cmaj9-E7sus4, 15 s: feather-duster swishes, a typewriter clacking on the beat,
+its bell and carriage return, a chime for "coming soon") and
+"ink2" (88 BPM, Fmaj9-Em7-Dm9-Cmaj9, 14 s: Ink asks for likes: a comedy sting, a slow-blink chime,
+a pop as each arrow to the like, comment and share buttons appears).
 """
 import sys
 import wave
@@ -31,7 +36,7 @@ import numpy as np
 
 SR = 44100
 PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
-BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed', 'day1', 'ink', 'welcome') else 72
+BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed', 'day1', 'ink', 'welcome', 'teaser', 'ink2') else 72
 COUNT = int(sys.argv[4]) if len(sys.argv) > 4 else 7  # 'welcome': how many new followers
 BEAT = 60 / BPM
 BAR = 4 * BEAT
@@ -59,6 +64,8 @@ def fft_filter(x, lo=None, hi=None, slope=2.0):
 
 def place(buf, sig, at, gain=1.0):
     i = int(at * SR)
+    if i < 0:  # starts before the track does: keep only the part after 0
+        sig, i = sig[-i:], 0
     if i >= len(buf):
         return
     j = min(len(buf), i + len(sig))
@@ -272,6 +279,33 @@ elif PRESET == 'ink':
     def parts(bar):
         return dict(bass=bar <= 3, drums='full' if bar <= 3 else 'sparse',
                     restrum=bar in (1, 3), pad=bar >= 3, shaker=bar in (1, 2))
+elif PRESET == 'teaser':
+    # Am9 - Fmaj9 - Cmaj9 - E7sus4: something being made in secret. Light while the
+    # shelf is dusted, the full beat under the typing, back to light for "coming soon".
+    CHORDS = [
+        (45, [55, 59, 60, 64]),
+        (41, [57, 60, 64, 67]),
+        (36, [52, 55, 59, 62]),
+        (40, [57, 59, 62, 64]),
+    ]
+    BARS = 6
+    MELODY = [(0, 2.5, 76), (1, 1.5, 72), (1, 3.0, 74), (4, 0.5, 76), (4, 2.0, 81), (5, 0.5, 79)]
+    def parts(bar):
+        return dict(bass=1 <= bar <= 4, drums='sparse' if bar in (0, 1, 4) else 'full' if bar in (2, 3) else None,
+                    restrum=bar in (1, 3), pad=bar in (0, 4, 5), shaker=bar in (2, 3))
+elif PRESET == 'ink2':
+    # The first Ink video's chords; the beat drops out for the "you haven't liked it" sting.
+    CHORDS = [
+        (41, [57, 60, 64, 67]),
+        (40, [55, 59, 62, 67]),
+        (38, [53, 57, 60, 64]),
+        (36, [52, 55, 59, 62]),
+    ]
+    BARS = 6
+    MELODY = [(0, 1.5, 81), (0, 2.5, 79), (3, 0.5, 77), (3, 1.5, 81), (3, 2.5, 84), (4, 1.0, 81), (4, 2.5, 79), (5, 0.5, 77)]
+    def parts(bar):
+        return dict(bass=bar != 1, drums='full' if bar in (0, 3, 4) else 'sparse' if bar == 2 else None,
+                    restrum=bar in (3, 4), pad=bar >= 2, shaker=bar in (3, 4))
 elif PRESET == 'welcome':
     # The friends' chords. The beat runs until the call to action, then steps back.
     CHORDS = [
@@ -480,8 +514,10 @@ def rain_channel():
 
 if PRESET == 'rooms':  # loud for the knock, under the beat, back up for the loop
     rain_level = np.interp(t, [0, 2 * BEAT, 2 * BEAT + 0.4, DURATION - 2.2, DURATION], [0.22, 0.22, 0.10, 0.10, 0.20])
-elif PRESET in ('friends', 'printed', 'day1', 'welcome'):
+elif PRESET in ('friends', 'printed', 'day1', 'welcome', 'ink2'):
     rain_level = np.full_like(t, 0.09)
+elif PRESET == 'teaser':  # rain on the writing room's window while the typing goes on
+    rain_level = np.interp(t, [0, 8 * BEAT - 0.2, 8 * BEAT, 17 * BEAT, 17 * BEAT + 0.3, DURATION], [0.08, 0.08, 0.2, 0.2, 0.09, 0.09])
 elif PRESET == 'ink':  # the rain is part of the story here: louder while Ink watches it
     rain_level = np.interp(t, [0, 3 * BEAT - 0.2, 3 * BEAT, 7 * BEAT, 7 * BEAT + 0.4, DURATION], [0.10, 0.10, 0.26, 0.26, 0.10, 0.10])
 else:
@@ -774,8 +810,81 @@ if PRESET == 'welcome':
     place(left, end, cta + 3 * BEAT)
     place(right, end, cta + 3 * BEAT)
 
+if PRESET in ('teaser', 'ink2'):
+    def put(sig, at, pan=0.0):
+        place(left, sig * (1 - pan), at)
+        place(right, sig * (1 + pan), at + 0.002)
+if PRESET == 'teaser':
+    # the feather duster: a soft swish each time it crosses the middle of its sweep
+    # (the same sweeps as make-tiktok-teaser.cjs: period 1.1 s from -0.14 s, then 1.3 s from 4 beats + 0.15 s)
+    def swish(level, direction):
+        n = int(0.42 * SR)
+        u = np.linspace(0, 1, n)
+        w = one_pole(rng.standard_normal(n), 1400 + 3800 * np.sin(np.pi * u))
+        w -= one_pole(w, 500)
+        w = w / (np.abs(w).max() + 1e-9) * np.sin(np.pi * u) ** 1.5 * level
+        return w * (1 - 0.5 * direction * (u - 0.5)), w * (1 + 0.5 * direction * (u - 0.5))
+    sweeps = [(-0.14 + k * 0.55, 1 if k % 2 == 0 else -1) for k in range(8) if -0.14 + k * 0.55 < 4 * BEAT]
+    sweeps += [(4 * BEAT + 0.15 + k * 0.65, 1 if k % 2 == 0 else -1) for k in range(8) if 4 * BEAT + 0.15 + k * 0.65 < 8 * BEAT]
+    for at, d in sweeps:
+        l_s, r_s = swish(0.16, d)
+        place(left, l_s, max(0, at - 0.21))
+        place(right, r_s, max(0, at - 0.21))
+    # the typewriter: keys on a sixteenth-note pattern, the bell, the carriage return
+    PATTERN = 'x.xxx.x.xx.xxx.x'
+    def key_clack(level):
+        n = int(0.09 * SR)
+        tt = np.arange(n) / SR
+        snap = one_pole(rng.standard_normal(n), 6000) - one_pole(rng.standard_normal(n), 1800)
+        snap = snap / (np.abs(snap).max() + 1e-9) * np.exp(-tt * 140)
+        body = np.sin(2 * np.pi * (150 + rng.uniform(-15, 15)) * tt) * np.exp(-tt * 70) * 0.7
+        tick = np.sin(2 * np.pi * 3300 * tt) * np.exp(-tt * 220) * 0.12
+        return np.tanh(1.4 * (snap + body + tick)) * level
+    step = BEAT / 4
+    for i in range(int(8 * 4), int(17 * 4)):
+        at = i * step
+        if 12 * BEAT - 1e-6 <= at < 12.5 * BEAT - 1e-6:
+            continue  # the bell and the carriage return
+        if PATTERN[i % 16] == 'x':
+            put(key_clack(0.12 * rng.uniform(0.8, 1.0)), at, pan=rng.uniform(-0.25, 0.25))
+    n = int(1.6 * SR)
+    tt = np.arange(n) / SR
+    bell = (np.sin(2 * np.pi * 2093 * tt) + 0.4 * np.sin(2 * np.pi * 5230 * tt) * np.exp(-tt * 6)) * np.exp(-tt * 3.2) * 0.1
+    put(bell, 12 * BEAT, pan=-0.3)
+    for k in range(9):  # the ratchet of the carriage sliding back
+        put(click(0.04 + 0.006 * k), 12 * BEAT + 0.12 + 0.022 * k, pan=0.3 - 0.07 * k)
+    clunk = np.sin(2 * np.pi * np.cumsum(140 * np.exp(-np.arange(int(0.2 * SR)) / SR * 30) + 60) / SR) * np.exp(-np.arange(int(0.2 * SR)) / SR * 30) * 0.3
+    put(clunk, 12 * BEAT + 0.33)
+    # "a new book is coming soon": a chime; "follow": another, higher
+    for at, notes in ((17 * BEAT, (72, 76, 79, 84)), (19.5 * BEAT, (79, 84, 88))):
+        for k, note in enumerate(notes):
+            put(pluck(hz(note), 0.15, 1.8), at + k * 0.07, pan=0.2 * (k - 1))
+if PRESET == 'ink2':
+    put(pluck(hz(84), 0.16, 1.0), 0.0)  # frame 0: the stare
+    put(pluck(hz(91), 0.07, 0.8), 0.09)
+    l_w, r_w = whoosh(level=0.22)
+    place(left, l_w, 3 * BEAT - 0.22)
+    place(right, r_w, 3 * BEAT - 0.22)
+    # "and you still haven't liked it": dun, dun
+    def thud(note, level):
+        n = int(0.9 * SR)
+        tt = np.arange(n) / SR
+        boom = np.sin(2 * np.pi * np.cumsum(hz(note) * (1 + 0.6 * np.exp(-tt * 30))) / SR) * np.exp(-tt * 3.5)
+        return np.tanh(1.3 * (boom + 0.5 * bass(hz(note + 12), 0.9, 1.0)[:n])) * level
+    put(thud(31, 0.32), 6 * BEAT + 0.35)
+    put(thud(30, 0.35), 6 * BEAT + 0.8)
+    # "it's okay. he forgives you.": the slow blink
+    for k, note in enumerate((88, 84, 81, 77)):
+        put(pluck(hz(note), 0.13, 1.6), 9 * BEAT + 0.15 + k * 0.12)
+    # the call to action: a pop for each arrow (like, comment, share), then a sparkle
+    for k, at in enumerate((11.5 * BEAT, 13 * BEAT, 14.5 * BEAT)):
+        put(pluck(hz((79, 83, 86)[k]), 0.16, 1.0), at, pan=0.35)
+        put(pluck(hz((91, 95, 98)[k]), 0.05, 0.6), at + 0.04, pan=0.35)
+    for k, note in enumerate((84, 88, 91, 96)):
+        put(pluck(hz(note), 0.1, 1.4), 17 * BEAT + k * 0.06)
+
 # Fade in the first moment, ring out at the end.
-if PRESET in ('rooms', 'friends', 'printed', 'day1', 'ink', 'welcome'):
+if PRESET in ('rooms', 'friends', 'printed', 'day1', 'ink', 'welcome', 'teaser', 'ink2'):
     fade = np.interp(t, [0, 0.003, DURATION - 0.06, DURATION], [0, 1, 1, 0])
 else:
     fade = np.interp(t, [0, 0.01 if PRESET == 'rules' else 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])
