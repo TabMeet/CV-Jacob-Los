@@ -27,7 +27,11 @@ then dropped onto a shelf; pass the number of followers as a 4th argument, defau
 "teaser" (88 BPM, Am9-Fmaj9-Cmaj9-E7sus4, 15 s: feather-duster swishes, a typewriter clacking on the beat,
 its bell and carriage return, a chime for "coming soon") and
 "ink2" (88 BPM, Fmaj9-Em7-Dm9-Cmaj9, 14 s: Ink asks for likes: a comedy sting, a slow-blink chime,
-a pop as each arrow to the like, comment and share buttons appears).
+a pop as each arrow to the like, comment and share buttons appears) and
+"everyone" (like "welcome", then a warm swell rising through every follower's book on the shelves
+and a "thank you" chime; the number of new followers is the 4th argument).
+
+    python3 lofi.py out.wav 15.05 everyone 6
 """
 import sys
 import wave
@@ -36,7 +40,7 @@ import numpy as np
 
 SR = 44100
 PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
-BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed', 'day1', 'ink', 'welcome', 'teaser', 'ink2') else 72
+BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed', 'day1', 'ink', 'welcome', 'teaser', 'ink2', 'everyone') else 72
 COUNT = int(sys.argv[4]) if len(sys.argv) > 4 else 7  # 'welcome': how many new followers
 BEAT = 60 / BPM
 BAR = 4 * BEAT
@@ -306,6 +310,21 @@ elif PRESET == 'ink2':
     def parts(bar):
         return dict(bass=bar != 1, drums='full' if bar in (0, 3, 4) else 'sparse' if bar == 2 else None,
                     restrum=bar in (3, 4), pad=bar >= 2, shaker=bar in (3, 4))
+elif PRESET == 'everyone':
+    # The friends' chords. The beat runs through the printing and the shelf, lifts as the
+    # camera rises through every follower's book, and settles for "thank you".
+    CHORDS = [
+        (41, [57, 60, 64, 67]),
+        (38, [53, 57, 60, 64]),
+        (34, [57, 60, 62, 65]),
+        (36, [58, 62, 65, 69]),
+    ]
+    BARS = -(-(COUNT + 16) // 4)
+    PULL_BAR = (COUNT + 12) // 4
+    MELODY = [(1, 1.5, 77), (1, 2.5, 76), (2, 1.5, 74), (2, 2.5, 72), (3, 0.5, 77), (3, 1.5, 79), (3, 2.5, 81), (4, 0.5, 84), (4, 2.0, 81)]
+    def parts(bar):
+        return dict(bass=True, drums='full' if bar < PULL_BAR else 'sparse',
+                    restrum=bar in (1, 3), pad=bar >= 2, shaker=bar in (1, 2, 3))
 elif PRESET == 'welcome':
     # The friends' chords. The beat runs until the call to action, then steps back.
     CHORDS = [
@@ -514,7 +533,7 @@ def rain_channel():
 
 if PRESET == 'rooms':  # loud for the knock, under the beat, back up for the loop
     rain_level = np.interp(t, [0, 2 * BEAT, 2 * BEAT + 0.4, DURATION - 2.2, DURATION], [0.22, 0.22, 0.10, 0.10, 0.20])
-elif PRESET in ('friends', 'printed', 'day1', 'welcome', 'ink2'):
+elif PRESET in ('friends', 'printed', 'day1', 'welcome', 'ink2', 'everyone'):
     rain_level = np.full_like(t, 0.09)
 elif PRESET == 'teaser':  # rain on the writing room's window while the typing goes on
     rain_level = np.interp(t, [0, 8 * BEAT - 0.2, 8 * BEAT, 17 * BEAT, 17 * BEAT + 0.3, DURATION], [0.08, 0.08, 0.2, 0.2, 0.09, 0.09])
@@ -682,7 +701,7 @@ if PRESET == 'friends':
     place2(pop(84, 0.2), 20 * BEAT)
     place2(pluck(hz(89), 0.12, 1.6), 20 * BEAT + 0.08)
 
-if PRESET in ('printed', 'welcome'):
+if PRESET in ('printed', 'welcome', 'everyone'):
     def stamp(level, bright=1.0):
         n = int(0.35 * SR)
         tt = np.arange(n) / SR
@@ -883,8 +902,50 @@ if PRESET == 'ink2':
     for k, note in enumerate((84, 88, 91, 96)):
         put(pluck(hz(note), 0.1, 1.4), 17 * BEAT + k * 0.06)
 
+if PRESET == 'everyone':
+    # The schedule, the same as make-tiktok-everyone.cjs (in beats): book 1 stamped at
+    # 0.22 s; books 2 to N-1 one beat apart from beat 3; the newest held for a breath and
+    # stamped 1 s into its turn; the shelf; rising through everyone's books; "thank you".
+    hero = (COUNT + 1) * BEAT
+    shelf = (COUNT + 4) * BEAT
+    rise_at = (COUNT + 8) * BEAT
+    pull = (COUNT + 12) * BEAT
+    stamps = [0.22] + [(3 + i) * BEAT + 0.4 * BEAT for i in range(COUNT - 2)] + [hero + 1.0]
+    for k, at in enumerate(stamps):
+        last = k == len(stamps) - 1
+        both(stamp(0.34 if k == 0 or last else 0.26, 1 + 0.02 * k), at, pan=0 if last else 0.15 * ((k % 3) - 1))
+        both(click(0.05), at - 0.11)
+    for first, at in ((0, 0.38), (1, hero + 1.16)):
+        for k, note in enumerate((84, 88, 91) if first == 0 else (84, 88, 91, 96)):
+            both(pluck(hz(note), 0.11, 1.2), at + k * 0.06)
+    l_w, r_w = whoosh(dur=0.35, level=0.2)
+    place(left, l_w, 0.0)
+    place(right, r_w, 0.0)
+    rise = riser(1.0, level=0.13)
+    place(left, rise, hero)
+    place(right, rise, hero)
+    SCALE = [72, 74, 77, 79, 81, 84, 86, 89, 91]
+    for k in range(COUNT):
+        both(pop2(SCALE[k % len(SCALE)], 0.13), shelf + 0.25 + k * 0.18 + 0.36, pan=0.25 * ((k % 3) - 1))
+    for at in (shelf, rise_at):
+        l_w, r_w = whoosh(level=0.26)
+        place(left, l_w, max(0, at - 0.22))
+        place(right, r_w, max(0, at - 0.22))
+    # rising through everyone's books: a slow arpeggio climbing with the camera
+    for k, note in enumerate((65, 69, 72, 76, 77, 81, 84, 88)):
+        both(pluck(hz(note), 0.1, 1.8), rise_at + 0.2 + k * 0.32, pan=0.3 * ((k % 3) - 1))
+    # "thank you for being here": a chime, and a soft swell under it
+    for k, note in enumerate((77, 81, 84, 89)):
+        both(pluck(hz(note), 0.15, 2.2), pull + k * 0.08)
+    swell = pad([hz(n) for n in (53, 60, 65, 69, 72)], DURATION - pull + 0.2, 0.6)
+    place(left, swell * 0.12, pull - 0.2)
+    place(right, swell * 0.12, pull - 0.2)
+    end = riser(1.4, level=0.1)  # back into the first stamp
+    place(left, end, DURATION - 1.4)
+    place(right, end, DURATION - 1.4)
+
 # Fade in the first moment, ring out at the end.
-if PRESET in ('rooms', 'friends', 'printed', 'day1', 'ink', 'welcome', 'teaser', 'ink2'):
+if PRESET in ('rooms', 'friends', 'printed', 'day1', 'ink', 'welcome', 'teaser', 'ink2', 'everyone'):
     fade = np.interp(t, [0, 0.003, DURATION - 0.06, DURATION], [0, 1, 1, 0])
 else:
     fade = np.interp(t, [0, 0.01 if PRESET == 'rules' else 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])

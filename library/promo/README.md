@@ -358,7 +358,7 @@ Suggested caption:
 
 **Light covers.** A book on pale gold or cream cloth gets dark-brown foil instead of gold, as the library does on its light spines, so every name reads.
 
-**For the next batch** this works as a template. Put the new handles in `new-followers.txt`, one per line, **oldest first** (TikTok lists the newest at the top, so reverse it). Three to nine names works. Then make the music for that many followers and render:
+**For the next batch** this works as a template, and video 14's script does the same plus everyone on the shelf. Put the new handles in `new-followers.txt`, one per line, **oldest first** (TikTok lists the newest at the top, so reverse it). Video 11's seven are lines 29 to 35 of `all-followers.txt`. Three to nine names works. Then make the music for that many followers and render:
 
 ```bash
 python3 promo/lofi.py promo/lofi-welcome.wav 14.4 welcome 7     # 7 = how many new followers; the length is (count + 14) beats
@@ -436,6 +436,51 @@ Suggested caption:
 
 **Audio on looping videos.** These two use `assemble({ loop: true })`. The music's last second plays before frame 0 while the loudness is measured, then gets cut. Without it the measurement starts cold, and a loud first beat (the hook) can overshoot to 0 dB.
 
+## 14 · Six new books, and everyone on the shelf (`quiet-library-everyone.mp4`)
+
+15 seconds. The next six followers get their books printed, newest last, as in video 11. Then the camera rises through every follower's book on the bookcase and pulls back over all of them. No follower numbers appear anywhere.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.0 s (hook, on frame 0) | The stamp slams onto the first book: @zena.writes | *6 new followers.* **6 new books.** |
+| 2.0–4.8 s | @annagilchrist1, @.alexwinterhamilton, @justarandomtheri, @icyfire010, one a beat | *printing them* **one by one.** |
+| 4.8–6.8 s | The stamp holds its breath, then the newest: @angell49527 | *and the newest…* |
+| 6.8–9.5 s | The six drop onto a fresh row at the bottom of the bookcase | *welcome to* **the library.** |
+| 9.5–12.3 s | Up through every row to the "Friends · I" plaque, names on the spines. Each row is a batch: the first 28, then the 7, then these 6. | *and everyone* **who came before.** |
+| 12.3–15 s | Back over the whole bookcase: all 41 books | *the quiet library* · *thank you* **for being here.** · ***follow,*** *and you're next.* |
+
+**Everyone on the shelf** comes from `all-followers.txt`: every follower so far, oldest first, one handle per line. That's the first 28 (`followers.txt`), then the 7 from video 11, then these 6. One earlier follower has since left, but nobody knows which, so everyone who ever followed keeps their book. To take a name off, delete its line.
+
+**For the next batch:**
+1. Put the new handles in `new-followers.txt`, oldest first (TikTok lists the newest at the top).
+2. Add the same handles to the end of `all-followers.txt`.
+3. Render with the number of new followers.
+
+```bash
+python3 promo/lofi.py promo/lofi-everyone.wav 15.05 everyone 6     # 6 = new followers; the length is (count + 16) beats
+node promo/make-tiktok-everyone.cjs promo/lofi-everyone.wav promo/quiet-library-everyone.mp4
+```
+
+The bookcase holds 50 books up close. Past that, the oldest stay in the room's first bookcase and the newest go on the next.
+
+The music is the "everyone" preset:
+- the stamps
+- a riser before the newest
+- notes as the books land
+- an arpeggio climbing with the camera
+- a "thank you" chime over a soft swell
+- a riser back into the loop
+
+About 8 MB, −13.9 LUFS. **`cover-everyone.jpg`** is the hook.
+
+Suggested caption:
+
+> 6 new followers, 6 new books 📚 welcome to the library, @zena.writes @annagilchrist1 @.alexwinterhamilton @justarandomtheri @icyfire010 @angell49527, and thank you to everyone already on the shelf 🕯️ can you find yours?
+>
+> #booktok #cozy #library #newfollowers #thankyou #smallcreator #cozyaesthetic #lofi
+
+"Can you find yours?" brings the earlier followers back to pause the video and look for their name.
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -467,6 +512,10 @@ node promo/make-tiktok-making.cjs promo/lofi-making.wav promo/quiet-library-maki
 # video 6: the writing rooms (12-second loop)
 python3 promo/lofi.py promo/lofi-rooms.wav 11.6 rooms
 node promo/make-tiktok-rooms.cjs promo/lofi-rooms.wav promo/quiet-library-rooms.mp4
+
+# video 14: new followers' books, then everyone on the shelf (promo/new-followers.txt, promo/all-followers.txt)
+python3 promo/lofi.py promo/lofi-everyone.wav 15.05 everyone 6
+node promo/make-tiktok-everyone.cjs promo/lofi-everyone.wav promo/quiet-library-everyone.mp4
 
 # video 12: a new book is coming (the typewriter teaser)
 python3 promo/lofi.py promo/lofi-teaser.wav 15.05 teaser
