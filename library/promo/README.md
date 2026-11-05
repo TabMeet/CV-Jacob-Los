@@ -438,16 +438,16 @@ Suggested caption:
 
 ## 14 · Six new books, and everyone on the shelf (`quiet-library-everyone.mp4`)
 
-15 seconds. The next six followers get their books printed, newest last, as in video 11. Then the camera rises through every follower's book on the bookcase and pulls back over all of them. No follower numbers appear anywhere.
+15 seconds. The next six followers get their books printed, newest last, as in video 11. Then the six glow onto the real Friends · I bookcase in the library, the same art as every bookcase standing in the hall. Each follower's name is written on their spine for this video. The camera rises through all the names and pulls back to show the whole bookcase standing in the room. No follower numbers appear anywhere.
 
 | Time | Shot | On-screen text |
 | --- | --- | --- |
 | 0–2.0 s (hook, on frame 0) | The stamp slams onto the first book: @zena.writes | *6 new followers.* **6 new books.** |
 | 2.0–4.8 s | @annagilchrist1, @.alexwinterhamilton, @justarandomtheri, @icyfire010, one a beat | *printing them* **one by one.** |
 | 4.8–6.8 s | The stamp holds its breath, then the newest: @angell49527 | *and the newest…* |
-| 6.8–9.5 s | The six drop onto a fresh row at the bottom of the bookcase | *welcome to* **the library.** |
-| 9.5–12.3 s | Up through every row to the "Friends · I" plaque, names on the spines. Each row is a batch: the first 28, then the 7, then these 6. | *and everyone* **who came before.** |
-| 12.3–15 s | Back over the whole bookcase: all 41 books | *the quiet library* · *thank you* **for being here.** · ***follow,*** *and you're next.* |
+| 6.8–9.5 s | Close on the bookcase: the six glow onto the shelf, after everyone else | *welcome to* **the library.** |
+| 9.5–12.3 s | Up the shelves to the brass "Friends · I" plaque, past everyone's names, in the order they followed | *and everyone* **who came before.** |
+| 12.3–15 s | Back to show the whole bookcase standing in the room, all 41 books, a candle on the empty bottom shelf | *thank you* **for being here.** · ***follow,*** *and you're next.* (smaller, so the plaque shows) |
 
 **Everyone on the shelf** comes from `all-followers.txt`: every follower so far, oldest first, one handle per line. That's the first 28 (`followers.txt`), then the 7 from video 11, then these 6. One earlier follower has since left, but nobody knows which, so everyone who ever followed keeps their book. To take a name off, delete its line.
 
@@ -461,7 +461,7 @@ python3 promo/lofi.py promo/lofi-everyone.wav 15.05 everyone 6     # 6 = new fol
 node promo/make-tiktok-everyone.cjs promo/lofi-everyone.wav promo/quiet-library-everyone.mp4
 ```
 
-The bookcase holds 50 books up close. Past that, the oldest stay in the room's first bookcase and the newest go on the next.
+**The names on the spines** are written onto the hall's bookcase for the video only. In the library itself, the bookcases in the hall show plain spines, and names appear when you look at a bookcase up close. Long handles are squeezed to fit between the gold bands. The first bookcase holds 50 books. After that, the newest books go on the next bookcase, and the script will need to follow them there.
 
 The music is the "everyone" preset:
 - the stamps

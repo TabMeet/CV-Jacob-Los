@@ -116,6 +116,7 @@ const PRINT_CSS = `
   #pr .cov.light .no, #pr .cov.light .lib { color: #4a3420; text-shadow: none; }
   #pr .cov.light .orn, #pr .cov.light .dots { color: rgba(74,52,32,.75); }
   #pr .cov.light .fr { border-color: rgba(74,52,32,.45); }
+  .tt-kin.tt-sm .ln { font-size: 38px; } /* the last shot: the bookcase's brass plaque shows below */
   .tt-bare .friends-panel { background: transparent; box-shadow: none; max-height: none; overflow: visible; }
   .tt-bare .friends-panel .case { min-height: var(--case-h, 0); }
   .tt-bare .friends-panel .spine-reads { visibility: hidden; } /* no follower numbers */
@@ -308,56 +309,90 @@ function pageSetup(earlier) {
     ],
   });
 
-  // 4-6 · onto the shelf, up through everyone's books, and back over the whole bookcase
-  let cam = { top: 0, first: 0, pitch: 210, caseTop: 0, caseH: 1200 };
+  // 4-6 · onto the shelf, up through everyone's books, and back over the whole bookcase:
+  // the real Friends · I bookcase standing in the room, the same art as every bookcase
+  // in the library, with each follower's name written on their spine for the film.
+  const ids = Object.fromEntries([...EARLIER, ...NEW].map((name, i) => [`friend-${i + 1}`, name]));
+  await js((names) => {
+    const LIGHT = ['#d6c6a3', '#b8934f'];
+    const write = () => {
+      for (const g of document.querySelectorAll('.friends-case .book')) {
+        if (g.querySelector('.tt-name')) continue;
+        const name = names[g.dataset.book];
+        const r = g.querySelector('rect');
+        if (!name || !r) continue;
+        const x = +r.getAttribute('x');
+        const y = +r.getAttribute('y');
+        const w = +r.getAttribute('width');
+        const h = +r.getAttribute('height');
+        const room = h - 18; // between the gold bands
+        const cx = x + w / 2 - 0.4;
+        const cy = y + h / 2;
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('class', 'tt-name');
+        t.setAttribute('x', cx);
+        t.setAttribute('y', cy);
+        t.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('dominant-baseline', 'central');
+        t.setAttribute('font-family', 'Cormorant Garamond, serif');
+        t.setAttribute('font-weight', '700');
+        t.setAttribute('font-size', Math.min(4.9, w * 0.4).toFixed(2));
+        t.setAttribute('fill', LIGHT.includes(r.getAttribute('fill')) ? '#2b2622' : '#f3e7cf');
+        t.textContent = name;
+        g.append(t);
+        if (t.getComputedTextLength() > room) {
+          t.setAttribute('textLength', room.toFixed(1));
+          t.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+        }
+      }
+    };
+    write();
+    new MutationObserver(write).observe(document.getElementById('world'), { childList: true, subtree: true });
+  }, ids);
+  // where the new books will stand (laid out once, quietly, then put back the way it was)
+  const friendList = (names) => names.map((name, i) => ({ id: `friend-${i + 1}`, no: i + 1, name }));
+  const spot = await js(() => {
+    const s = window.__lib.hall.spot('friends:0');
+    return { x0: s.x0, cx: s.cx };
+  });
+  const landing = await js(([all, earlier, newIds]) => {
+    const hall = window.__lib.hall;
+    hall.updateFriends(all, { quiet: true });
+    const boxes = newIds.map((id) => {
+      const r = document.querySelector(`.friends-case .book[data-book="${id}"] rect`);
+      return { x: +r.getAttribute('x') + +r.getAttribute('width') / 2, y: +r.getAttribute('y') + +r.getAttribute('height') / 2 };
+    });
+    hall.updateFriends(earlier, { quiet: true });
+    return { x: boxes.reduce((a, b) => a + b.x, 0) / boxes.length, y: boxes.reduce((a, b) => a + b.y, 0) / boxes.length };
+  }, [friendList([...EARLIER, ...NEW]), friendList(EARLIER), NEW.map((_, i) => `friend-${EARLIER.length + i + 1}`)]);
+  const land = { x: spot.x0 + landing.x, y: 120 + landing.y }; // the bookcase stands at y 120 in the hall
+  const top = { x: spot.cx, y: 186 }; // the top shelf
+  const whole = { x: spot.cx, y: 305 };
   await cut(LENGTH, {
     setup: async () => {
       await js(() => window.__print({ on: false }));
-      await js((x) => window.__lib.hall.teleport(x), await js(() => window.__lib.hall.spot('friends:0').cx));
-      await js(() => document.body.classList.add('tt-bare'));
-      await js(() => window.__lib.openFriendsCase(0));
-      await quietly(900);
-      // make room for the new rows before anything arrives, so nothing shifts, then measure
-      cam = await js((rowsNeeded) => {
-        const rows = [...document.querySelectorAll('.friends-panel .case-row')];
-        const pitch = rows[1].getBoundingClientRect().top - rows[0].getBoundingClientRect().top;
-        const c = document.querySelector('.friends-panel .case').getBoundingClientRect();
-        document.body.style.setProperty('--case-h', `${c.height + pitch * rowsNeeded}px`);
-        return { pitch };
-      }, Math.ceil(N / 7));
       await quietly(50);
-      Object.assign(cam, await js(() => {
-        const rows = [...document.querySelectorAll('.friends-panel .case-row')];
-        const c = document.querySelector('.friends-panel .case').getBoundingClientRect();
-        return { top: rows.at(-1).getBoundingClientRect().top, first: rows[0].getBoundingClientRect().top, caseTop: c.top, caseH: c.height };
-      }));
     },
     frame: (g) => {
-      const newRow = cam.top + cam.pitch * 1.5; // the middle of the new row
-      const firstRow = cam.first + cam.pitch * 0.5;
-      let s;
-      let ty;
+      let cam;
       if (g < RISE) {
-        s = 1.28 + 0.06 * ease(clamp((g - SHELF) / (RISE - SHELF)));
-        ty = 590 - s * newRow;
+        cam = { x: land.x, focusY: land.y, zoom: 2.55 + 0.1 * ease(clamp((g - SHELF) / (RISE - SHELF))) };
       } else if (g < PULL) {
         const p = ease(clamp((g - RISE) / (PULL - RISE)));
-        s = 1.34 + (1.12 - 1.34) * p;
-        ty = 590 + (520 - 590) * p - s * (newRow + (firstRow - newRow) * p);
+        cam = { x: land.x + (top.x - land.x) * p, focusY: land.y + (top.y - land.y) * p, zoom: 2.65 + (2.3 - 2.65) * p };
       } else {
         const p = ease(clamp((g - PULL) / b(2.4)));
-        const fit = (928 - 255) / cam.caseH;
-        s = 1.12 + (fit - 1.12) * p;
-        ty = (520 - 1.12 * firstRow) + ((255 - fit * cam.caseTop) - (520 - 1.12 * firstRow)) * p;
+        cam = { x: top.x + (whole.x - top.x) * p, focusY: top.y + (whole.y - top.y) * p, zoom: 2.3 + (1.0 - 2.3) * p };
       }
-      return js((f) => window.__frame(f), { el: { sel: '.overlay', css: `translateY(${ty.toFixed(1)}px) scale(${s.toFixed(4)})`, origin: '50% 0' } });
+      return js((f) => window.__frame(f), { hall: cam });
     },
     events: [
       { at: SHELF, run: () => say('welcome to|*the library.*', { step: 0.05 }) },
       ...NEW.map((name, k) => ({ at: SHELF + 0.25 + k * DROP_EVERY, run: () => js((nm) => window.__lib.backend.addFriends([nm]), name) })),
       { at: RISE, run: () => say('and everyone|*who came before.*', { step: 0.06 }) },
-      { at: PULL, run: () => say('thank you|*for being here.*', { kicker: 'the quiet library', step: 0.06 }) },
-      { at: PULL + b(2.4), run: () => say('*follow,* and|you’re next.', { kicker: 'the quiet library', step: 0.06 }) },
+      { at: PULL, run: () => say('thank you|*for being here.*', { size: 'tt-sm', step: 0.06 }) },
+      { at: PULL + b(2.4), run: () => say('*follow,* and|you’re next.', { size: 'tt-sm', step: 0.06 }) },
     ],
   });
 
