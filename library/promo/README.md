@@ -481,6 +481,102 @@ Suggested caption:
 
 "Can you find yours?" brings the earlier followers back to pause the video and look for their name.
 
+## 15 · "shh… Ink is asleep" (`quiet-library-sleep.mp4`)
+
+14.2 seconds of Ink asleep on the windowsill, with rain on the glass. It's a calm, loopable video that people watch to the end and replay, and it ends on an easy comment.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–3.3 s (hook, on frame 0) | Close on Ink, curled up asleep, his chest rising and falling; little z's drift up | *shh…* **Ink is asleep.** |
+| 3.3–6.7 s | The big window: rain, the moon, the city, Ink small on the sill | *he guarded the shelves* **all night.** |
+| 6.7–10 s | Closer: a dream bubble puffs up, with a little open book and sparkles in it | *he's dreaming* **about stories.** |
+| 10–14.2 s | Ink sleeping on; an ear twitches, his white tail tip flicks | *the quiet library* · *whisper goodnight* **in the comments.** |
+
+**The sleeping Ink** is new artwork, drawn for this video. It lies on the hall's windowsill in place of the sitting Ink. He breathes once every 3.2 seconds, and the purr in the music swells on the same breath.
+
+Music: the "sleep" preset (72 BPM, Fmaj7, Em7, Dm9, Cmaj9), with:
+- no drums
+- a music box
+- soft rain
+- the purr
+- a twinkle as the dream appears
+- a chime for "goodnight"
+
+About 7 MB, −14.4 LUFS. Cover: `cover-sleep.jpg`.
+
+Suggested caption:
+
+> shh… Ink is asleep 🐈‍⬛💤 he guarded the shelves all night. whisper goodnight to him 🌙
+>
+> #catsoftiktok #sleepingcat #booktok #cozy #library #blackandwhitecat #rainyday #cozyaesthetic
+
+Post it late in the evening. "goodnight Ink" is an easy first comment, and replying to the first few keeps the thread going.
+
+## 16 · "the library at 3 a.m." (`quiet-library-night.mp4`)
+
+14.2 seconds of the library late at night, ending on its whole point: if you're up too, you're not alone. It's for the people scrolling at 3 a.m., which is exactly who the library is for.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.5 s (hook, on frame 0) | The clock on the library wall at 3:00, ticking | *the library* **at 3 a.m.** |
+| 2.5–5 s | An empty armchair under its lamp | *the lamps* **stay on.** |
+| 5–7.5 s | The fireplace in Friends of the Library, still burning | *the fire's* **still going.** |
+| 7.5–10 s | A writing room's door, lit, with someone writing behind the glass | *someone's* **still writing.** |
+| 10–14.2 s | Ink in the window, sleepy, with a slow blink | *if you're up too,* **you're not alone.** · *the quiet library* · *where are you* **watching from?** |
+
+The clock is the library's real wall clock, which shows the visitor's own time; the video is filmed with the clock set to 3:00 in the morning. The writer behind the glass is one of the library's visitor silhouettes, so no one in particular.
+
+Music: the "night" preset (72 BPM, Am9, Fmaj7, Cmaj7, G6), with:
+- rain
+- the clock ticking on every beat (loudest for the hook)
+- fire crackles under the fireplace
+- muffled typing behind the writing-room door
+- chimes for "not alone" and the question
+
+About 7 MB, −14.3 LUFS. Cover: `cover-night.jpg`.
+
+Suggested caption:
+
+> the library at 3 a.m. 🕯️ the lamps stay on, for anyone who can't sleep. if you're up too, you're not alone. where are you watching from? 🌙
+>
+> #cantsleep #3am #booktok #cozy #library #youarenotalone #latenight #cozyaesthetic
+
+Post it late at night. "Where are you watching from?" gets people to write their city or country in the comments, and those answers show everyone how many others are awake with them.
+
+## 17 · What happens to the story you send me (`quiet-library-how.mp4`)
+
+14.3 seconds. The new plan, in four numbered steps: you send a story (no name needed), it's bound into a book, it goes on a shelf, and a stranger reads it. It answers the question new viewers have after "day 1": what actually happens to my story?
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.0 s (hook, on frame 0) | An envelope lands on the worktable, addressed "to: the quiet library", with a cat stamp | *what happens to* **the story you send me** |
+| 2.0–4.1 s | Close on the envelope: the "from:" line is left blank, and a postmark thumps down | **1.** *you send it. no name needed.* |
+| 4.1–6.1 s | The press stamps a book cover: "Your Story", by no one | **2.** *I bind it into a book.* |
+| 6.1–8.2 s | An empty story shelf: the book glows onto it | **3.** *it goes on a shelf.* |
+| 8.2–14.3 s | Someone in an armchair under the lamp, an open book in their lap | **4.** *a stranger reads it.* · *and feels* **a little less alone.** · *the quiet library* · **send me yours.** *no names. ever.* |
+
+**It shows how it works.** It doesn't claim any real stories are on the shelves yet. The shelf is empty, as in "day 1", and "Your Story" stands in for whichever one comes first. The reader is one of the library's visitor silhouettes. The library draws them faint so they stay in the background, so this video makes the reader stronger and puts a book in their lap.
+
+Music: the "how" preset (88 BPM, the same chords as "friends"), with:
+- a paper slide and a soft thud as the envelope lands
+- one, two, three and four dings for the steps
+- the postmark
+- the stamp
+- a chime as the book glows onto the shelf
+- a page turn for the reader
+- a bell for "send me yours"
+- a riser back into the loop
+
+About 7 MB, −14.1 LUFS. Cover: `cover-how.jpg`.
+
+Suggested caption:
+
+> what happens to the story you send me 📚 1. you send it (in my DMs, no name needed) 2. I bind it into a book 3. it goes on a shelf 4. a stranger reads it, and feels a little less alone. send me yours 🕯️
+>
+> #booktok #anonymousstories #writingcommunity #youarenotalone #storytime #cozy #library #howitworks
+
+Pin it to the profile next to "day 1". Together they explain the whole idea to anyone who finds the account later.
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -512,6 +608,18 @@ node promo/make-tiktok-making.cjs promo/lofi-making.wav promo/quiet-library-maki
 # video 6: the writing rooms (12-second loop)
 python3 promo/lofi.py promo/lofi-rooms.wav 11.6 rooms
 node promo/make-tiktok-rooms.cjs promo/lofi-rooms.wav promo/quiet-library-rooms.mp4
+
+# video 15: shh… Ink is asleep
+python3 promo/lofi.py promo/lofi-sleep.wav 14.25 sleep
+node promo/make-tiktok-sleep.cjs promo/lofi-sleep.wav promo/quiet-library-sleep.mp4
+
+# video 16: the library at 3 a.m.
+python3 promo/lofi.py promo/lofi-night.wav 14.25 night
+node promo/make-tiktok-night.cjs promo/lofi-night.wav promo/quiet-library-night.mp4
+
+# video 17: what happens to the story you send me
+python3 promo/lofi.py promo/lofi-how.wav 14.4 how
+node promo/make-tiktok-how.cjs promo/lofi-how.wav promo/quiet-library-how.mp4
 
 # video 14: new followers' books, then everyone on the shelf (promo/new-followers.txt, promo/all-followers.txt)
 python3 promo/lofi.py promo/lofi-everyone.wav 15.05 everyone 6
