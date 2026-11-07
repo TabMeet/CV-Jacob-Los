@@ -577,6 +577,71 @@ Suggested caption:
 
 Pin it to the profile next to "day 1". Together they explain the whole idea to anyone who finds the account later.
 
+## 18 · How the library cat got his name (`quiet-library-name.mp4`)
+
+14.3 seconds. A cat, a rule, and an inkwell: the classic slow push, with eye contact. It ends on a question anyone can answer in the comments.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.7 s (hook, on frame 0) | Ink at a writing desk, next to an inkwell with a quill in it; he blinks, and an ear twitches | *how the library cat* **got his name.** |
+| 2.7–5.5 s | He glances at the inkwell, then back at you, and his paw goes up and hovers over it anyway | *Mrs. Wren had one rule:* **don't touch the ink.** |
+| 5.5–7.5 s | Close on his face: deadpan at you, then his eyes slide over to the ink (dun, dun) | *he looked at her.* · **he looked at the ink.** |
+| 7.5–9.2 s | The push. It tips, lands on its side right where the beat comes back, and splashes across the letter. Ears flat, eyes huge. | **he touched the ink.** |
+| 9.2–11.6 s | Inky paw prints across the letter, right up to him; one white paw is black now; a slow blink | *he's been called* **Ink ever since.** |
+| 11.6–14.3 s | Pulling back: the desk, the rain, the moon | *the quiet library* · *what would you* **have named him?** |
+
+**It's a story for the character.** The library doesn't say anywhere else how Ink got his name. The handwriting on the letter is wavy strokes, not words.
+
+**The close-up Ink** (`scenes/ink-big.cjs`) is new. He's the same drawing as the cat in the library's window, with his eyes, eyelids, ears, tail and front paws made posable. Both this video and the next use it, and later Ink videos can too. The writing desk is `scenes/inkwell.cjs`.
+
+Music: the "name" preset (88 BPM, Dm9, G13, Cmaj9, A7sus4). The beat drops out while he stares at the ink and comes back as the inkwell lands. With:
+- a tiptoe as the paw goes up
+- the dun, dun
+- a tink on the glass and a little riser for the push
+- a clunk and a splash
+- one plink per paw print
+- a chime for the slow blink and a bell for the question
+
+About 9 MB, −14.2 LUFS. Cover: `cover-name.jpg`.
+
+Suggested caption:
+
+> how the library cat got his name 🐈‍⬛🖋️ Mrs. Wren had one rule. he did not follow the rule. what would you have named him? 👇
+>
+> #catsoftiktok #booktok #cozy #library #blackandwhitecat #tuxedocat #catlife #storytime
+
+## 19 · POV: you try to read in a library with a cat (`quiet-library-read.mp4`)
+
+14.3 seconds of the most relatable cat thing for anyone who reads: he sits on the book. It ends on "tag someone", which brings in shares as well as comments.
+
+| Time | Shot | On-screen text |
+| --- | --- | --- |
+| 0–2.0 s (hook, on frame 0) | Your open book on a library table; over the far edge, Ink's ears, big eyes and two white paws, staring at you | *POV: you try to read* **in a library with a cat.** |
+| 2.0–3.4 s | He hops up onto the table | *page one.* |
+| 3.4–5.5 s | He steps onto your book and sits right on it, staring at you | **still** *page one.* |
+| 5.5–7.8 s | Head down, his eyes going along the lines, one after another | *he's reading it* **first.** |
+| 7.8–10.6 s | He looks up and slow-blinks, purring, and puts a paw on the page | *fine.* **we'll read together.** |
+| 10.6–14.3 s | Ink on the book, with the candle and the tea | *the quiet library* · *tag someone* **whose cat does this.** |
+
+The reading table is `scenes/reading.cjs`: the open book, a candle, a cup of tea, and the library's bookcases out of focus behind. The words on the pages are strokes, not text.
+
+Music: the "read" preset (88 BPM, Cmaj9, Am9, Fmaj9, G13), with:
+- a boop for the peek
+- soft paws landing for each hop, and paper crinkling under him on the book
+- a tiny tick each time his eyes jump back to the next line
+- a warm chime and a purr from "we'll read together"
+- a bell for "tag someone"
+
+About 9 MB, −14.3 LUFS. Cover: `cover-read.jpg`.
+
+Suggested caption:
+
+> POV: you try to read in a library with a cat 📚🐈‍⬛ he's reading it first. tag someone whose cat does this 😭
+>
+> #catsoftiktok #booktok #reading #cozy #library #catsandbooks #tuxedocat #relatable
+
+**Posting them.** Post them a day apart, with Ink as the face of both. Answer the first name suggestions on #18. "Inky", "Sir Spills-a-lot" and the like are good comments to pin.
+
 ## Making them again (or new versions)
 
 You need Python 3 with numpy, ffmpeg, and Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
@@ -608,6 +673,14 @@ node promo/make-tiktok-making.cjs promo/lofi-making.wav promo/quiet-library-maki
 # video 6: the writing rooms (12-second loop)
 python3 promo/lofi.py promo/lofi-rooms.wav 11.6 rooms
 node promo/make-tiktok-rooms.cjs promo/lofi-rooms.wav promo/quiet-library-rooms.mp4
+
+# video 18: how the library cat got his name
+python3 promo/lofi.py promo/lofi-name.wav 14.4 name
+node promo/make-tiktok-name.cjs promo/lofi-name.wav promo/quiet-library-name.mp4
+
+# video 19: POV, you try to read in a library with a cat
+python3 promo/lofi.py promo/lofi-read.wav 14.4 read
+node promo/make-tiktok-read.cjs promo/lofi-read.wav promo/quiet-library-read.mp4
 
 # video 15: shh… Ink is asleep
 python3 promo/lofi.py promo/lofi-sleep.wav 14.25 sleep
@@ -655,5 +728,7 @@ node promo/make-tiktok-friends.cjs promo/lofi-friends.wav promo/quiet-library-fr
 ```
 
 Each takes 5–10 minutes. Every frame is rendered on a paused clock, so walks, blinks and page turns are perfectly smooth, and the result is the same on every run.
+
+The drawn scenes (videos 18 and 19) can be checked without filming the whole thing: `PREVIEW=0,3.5,8 node promo/make-tiktok-name.cjs x some-folder` saves just those moments as JPEGs.
 
 To change the scenes, the words or the timing, edit `make-tiktok.cjs`, `make-tiktok-shelves.cjs` or `make-tiktok-cta.cjs`. In the second and third scripts, each shot is a `shot()` with a camera function: position, zoom and focus over time. The captions are plain HTML strings, and `BAR` is one bar of music. The palette, chords and tempo are at the top of `lofi.py`. If you change `BPM` there, change `BAR` in `make-tiktok.cjs` to match.

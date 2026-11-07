@@ -35,8 +35,11 @@ and a "thank you" chime; the number of new followers is the 4th argument).
 
 "sleep" (72 BPM, Fmaj7-Em7-Dm9-Cmaj9, 14 s: a music box and Ink purring, breathing in and out every 3.2 s),
 "night" (72 BPM, Am9-Fmaj7-Cmaj7-G6, 14 s: a wall clock ticking from frame 0, the fire, muffled typing behind
-a door) and "how" (88 BPM, the friends' chords, 14 s: paper sliding in, a ding per numbered step, the stamp,
-a page turning, a bell).
+a door), "how" (88 BPM, the friends' chords, 14 s: paper sliding in, a ding per numbered step, the stamp,
+a page turning, a bell), "name" (88 BPM, Dm9-G13-Cmaj9-A7sus4, 14 s: sneaky; the beat drops out while Ink
+stares at the inkwell, and comes back as it lands: a clunk and a splash, then a plink per paw print) and
+"read" (88 BPM, Cmaj9-Am9-Fmaj9-G13, 14 s: Ink hops up onto the table and onto your book, his eyes tick
+along the lines, then a purr).
 """
 import sys
 import wave
@@ -45,7 +48,7 @@ import numpy as np
 
 SR = 44100
 PRESET = sys.argv[3] if len(sys.argv) > 3 else 'cozy'
-BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed', 'day1', 'ink', 'welcome', 'teaser', 'ink2', 'everyone', 'how') else 72
+BPM = 88 if PRESET in ('rules', 'making', 'rooms', 'friends', 'printed', 'day1', 'ink', 'welcome', 'teaser', 'ink2', 'everyone', 'how', 'name', 'read') else 72
 COUNT = int(sys.argv[4]) if len(sys.argv) > 4 else 7  # 'welcome': how many new followers
 BEAT = 60 / BPM
 BAR = 4 * BEAT
@@ -352,6 +355,35 @@ elif PRESET == 'how':
     MELODY = [(1, 1.5, 77), (1, 2.5, 76), (2, 1.5, 74), (2, 2.5, 72), (3, 1.5, 77), (3, 2.5, 79), (4, 1.5, 81), (4, 3.0, 79)]
     def parts(bar):
         return dict(bass=True, drums='full' if bar <= 3 else 'sparse', restrum=bar in (1, 3), pad=bar >= 3, shaker=bar in (2, 3))
+elif PRESET == 'name':
+    # Dm9 - G13 - Cmaj9 - A7sus4: sneaky. The beat drops out while Ink stares at the ink
+    # (bar 2) and comes back on the downbeat where the inkwell lands (bar 3).
+    CHORDS = [
+        (38, [53, 57, 60, 64]),
+        (43, [53, 59, 64, 69]),
+        (36, [52, 55, 59, 62]),
+        (45, [55, 57, 62, 64]),
+    ]
+    BARS = 6
+    MELODY = [(0, 1.5, 74), (0, 2.5, 77), (0, 3.25, 76), (1, 1.5, 72), (1, 2.5, 74), (1, 3.0, 71),
+              (3, 0.5, 79), (3, 1.5, 77), (3, 2.5, 76), (3, 3.25, 74), (4, 0.5, 76), (4, 2.0, 81)]
+    def parts(bar):
+        return dict(bass=bar != 2, drums='full' if bar in (0, 3) else 'sparse' if bar in (1, 4) else None,
+                    restrum=bar in (1, 3), pad=bar >= 3, shaker=bar == 3)
+elif PRESET == 'read':
+    # Cmaj9 - Am9 - Fmaj9 - G13: warm, a little bouncy. Purring from "we'll read together".
+    CHORDS = [
+        (36, [52, 55, 59, 62]),
+        (45, [55, 59, 60, 64]),
+        (41, [57, 60, 64, 67]),
+        (43, [53, 59, 64, 69]),
+    ]
+    BARS = 6
+    MELODY = [(0, 2.5, 79), (0, 3.25, 76), (1, 1.5, 74), (1, 2.5, 76), (2, 1.5, 72), (2, 2.5, 74), (2, 3.25, 76),
+              (3, 1.0, 79), (3, 2.5, 76), (4, 0.5, 74), (4, 2.0, 79)]
+    def parts(bar):
+        return dict(bass=bar <= 4, drums='full' if bar in (1, 2) else 'sparse' if bar in (0, 3, 4) else None,
+                    restrum=bar in (1, 3), pad=bar >= 3, shaker=bar == 2)
 elif PRESET == 'everyone':
     # The friends' chords. The beat runs through the printing and the shelf, lifts as the
     # camera rises through every follower's book, and settles for "thank you".
@@ -575,7 +607,7 @@ def rain_channel():
 
 if PRESET == 'rooms':  # loud for the knock, under the beat, back up for the loop
     rain_level = np.interp(t, [0, 2 * BEAT, 2 * BEAT + 0.4, DURATION - 2.2, DURATION], [0.22, 0.22, 0.10, 0.10, 0.20])
-elif PRESET in ('friends', 'printed', 'day1', 'welcome', 'ink2', 'everyone', 'how'):
+elif PRESET in ('friends', 'printed', 'day1', 'welcome', 'ink2', 'everyone', 'how', 'name', 'read'):
     rain_level = np.full_like(t, 0.09)
 elif PRESET in ('sleep', 'night'):  # rain on the big window
     rain_level = np.full_like(t, 0.2)
@@ -1072,8 +1104,138 @@ if PRESET == 'how':
     place(left, lift, DURATION - 1.2)
     place(right, lift, DURATION - 1.2)
 
+if PRESET == 'name':
+    # The story's beats, the same as make-tiktok-name.cjs (in beats): the paw lifts at 5,
+    # "he looked at her" at 8 and "at the ink" at 9.5, the paw touches the glass at 11.3,
+    # the inkwell lands at 12, the paw prints from 13.8 (one every 0.22 s), a slow blink
+    # at 15.6, the question at 17.
+    def put3(sig, at, pan=0.0):
+        place(left, sig * (1 - pan), at)
+        place(right, sig * (1 + pan), at + 0.002)
+    def thud3(note, level):
+        n = int(0.9 * SR)
+        tt = np.arange(n) / SR
+        boom = np.sin(2 * np.pi * np.cumsum(hz(note) * (1 + 0.6 * np.exp(-tt * 30))) / SR) * np.exp(-tt * 3.5)
+        return np.tanh(1.3 * (boom + 0.5 * bass(hz(note + 12), 0.9, 1.0)[:n])) * level
+    def tink(level):  # a paw on glass
+        n = int(0.4 * SR)
+        tt = np.arange(n) / SR
+        ring = sum(a * np.sin(2 * np.pi * f * tt) * np.exp(-tt * d) for f, a, d in ((2350, 1.0, 14), (3710, 0.5, 20), (5200, 0.25, 30)))
+        return (ring + one_pole(rng.standard_normal(n), 5000) * np.exp(-tt * 300) * 0.8) * level
+    put3(pluck(hz(84), 0.16, 1.0), 0.0)  # frame 0: the stare
+    put3(pluck(hz(91), 0.07, 0.8), 0.09)
+    for at in (4 * BEAT, 8 * BEAT, 13.5 * BEAT, 17 * BEAT):
+        l_w, r_w = whoosh(level=0.2)
+        place(left, l_w, at - 0.22)
+        place(right, r_w, at - 0.22)
+    # the paw goes up, on tiptoe
+    for k, note in enumerate((69, 72, 76, 79)):
+        put3(pluck(hz(note), 0.1, 0.6), 5 * BEAT + k * BEAT / 3, pan=-0.3)
+    # he looked at her. he looked at the ink. dun, dun
+    put3(thud3(31, 0.3), 8 * BEAT + 0.1)
+    put3(thud3(30, 0.34), 9.5 * BEAT + 0.05)
+    # the push: a tink on the glass, a little scrape, a riser into the fall
+    put3(tink(0.09), 11.3 * BEAT, pan=-0.3)
+    n = int(0.22 * SR)
+    u = np.linspace(0, 1, n)
+    scrape = one_pole(rng.standard_normal(n), 1800) - one_pole(rng.standard_normal(n), 500)
+    put3(scrape / (np.abs(scrape).max() + 1e-9) * np.sin(np.pi * u) * 0.05, 11.3 * BEAT + 0.04, pan=-0.3)
+    rise = riser(12 * BEAT - 11 * BEAT, level=0.1)
+    place(left, rise, 11 * BEAT)
+    place(right, rise, 11 * BEAT)
+    # the landing: a clunk of glass on wood, and the splash
+    land = 12 * BEAT
+    n = int(0.6 * SR)
+    tt = np.arange(n) / SR
+    clunk = np.sin(2 * np.pi * np.cumsum(90 + 120 * np.exp(-tt * 40)) / SR) * np.exp(-tt * 18)
+    clunk += sum(a * np.sin(2 * np.pi * f * tt) * np.exp(-tt * d) for f, a, d in ((1320, 0.25, 22), (2110, 0.15, 30)))
+    put3(np.tanh(1.5 * clunk) * 0.32, land, pan=-0.25)
+    n = int(0.5 * SR)
+    tt = np.arange(n) / SR
+    splash = one_pole(rng.standard_normal(n), 600 + 4200 * np.exp(-tt * 9)) * np.exp(-tt * 7)
+    splash = splash / (np.abs(splash).max() + 1e-9)
+    bloop = np.sin(2 * np.pi * np.cumsum(260 + 420 * np.exp(-tt * 25)) / SR) * np.exp(-tt * 22) * 0.5
+    put3((splash * 0.2 + bloop * 0.22), land + 0.03, pan=-0.3)
+    for at in land + 0.15 + np.cumsum(rng.uniform(0.04, 0.1, 6)):  # the drops coming down
+        n = int(0.03 * SR)
+        drop = np.sin(2 * np.pi * rng.uniform(900, 1500) * np.arange(n) / SR) * np.exp(-np.arange(n) / SR * 160)
+        put3(drop * 0.05, at, pan=rng.uniform(-0.4, 0.2))
+    # the paw prints, one by one
+    for k, note in enumerate((79, 81, 84, 86, 88, 91)):
+        put3(pluck(hz(note), 0.13, 0.9), 13.8 * BEAT + k * 0.22, pan=-0.3 + 0.12 * k)
+    # the slow blink: a soft falling chime; the question: a bell
+    for k, note in enumerate((88, 84, 81, 77)):
+        put3(pluck(hz(note), 0.11, 1.6), 15.6 * BEAT + 0.15 + k * 0.12)
+    for k, note in enumerate((74, 77, 81, 86)):
+        put3(pluck(hz(note), 0.13, 2.0), 17 * BEAT + k * 0.07)
+    lift = riser(1.2, level=0.09)
+    place(left, lift, DURATION - 1.2)
+    place(right, lift, DURATION - 1.2)
+
+if PRESET == 'read':
+    # The story's beats, the same as make-tiktok-read.cjs: he hops up onto the table at 3
+    # beats (lands 0.5 s later), onto the book at 5, reads from 8, "we'll read together" at
+    # 11.5 (the purr starts), a paw on the page at 13.2, "tag someone" at 15.5.
+    def put4(sig, at, pan=0.0):
+        place(left, sig * (1 - pan), at)
+        place(right, sig * (1 + pan), at + 0.002)
+    def pat(level):  # soft paws landing
+        n = int(0.25 * SR)
+        tt = np.arange(n) / SR
+        body = np.sin(2 * np.pi * np.cumsum(80 + 90 * np.exp(-tt * 40)) / SR) * np.exp(-tt * 28)
+        felt = one_pole(rng.standard_normal(n), 1100) * np.exp(-tt * 60)
+        return np.tanh(1.4 * (body + felt * 0.8)) * level
+    def crinkle(dur, level):  # paper under a cat
+        n = int(dur * SR)
+        u = np.linspace(0, 1, n)
+        nz = one_pole(rng.standard_normal(n), 6000) - one_pole(rng.standard_normal(n), 1500)
+        grains = (rng.random(n) < 0.004).astype(float)
+        grains = np.convolve(grains, np.exp(-np.arange(200) / 30), mode='same')
+        return nz / (np.abs(nz).max() + 1e-9) * (0.3 + grains) * np.sin(np.pi * u) * level
+    put4(pluck(hz(84), 0.16, 1.0), 0.0)  # frame 0: the peek
+    put4(pluck(hz(91), 0.07, 0.8), 0.09)
+    put4(click(0.04), 0.95)  # an ear twitch
+    for at, level in ((3 * BEAT, 0.16), (5 * BEAT, 0.14)):
+        l_w, r_w = whoosh(dur=0.4, level=level)
+        place(left, l_w, at - 0.1)
+        place(right, r_w, at - 0.1)
+    put4(pat(0.24), 3 * BEAT + 0.5)
+    put4(pat(0.26), 5 * BEAT + 0.5)
+    put4(crinkle(0.3, 0.07), 5 * BEAT + 0.5)
+    for k, note in enumerate((79, 72)):  # "still page one."
+        put4(pluck(hz(note), 0.12, 0.9), 5 * BEAT + 0.85 + k * 0.16)
+    # reading: a tiny tick each time his eyes jump back to the start of the next line
+    at = 8 * BEAT + 0.3 + 0.62 * 0.85
+    while at < 11.5 * BEAT - 0.3:
+        put4(click(0.03), at, pan=0.2)
+        at += 0.62
+    for at in (8 * BEAT, 11.5 * BEAT, 15.5 * BEAT):
+        l_w, r_w = whoosh(level=0.18)
+        place(left, l_w, at - 0.22)
+        place(right, r_w, at - 0.22)
+    # "fine. we'll read together.": a warm chime, and he starts to purr (a breath every 2.2 s)
+    for k, note in enumerate((76, 79, 84)):
+        put4(pluck(hz(note), 0.13, 1.8), 11.5 * BEAT + k * 0.08)
+    rumble = one_pole(rng.standard_normal(N), 160) - one_pole(rng.standard_normal(N), 45)
+    rumble /= np.abs(rumble).max() + 1e-9
+    breath = 0.5 - 0.5 * np.cos(2 * np.pi * t / 2.2)
+    purr = rumble * (0.55 + 0.45 * np.sin(2 * np.pi * 25 * t) ** 2) * (0.45 + 0.55 * breath)
+    purr *= np.clip((t - 11.5 * BEAT) / 0.6, 0, 1) * 0.26
+    left += purr
+    right += purr
+    put4(pat(0.1), 13.2 * BEAT + 0.35)  # the paw on the page
+    put4(crinkle(0.18, 0.04), 13.2 * BEAT + 0.35)
+    # "tag someone": a bell; the second slow blink: a soft falling chime
+    for k, note in enumerate((76, 79, 84, 88)):
+        put4(pluck(hz(note), 0.13, 2.0), 15.5 * BEAT + k * 0.07)
+    for k, note in enumerate((88, 84, 79)):
+        put4(pluck(hz(note), 0.08, 1.4), 15.5 * BEAT + 2.75 + k * 0.12)
+    lift = riser(1.2, level=0.09)
+    place(left, lift, DURATION - 1.2)
+    place(right, lift, DURATION - 1.2)
+
 # Fade in the first moment, ring out at the end.
-if PRESET in ('rooms', 'friends', 'printed', 'day1', 'ink', 'welcome', 'teaser', 'ink2', 'everyone', 'sleep', 'night', 'how'):
+if PRESET in ('rooms', 'friends', 'printed', 'day1', 'ink', 'welcome', 'teaser', 'ink2', 'everyone', 'sleep', 'night', 'how', 'name', 'read'):
     fade = np.interp(t, [0, 0.003, DURATION - 0.06, DURATION], [0, 1, 1, 0])
 else:
     fade = np.interp(t, [0, 0.01 if PRESET == 'rules' else 0.15, DURATION - 2.2, DURATION], [0, 1, 1, 0])
